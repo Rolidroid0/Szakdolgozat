@@ -1,6 +1,8 @@
-const { MongoClient } = require('mongodb');
+const dotenv = require('dotenv')
+dotenv.config()
+const { MongoClient } = require('mongodb')
 
-let dbInstance = null;
+let dbInstance = null
 
 async function connectToDb() {
     if (dbInstance) {
