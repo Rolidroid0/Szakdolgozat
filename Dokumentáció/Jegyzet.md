@@ -26,3 +26,22 @@
 ***Van köztük egy különleges, a játék vége kártya. A sorszám jelzi, hogy a megkevert pakliban hol helyezkedik el.
 
 ((régibónusz jár e: COUNT területNév FROM területek WHERE birtokos = ház AND régió = régióNév -- ezt minden régióval és megnézni, hogy egyenlő-e a régió területeinek számával))
+
+### Jegyzet magamnak
+
+React keretrendszerben van a client aki websocket segítségével kommunikál a nodejs szerverrel, ezáltal biztosítható a dinamikusság.
+
+Frontend (React):
+
+A felhasználói felületet Reacttel fejleszted.
+A React alkalmazás WebSocketeken keresztül kommunikál a szerverrel.
+
+Backend (Node.js):
+
+A Node.js szerver kezeli a WebSocket kapcsolatokat.
+A Node.js szerver kezeli az adatbázis műveleteket is, és MongoDB-t használ az adatok tárolására.
+
+Adatbázis (MongoDB):
+
+A MongoDB az adatokat tárolja, mint például a játék állapotát, a kártyák eloszlását stb.
+A Node.js szerver kapcsolódik a MongoDB-hez, és onnan olvas vagy ír adatokat.
