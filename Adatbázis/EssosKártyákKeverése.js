@@ -37,4 +37,4 @@ async function EssosKártyákKeverése() {
     }
 }
 
-EssosKártyákKeverése();
+module.exports = EssosKártyákKeverése;

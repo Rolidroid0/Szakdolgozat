@@ -2,6 +2,8 @@ const dotenv = require('dotenv')
 dotenv.config()
 const { MongoClient } = require('mongodb')
 
+const TerületekLétrehozása = require('./Adatbázis/TerületekLétrehozása').default
+
 /*MongoClient.connect(process.env.CONNECTIONSTRING, async function(err, client) {
     console.log("1")
     if (err) {
@@ -24,16 +26,7 @@ const { MongoClient } = require('mongodb')
 })*/
 
 async function main() {
-    try {
-        const client = await MongoClient.connect(process.env.CONNECTIONSTRING);
-        const db = client.db();
-        const results = await db.collection("Players").find().toArray();
-        console.log(results);
-
-        await client.close();
-    } catch (err) {
-        console.error('Failed to connect to the database or querying the database. Error:', err);
-    }
-}
+    TerületekLétrehozása("fss");
+}    
 
 main();
