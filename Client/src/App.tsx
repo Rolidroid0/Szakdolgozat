@@ -1,31 +1,34 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { WebSocketService } from './services/WebSocketService';
 
 const App = () => {
 
+  const [data, setData] = useState<string[]>([]);
+
   useEffect(() => {
     
-    const socket = new WebSocket('ws://localhost:3000');
+    const wsService = WebSocketService.getInstance();
+    wsService.connect('ws://localhost:3000');
 
-    socket.onopen = () => {
-      console.log('Connected to WebSocket server');
-      //socket.send('Hello WebSocket');
+    wsService.send('Hello WebSocket');
+
+    const handleMessage = async (event: MessageEvent) => {
+      if (event.data instanceof Blob) {
+        const text = await event.data.text();
+        console.log(`Received message: ${text}`);
+        setData(prevData => [...prevData, text]);
+      } else {
+        console.log(`Received message: ${event.data}`);
+        setData(prevData => [...prevData, event.data]);
+      }
     };
 
-    socket.onmessage = (event) => {
-      console.log(`Received message: ${event.data}`);
-      // Handle the received message here
-    };
-
-    socket.onclose = (event) => {
-      console.log(`Disconnected from WebSocket server: ${event.code}, ${event.reason}`);
-    };
-
-    socket.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
+    const ws = wsService.getWebSocket();
+    ws?.addEventListener('message', handleMessage);
 
     return () => {
-      socket.close();
+      ws?.removeEventListener('message', handleMessage);
+      wsService.disconnect();
     };
 
   }, []);
@@ -33,7 +36,11 @@ const App = () => {
   return (
     <div>
       <h1>WebSocket React App</h1>
-      {/* UI elements */}
+      <ul>
+        {data.map((item, index) => (
+          <li key={index}>{item}</li>
+        ))}
+      </ul>
     </div>
   );
 };
