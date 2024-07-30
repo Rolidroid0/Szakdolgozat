@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { WebSocketService } from './services/WebSocketService';
+import KeverKártyákButton from './components/Kártyák/KeverKártyákButton';
 
-const App = () => {
+/*const App = () => {
 
   const [data, setData] = useState<string[]>([]);
 
@@ -43,6 +44,20 @@ const App = () => {
       </ul>
     </div>
   );
+};*/
+
+const App: React.FC = () => {
+
+  const wsService = WebSocketService.getInstance();
+  wsService.connect('ws://localhost:3000');
+
+  return (
+    <div>
+      <h1>WebSocket React App</h1>
+      <KeverKártyákButton />
+    </div>
+  );
 };
+
 
 export default App;
