@@ -1,46 +1,15 @@
-import { useEffect, useState } from 'react';
-import { WebSocketService } from './services/WebSocketService';
+import ShuffleCardsButton from "./components/ShuffleCardsButton";
+import { WebSocketService } from "./services/WebSocketService";
 
-const App = () => {
+const App: React.FC = () => {
 
-  const [data, setData] = useState<string[]>([]);
-
-  useEffect(() => {
-    
-    const wsService = WebSocketService.getInstance();
-    wsService.connect('ws://localhost:3000');
-
-    wsService.send('Hello WebSocket');
-
-    const handleMessage = async (event: MessageEvent) => {
-      if (event.data instanceof Blob) {
-        const text = await event.data.text();
-        console.log(`Received message: ${text}`);
-        setData(prevData => [...prevData, text]);
-      } else {
-        console.log(`Received message: ${event.data}`);
-        setData(prevData => [...prevData, event.data]);
-      }
-    };
-
-    const ws = wsService.getWebSocket();
-    ws?.addEventListener('message', handleMessage);
-
-    return () => {
-      ws?.removeEventListener('message', handleMessage);
-      wsService.disconnect();
-    };
-
-  }, []);
+  const wsService = WebSocketService.getInstance();
+  wsService.connect('ws://localhost:3000');
 
   return (
     <div>
       <h1>WebSocket React App</h1>
-      <ul>
-        {data.map((item, index) => (
-          <li key={index}>{item}</li>
-        ))}
-      </ul>
+      <ShuffleCardsButton />
     </div>
   );
 };

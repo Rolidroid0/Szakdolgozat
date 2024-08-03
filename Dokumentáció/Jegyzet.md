@@ -33,11 +33,13 @@ React keretrendszerben van a client aki websocket segítségével kommunikál a 
 
 Frontend (React):
 
+((npm run dev))
 A felhasználói felületet Reacttel fejleszted.
 A React alkalmazás WebSocketeken keresztül kommunikál a szerverrel.
 
 Backend (Node.js):
 
+((npm start))
 A Node.js szerver kezeli a WebSocket kapcsolatokat.
 A Node.js szerver kezeli az adatbázis műveleteket is, és MongoDB-t használ az adatok tárolására.
 
