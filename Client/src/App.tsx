@@ -1,3 +1,5 @@
+
+import Map from "./components/Map";
 import ShuffleCardsButton from "./components/ShuffleCardsButton";
 import { WebSocketService } from "./services/WebSocketService";
 
@@ -10,6 +12,7 @@ const App: React.FC = () => {
     <div>
       <h1>WebSocket React App</h1>
       <ShuffleCardsButton />
+      <Map />
     </div>
   );
 };
