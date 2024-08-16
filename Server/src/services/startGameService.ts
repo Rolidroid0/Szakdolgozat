@@ -15,8 +15,8 @@ export const startGameService = async () => {
         await playersCollection.deleteMany({});
 
         const defaultPlayers = [
-            { ház: 'Targaryen', pluszSeregek: 0, hódított: false},
-            { ház: 'Ghiscari', pluszSeregek: 0, hódított: false}
+            { house: 'Targaryen', plusArmies: 0, conquered: false},
+            { house: 'Ghiscari', plusArmies: 0, conquered: false}
         ]
 
         const result = await playersCollection.insertMany(defaultPlayers);

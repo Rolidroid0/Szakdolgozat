@@ -1,5 +1,5 @@
 import { ReactSVG } from 'react-svg';
-import essosSvg from '../assets/svg/essos.svg'
+import essosSvg from '../../assets/svg/essos.svg'
 import './Map.css'
 
 const Map = () => {

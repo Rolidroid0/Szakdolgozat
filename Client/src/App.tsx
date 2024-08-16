@@ -1,9 +1,10 @@
 
 import { useState } from "react";
-import Map from "./components/Map";
+import Map from "./components/map/Map";
 import ShuffleCardsButton from "./components/ShuffleCardsButton";
 import StartGameButton from "./components/StartGameButton";
 import { WebSocketService } from "./services/WebSocketService";
+import Header from "./components/header/Header";
 
 const App: React.FC = () => {
 
@@ -24,6 +25,7 @@ const App: React.FC = () => {
       <Map />
     </div>*/
     <div>
+      <Header />
       <h1>Game Of Thrones RISK</h1>
       {!gameStarted ? (
         <StartGameButton onGameStart={handleGameStart} wsService={wsService} />
