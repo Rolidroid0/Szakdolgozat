@@ -1,23 +1,23 @@
 import { useEffect, useState } from "react";
 import { WebSocketService } from "../services/WebSocketService";
 
-const ShuffleCardsButton: React.FC = () => {
+interface ShuffleCardsButtonProps {
+    wsService: WebSocketService;
+}
+
+const ShuffleCardsButton: React.FC<ShuffleCardsButtonProps> = ({ wsService }) => {
     const [responseMessage, setResponseMessage] = useState<string | null>(null);
-    const wsService = WebSocketService.getInstance();
 
     useEffect(() => {
-        const handleMessage = async (event: MessageEvent) => {
-            const text = await event.data.text();
-            const data = JSON.parse(text);
-            console.log('Received cards:', data.message);
+        const handleShuffleResponse = (data: any) => {
+            console.log('Received cards:', data.cards);
             setResponseMessage('Cards received and logged in the console.');
         };
 
-        const ws = wsService.getWebSocket();
-        ws?.addEventListener('message', handleMessage);
+        wsService.registerHandler('shuffle-cards', handleShuffleResponse);
 
         return () => {
-            ws?.removeEventListener('message', handleMessage);
+            wsService.unregisterHandler('shuffle-cards');
         };
     }, [wsService]);
 

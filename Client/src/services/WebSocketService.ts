@@ -1,7 +1,10 @@
+type MessageHandler = (data: any) => void;
+
 export class WebSocketService {
     private static instance: WebSocketService;
     private ws: WebSocket | null = null;
     private messageQueue: string[] = [];
+    private actionHandlers: Record<string, MessageHandler> = {}
 
     private constructor() { }
 
@@ -27,8 +30,14 @@ export class WebSocketService {
         };
 
         this.ws.onmessage = (event) => {
-            console.log(`Received message: ${event.data}`);
-            // Handle incoming messages here
+            const data = JSON.parse(event.data);
+            const action = data.action;
+            const handler = this.actionHandlers[action];
+            if (handler) {
+                handler(data);
+            } else {
+                console.warn(`No handler found for action: ${action}`);
+            }
         };
 
         this.ws.onclose = (event) => {
@@ -54,6 +63,14 @@ export class WebSocketService {
             this.ws.close();
             this.ws = null;
         }
+    }
+
+    public registerHandler(action: string, handler: MessageHandler): void {
+        this.actionHandlers[action] = handler;
+    }
+
+    public unregisterHandler(action: string): void {
+        delete this.actionHandlers[action];
     }
 
     getWebSocket() {

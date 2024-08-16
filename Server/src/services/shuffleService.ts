@@ -10,46 +10,36 @@ export const shuffle = async (wss: WebSocketServer) => {
         const db = await connectToDb();
         const essosCards = db?.collection('EssosKártyák');
 
-        //törölni innen
-        const kártyák = await essosCards?.find({}).sort({ sorszám: 1 }).toArray();
+        if (!essosCards) {
+            console.error('EssosKártyák collection not found');
+            return;
+        }
+
+        const cardCount = await essosCards.countDocuments();
+        const shuffledNumbers = generateShuffledNumbers(cardCount);
+
+        const cardsCursor = essosCards.find({});
+        let index = 0;
+        while (await cardsCursor.hasNext()) {
+            const card = await cardsCursor.next();
+            if (card) {
+                await essosCards.updateOne(
+                    { _id: card._id },
+                    { $set: { sorszám: shuffledNumbers[index] } }
+                );
+                index++;
+            }
+        }
+        
+        const shuffledCards = await essosCards.find({}).toArray();
+
         wss.clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN) {
-                client.send(JSON.stringify({ message: kártyák }));
+                client.send(JSON.stringify({ action: 'shuffle-cards', cards: shuffledCards }));
             }
         });
-        console.log(kártyák);
-        //idáig
 
-        /*await essosCards?.deleteMany({});
-
-        const shuffledNumbers = generateShuffledNumbers(35);
-        let index = 0;
-
-        fs.createReadStream('Adatbázis/EssosKártyák.csv', { encoding: 'utf8' })
-            .pipe(csv())
-            .on('data', async (row) => {
-                const kártya = {
-                    név: row.név,
-                    szimbólum: row.szimbólum,
-                    birtokos: null,
-                    sorszám: shuffledNumbers[index++]
-                };
-                await essosCards?.insertOne(kártya);
-            })
-            .on('end', async () => {
-                console.log('Kártyák sikeresen betöltve az adatbázisba.');
-
-                // WebSocket értesítés küldése a klienseknek
-                wss.clients.forEach(client => {
-                    if (client.readyState === WebSocket.OPEN) {
-                        client.send(JSON.stringify({ message: 'Kártyák sikeresen betöltve az adatbázisba.' }));
-                    }
-                });
-
-                // Az adatbázisban lévő kártyák kiíratása (opcionális)
-                const kártyák = await essosCards?.find({}).sort({ sorszám: 1 }).toArray();
-                console.log('Essos kártyák:', kártyák);
-            });*/
+        console.log('Shuffle complete');
     } catch (error) {
         console.error('An error occured when shuffling the cards:', error);
     }
