@@ -25,7 +25,7 @@ const App: React.FC = () => {
       <Map />
     </div>*/
     <div>
-      <Header />
+      <Header wsService={wsService} />
       <h1>Game Of Thrones RISK</h1>
       {!gameStarted ? (
         <StartGameButton onGameStart={handleGameStart} wsService={wsService} />

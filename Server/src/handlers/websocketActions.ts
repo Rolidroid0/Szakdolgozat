@@ -1,8 +1,9 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { shuffle } from '../services/shuffleService';
 import { startGameService } from '../services/startGameService';
+import { CustomWebSocket } from '../config/websocket';
 
-const actions: Record<string, (wss: WebSocketServer, ws: WebSocket, data: any) => void> = {
+const actions: Record<string, (wss: WebSocketServer, ws: CustomWebSocket, data: any) => void> = {
     'shuffle-cards': async (wss, ws, data) => {
         try {
             await shuffle(wss);
@@ -18,6 +19,10 @@ const actions: Record<string, (wss: WebSocketServer, ws: WebSocket, data: any) =
         } catch (error) {
             console.log('Error during game start: ', error);
         }
+    },
+    'set-player-id': (wss, ws, data) => {
+        ws.playerId = data.playerId;
+        console.log(`Player ID set for WebSocket: ${ws.playerId}`);
     },
     // Add other actions here
 };

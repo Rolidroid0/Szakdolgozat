@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import './Header.css';
 import { API_BASE_URL } from "../../config/config";
 import { Player } from "../../types/Player";
+import { WebSocketService } from "../../services/WebSocketService";
 
-interface HeaderProps {}
+interface HeaderProps {
+    wsService: WebSocketService;
+}
 
-const Header: React.FC<HeaderProps> = () => {
+const Header: React.FC<HeaderProps> = ({ wsService }) => {
     const [players, setPlayers] = useState<Player[]>([]);
     const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
@@ -21,16 +24,68 @@ const Header: React.FC<HeaderProps> = () => {
         }
     };
 
-    const handleLogin = () => {
+    const handleLogin = async () => {
         if (selectedPlayer) {
-            setIsLoggedIn(true);
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/players/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ playerId: selectedPlayer }),
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    setIsLoggedIn(true);
+
+                    const ws = wsService.getWebSocket();
+
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({ action: 'set-player-id', data: {playerId: selectedPlayer} }));
+                    }
+                } else {
+                    alert(data.message);
+                }
+            } catch (error) {
+                console.error('Error during login:', error);
+            }
         }
     };
 
-    const handleLogout = () => {
-        setSelectedPlayer(null);
-        setIsLoggedIn(false);
-    }
+    const handleLogout = async () => {
+        if (selectedPlayer) {
+            try {
+                await fetch(`${API_BASE_URL}/api/players/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ playerId: selectedPlayer }),
+                });
+
+                setSelectedPlayer(null);
+                setIsLoggedIn(false);
+            } catch (error) {
+                console.error('Error during logout:', error);
+            }
+        }
+    };
+
+    useEffect(() => {
+        const handleWindowClose = async () => {
+            if (isLoggedIn && selectedPlayer) {
+                await handleLogout();
+            }
+        };
+
+        window.addEventListener("beforeunload", handleWindowClose);
+
+        return () => {
+            window.removeEventListener("beforeunload", handleWindowClose);
+        };
+    }, [isLoggedIn, selectedPlayer]);
 
     return (
         <header className="header">
@@ -46,7 +101,7 @@ const Header: React.FC<HeaderProps> = () => {
                             Choose a house
                         </option>
                         {players.map((player) => (
-                            <option key={player._id} value={player.house}>
+                            <option key={player._id} value={player._id}>
                                 {player.house}
                             </option>
                         ))}
@@ -57,7 +112,7 @@ const Header: React.FC<HeaderProps> = () => {
                 </>
             ) : (
                 <div className="header-loggedInContainer">
-                    <span>House {selectedPlayer}</span>
+                    <span>House {players.find(p => p._id === selectedPlayer)?.house}</span>
                     <button onClick={handleLogout} className="header-button">
                         Logout
                     </button>

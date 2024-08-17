@@ -1,19 +1,28 @@
 import { Server } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import actions from '../handlers/websocketActions';
+import { handleDisconnect } from '../utils/functions';
+
+export interface CustomWebSocket extends WebSocket {
+    playerId?: string;
+}
 
 let wss: WebSocketServer;
 
 export const initializeWebSocket = (server: Server) => {
     wss = new WebSocketServer({ server });
 
-    wss.on('connection', (ws: WebSocket) => {
+    wss.on('connection', (ws: CustomWebSocket) => {
         console.log('New client connected');
 
         ws.on('message', (message: string) => {
             try {
                 const parsedMessage = JSON.parse(message.toString());
                 console.log('Received message:', parsedMessage);
+
+                if (parsedMessage.playerId) {
+                    ws.playerId = parsedMessage.playerId;
+                }
 
                 const action = actions[parsedMessage.action];
                 if (action) {
@@ -27,7 +36,12 @@ export const initializeWebSocket = (server: Server) => {
         });
 
         ws.on('close', () => {
-            console.log('Client disconnected');
+            if (ws.playerId) {
+                console.log(`Client disconnected: Player ID ${ws.playerId}`);
+                handleDisconnect(ws.playerId);
+            } else {
+                console.log('Client disconnected');
+            }
         });
     });
 
