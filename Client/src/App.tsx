@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import Map from "./components/map/Map";
 import ShuffleCardsButton from "./components/ShuffleCardsButton";
-import StartGameButton from "./components/StartGameButton";
 import { WebSocketService } from "./services/WebSocketService";
 import Header from "./components/header/Header";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
 const App: React.FC = () => {
 
@@ -24,18 +23,21 @@ const App: React.FC = () => {
       <StartGameButton />
       <Map />
     </div>*/
-    <div>
-      <Header wsService={wsService} />
-      <h1>Game Of Thrones RISK</h1>
-      {!gameStarted ? (
-        <StartGameButton onGameStart={handleGameStart} wsService={wsService} />
-      ) : (
-        <>
-          <ShuffleCardsButton wsService={wsService} />
-          <Map />
-        </>
-      )}
-    </div>
+    <Router>
+      <div>
+        <Header wsService={wsService} handleGameStart={handleGameStart}/>
+        <Routes>
+          <Route path="/" element={!gameStarted ? (
+              <h1>Game Of Thrones RISK</h1>
+            ) : (
+              <>
+                <ShuffleCardsButton wsService={wsService} />
+                <Map />
+              </>
+            )} />
+        </Routes>
+      </div>
+    </Router>
   );
 };
 
