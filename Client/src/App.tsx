@@ -7,13 +7,13 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
 const App: React.FC = () => {
 
-  const [gameStarted, setGameStarted] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
 
   const wsService = WebSocketService.getInstance();
   wsService.connect('ws://localhost:3000');
 
-  const handleGameStart = () => {
-    setGameStarted(true);
+  const handleLoggedIn = (isLoggedIn: boolean) => {
+    setLoggedIn(isLoggedIn);
   };
 
   return (
@@ -25,9 +25,9 @@ const App: React.FC = () => {
     </div>*/
     <Router>
       <div>
-        <Header wsService={wsService} handleGameStart={handleGameStart}/>
+        <Header wsService={wsService} handleLoggedIn={handleLoggedIn}/>
         <Routes>
-          <Route path="/" element={!gameStarted ? (
+          <Route path="/" element={!loggedIn ? (
               <h1>Game Of Thrones RISK</h1>
             ) : (
               <>

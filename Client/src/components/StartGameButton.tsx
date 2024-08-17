@@ -1,30 +1,12 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { WebSocketService } from "../services/WebSocketService";
 
 interface StartGameButtonProps {
-    onGameStart: () => void;
     wsService: WebSocketService;
 }
 
-const StartGameButton: React.FC<StartGameButtonProps> = ({ onGameStart, wsService }) => {
+const StartGameButton: React.FC<StartGameButtonProps> = ({ wsService }) => {
     const [responseMessage, setResponseMessage] = useState<string | null>(null);
-
-    useEffect(() => {
-        const handleGameStartResponse = (data: any) => {
-            if (data.success) {
-                onGameStart();
-                setResponseMessage('Game started successfully.');
-            } else {
-                setResponseMessage('Failed to start the game.');
-            }
-        };
-
-        wsService.registerHandler('start-game', handleGameStartResponse);
-
-        return () => {
-            wsService.unregisterHandler('start-game');
-        }
-    }, [wsService, onGameStart]);
 
     const handleClick = () => {
         if (wsService.getWebSocket()?.readyState === WebSocket.OPEN) {

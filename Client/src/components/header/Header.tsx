@@ -8,10 +8,10 @@ import StartGameButton from "../StartGameButton";
 
 interface HeaderProps {
     wsService: WebSocketService;
-    handleGameStart: any;
+    handleLoggedIn: (isLoggedIn: boolean) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ wsService, handleGameStart }) => {
+const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn }) => {
     const [players, setPlayers] = useState<Player[]>([]);
     const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
@@ -45,6 +45,7 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleGameStart }) => {
                 
                 if (data.success) {
                     setIsLoggedIn(true);
+                    handleLoggedIn(true);
 
                     if (ws && ws.readyState === WebSocket.OPEN) {
                         ws.send(JSON.stringify({ action: 'set-player-id', data: {playerId: selectedPlayer} }));
@@ -71,6 +72,7 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleGameStart }) => {
 
                 setSelectedPlayer(null);
                 setIsLoggedIn(false);
+                handleLoggedIn(false);
             } catch (error) {
                 console.error('Error during logout:', error);
             }
@@ -83,9 +85,11 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleGameStart }) => {
                 const message = JSON.parse(event.data);
     
                 if (message.action === 'start-game') {
-                    handleLogout();
-                    alert("The game restarted, you were logged out.");
-                    navigate('/');
+                    if (isLoggedIn){
+                        handleLogout();
+                        alert("The game restarted, you were logged out.");
+                        navigate('/');
+                    }
                 }
             };
         };
@@ -125,7 +129,7 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleGameStart }) => {
                     <button onClick={handleLogin} className="header-button">
                         Log in
                     </button>
-                    <StartGameButton wsService={wsService} onGameStart={handleGameStart}></StartGameButton>
+                    <StartGameButton wsService={wsService}></StartGameButton>
                 </>
             ) : (
                 <div className="header-loggedInContainer">
