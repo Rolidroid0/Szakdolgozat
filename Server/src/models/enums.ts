@@ -4,8 +4,8 @@ export enum Table {
 }
 
 export enum Symbol {
-    Fortress = 'erődítmény',
-    Knight = 'lovag',
-    SiegeEngine = 'ostromgép',
-    End = 'vége'
+    Fortress = 'fortress',
+    Knight = 'knight',
+    SiegeEngine = 'siegeEngine',
+    End = 'end'
 }

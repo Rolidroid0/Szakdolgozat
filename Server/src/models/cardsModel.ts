@@ -5,6 +5,6 @@ export interface Card {
     table: Table;
     name: string;
     symbol: Symbol;
-    owner: string;
-    numberInDeck: number;
+    owner_id: string | null;
+    sequence_number: number | null;
 }
