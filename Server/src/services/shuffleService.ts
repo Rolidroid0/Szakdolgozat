@@ -8,10 +8,10 @@ import generateShuffledNumbers from '../utils/functions';
 export const shuffle = async (wss: WebSocketServer) => {
     try {
         const db = await connectToDb();
-        const essosCards = db?.collection('EssosKártyák');
+        const essosCards = db?.collection('EssosCards');
 
         if (!essosCards) {
-            console.error('EssosKártyák collection not found');
+            console.error('EssosCards collection not found');
             return;
         }
 
@@ -25,7 +25,7 @@ export const shuffle = async (wss: WebSocketServer) => {
             if (card) {
                 await essosCards.updateOne(
                     { _id: card._id },
-                    { $set: { sorszám: shuffledNumbers[index] } }
+                    { $set: { sequence_number: shuffledNumbers[index] } }
                 );
                 index++;
             }

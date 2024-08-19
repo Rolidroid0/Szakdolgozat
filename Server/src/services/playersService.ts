@@ -3,7 +3,7 @@ import { ObjectId } from "mongodb";
 
 export const getPlayers = async () => {
     const db = await connectToDb();
-    const playersCollection = db?.collection('Játékosok');
+    const playersCollection = db?.collection('Players');
 
     if (!playersCollection) {
         throw new Error("Players collection not found");
@@ -16,7 +16,7 @@ export const getPlayers = async () => {
 export const loginPlayer = async (playerId: string) => {
     try {
         const db = await connectToDb();
-        const playersCollection = db?.collection('Játékosok');
+        const playersCollection = db?.collection('Players');
 
         const player = await playersCollection?.findOne({ _id: new ObjectId(playerId) });
 
@@ -39,7 +39,7 @@ export const loginPlayer = async (playerId: string) => {
 export const logoutPlayer = async (playerId: string) => {
     try {
         const db = await connectToDb();
-        const playersCollection = db?.collection('Játékosok');
+        const playersCollection = db?.collection('Players');
 
         await playersCollection?.updateOne(
             { _id: new ObjectId(playerId) },
