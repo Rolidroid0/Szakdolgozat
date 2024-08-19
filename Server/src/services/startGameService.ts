@@ -29,8 +29,8 @@ export const startGameService = async () => {
         await playersCollection.deleteMany({});
 
         const defaultPlayers = [
-            { house: 'Targaryen', plusArmies: 0, conquered: false, isLoggedIn: false},
-            { house: 'Ghiscari', plusArmies: 0, conquered: false, isLoggedIn: false}
+            { house: 'Targaryen', plus_armies: 0, conquered: false, is_logged_in: false},
+            { house: 'Ghiscari', plus_armies: 0, conquered: false, is_logged_in: false}
         ]
 
         await playersCollection.insertMany(defaultPlayers);

@@ -1,36 +1,36 @@
 name,symbol
-Vörös pusztaság,fortress
+The Red Waste,fortress
 Astapor,siegeEngine
 Volantis,siegeEngine
-Síkföld,knight
-Keleti Dothraki-tenger,siegeEngine
-Lábnyom,fortress
-Északi Dothraki-tenger,knight
+The Flatlands,knight
+Eastern Dothraki Sea,siegeEngine
+The Footprint,fortress
+Northern Dothraki Sea,knight
 Mantarys,knight
 Bayasabhad,knight
-Norvosi-hegyek,knight
+Hills of Norvos,knight
 Vaes Dothrak,knight
 Tyrosh,fortress
 Lhazar,fortress
 Oros,knight
 Lys,knight
 Sarnor,siegeEngine
-Narancspart,siegeEngine
-Bárd,fortress
-Alsó-Rhoyne,fortress
-Aranymezők,siegeEngine
-Braavosi partvidék,siegeEngine
+The Orange Shore,siegeEngine
+The Axe,fortress
+Lower Rhoyne,fortress
+The Golden Fields,siegeEngine
+Braavosian Coastlands,siegeEngine
 Qarth,siegeEngine
-Qohori-erdő,siegeEngine
+Forest of Qohor,siegeEngine
 Myr,knight
-Új-Ghis,siegeEngine
-Ó-Ghis,knight
+New Ghis,siegeEngine
+Old Ghis,knight
 Samyrian,fortress
 Yunkai,knight
 Meereen,fortress
-Nyugati Dothraki-tenger,fortress
+Western Dothraki Sea,fortress
 Valyria,fortress
-Sóhajok tengere,siegeEngine
-Északi Jáde-tenger,siegeEngine
-Felső-Rhoyne,fortress
+The Sea of Sights,siegeEngine
+Northern Jade Sea,siegeEngine
+Upper Rhoyne,fortress
 Valar Morghulis,end

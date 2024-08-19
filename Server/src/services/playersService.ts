@@ -20,13 +20,13 @@ export const loginPlayer = async (playerId: string) => {
 
         const player = await playersCollection?.findOne({ _id: new ObjectId(playerId) });
 
-        if (player?.isLoggedIn) {
+        if (player?.is_logged_in) {
             return { success: false, message: 'This house is already occupied' };
         }
 
         await playersCollection?.updateOne(
             { _id: new ObjectId(playerId) },
-            { $set: { isLoggedIn: true } }
+            { $set: { is_logged_in: true } }
         );
 
         return { success: true, message: 'Login successful' };
@@ -43,7 +43,7 @@ export const logoutPlayer = async (playerId: string) => {
 
         await playersCollection?.updateOne(
             { _id: new ObjectId(playerId) },
-            { $set: { isLoggedIn: false } }
+            { $set: { is_logged_in: false } }
         );
     } catch (error) {
         console.error('Error during player logout: ', error);
