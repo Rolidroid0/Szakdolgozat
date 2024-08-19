@@ -3,6 +3,6 @@ import { shuffleCards } from '../controllers/shuffleCardsController';
 
 const router = express.Router();
 
-router.post('/shuffle', shuffleCards);
+router.post('/cards/shuffle', shuffleCards);
 
 export default router;
