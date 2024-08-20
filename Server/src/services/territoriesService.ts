@@ -11,3 +11,16 @@ export const getTerritories = async () => {
     const territories = await territoriesCollection.find({}).toArray();
     return territories;
 };
+
+/*ha már lesz changeTerritory data vagy valami:
+function broadcastTerritoryUpdate(territory) {
+  const data = {
+    action: 'territory-updated',
+    territory
+  };
+  wss.clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify(data));
+    }
+  });
+}*/
