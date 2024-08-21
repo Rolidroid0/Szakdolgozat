@@ -35,8 +35,11 @@ const Map = () => {
   }, []);
 
   const handleTerritoryClick = (event: MouseEvent) => {
+    event.stopPropagation();
+
     const target = event.target as HTMLElement;
     const territoryName = target.getAttribute('id');
+
     if (territoryName) {
       const territory = territories.find(t => t.name === territoryName);
       if (territory) {

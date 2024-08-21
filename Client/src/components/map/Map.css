@@ -1,8 +1,15 @@
+svg g * {
+  pointer-events: none;
+}
+
+svg g [id] {
+  pointer-events: auto;
+}
+
 .svg-container image {
     transition: filter 0.3s ease;
-  }
+}
   
-  .svg-container image:hover {
-    filter: brightness(1.5);
-  }
-  
+.svg-container image:hover {
+  filter: brightness(1.5);
+}
