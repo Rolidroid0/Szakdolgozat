@@ -45,6 +45,10 @@ const Map = () => {
       if (territory) {
         setSelectedTerritory(territory);
         setShowDetails(true);
+
+        document.querySelectorAll('.selected-territory').forEach(el => el.classList.remove('selected-territory'));
+
+        target.classList.add('selected-territory');
       } else {
         console.log('Territory not found');
       }
@@ -54,6 +58,8 @@ const Map = () => {
   const handleCloseDetails = () => {
     setShowDetails(false);
     setSelectedTerritory(null);
+
+    document.querySelectorAll('.selected-territory').forEach(el => el.classList.remove('selected-territory'));
   };
 
   return (
