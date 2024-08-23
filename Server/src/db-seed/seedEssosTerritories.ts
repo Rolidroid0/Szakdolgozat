@@ -30,6 +30,7 @@ export const seedEssosTerritories = async () => {
                     region: row.region,
                     neighbors: row.neighbors ? row.neighbors.split(',').map((neighbor: string) => neighbor.trim()) : [],
                     owner_id: row.owner_id,
+                    number_of_armies: 2,
                     last_attacked_from: parseInt(row.last_attacked_from),
                 });
             })

@@ -1,35 +1,35 @@
 name,fortress,port,region,neighbors,army_count,owner_id,last_attacked_from
-The Red Waste,0,0,Slaver's Bay,"Old Ghis,Astapor,Yunkai,Lhazar,Eastern Dothraki Sea,Samyrian,Bayasabhad,Qarth",0,semleges,0
-Astapor,1,1,Slaver's Bay,"Yunkai,The Red Waste,Old Ghis",0,semleges,0
-Volantis,1,1,The Disputed Lands,"The Orange Shore,Lower Rhoyne,Mantarys",0,semleges,0
-The Flatlands,1,1,Andalos,"Braavosian Coastlands,Upper Rhoyne,The Golden Fields,Myr",0,semleges,0
-Eastern Dothraki Sea,0,0,The Dothraki Sea,"Western Dothraki Sea,Northern Dothraki Sea,Mereen,Lhazar,The Red Waste,Samyrian,Vaes Dothrak,The Footprint",0,semleges,0
-The Footprint,0,0,The Dothraki Sea,"Eastern Dothraki Sea,Vaes Dothrak,Northern Jade Sea",0,semleges,0
-Northern Dothraki Sea,0,0,The Dothraki Sea,"Sarnor,Western Dothraki Sea,Eastern Dothraki Sea",0,semleges,0
-Mantarys,1,0,Lands of Long Summer,"Volantis,Lower Rhoyne,Western Dothraki Sea,Mereen,The Sea of Sights",0,semleges,0
-Bayasabhad,0,0,Jade Sea Coast,"Samyrian,The Red Waste,Qarth",0,semleges,0
-Hills of Norvos,0,0,Andalos,"Braavosian Coastlands,Upper Rhoyne,Forest of Qohor,The Axe",0,semleges,0
-Vaes Dothrak,1,0,The Dothraki Sea,"Eastern Dothraki Sea,Samyrian,Northern Jade Sea,The Footprint",0,semleges,0
-Tyrosh,1,0,The Disputed Lands,"Myr,The Orange Shore",0,semleges,0
-Lhazar,1,0,The Dothraki Sea,"Eastern Dothraki Sea,Mereen,Yunkai,The Red Waste",0,semleges,0
-Oros,0,0,Lands of Long Summer,"The Sea of Sights,Valyria",0,semleges,0
-Lys,0,1,The Disputed Lands,"The Orange Shore",0,semleges,0
-Sarnor,1,0,The Dothraki Sea,"Forest of Qohor,Western Dothraki Sea,Northern Dothraki Sea",0,semleges,0
-The Orange Shore,0,0,The Disputed Lands,"Tyrosh,Myr,Lower Rhoyne,Volantis,Lys",0,semleges,0
-The Axe,0,0,Andalos,"Braavosian Coastlands,Hills of Norvos,Forest of Qohor",0,semleges,0
-Lower Rhoyne,0,0,The Disputed Lands,"Upper Rhoyne,The Golden Fields,Myr,The Orange Shore,Volantis,Mantarys,Western Dothraki Sea,Forest of Qohor",0,semleges,0
-The Golden Fields,0,0,Andalos,"Upper Rhoyne,The Flatlands,Myr,Lower Rhoyne",0,semleges,0
-Braavosian Coastlands,1,1,Andalos,"The Flatlands,Upper Rhoyne,Hills of Norvos,The Axe",0,semleges,0
-Qarth,1,1,Jade Sea Coast,"The Red Waste,Bayasabhad",0,semleges,0
-Forest of Qohor,1,0,Andalos,"The Axe,Hills of Norvos,Upper Rhoyne,Lower Rhoyne,Western Dothraki Sea,Sarnor",0,semleges,0
-Myr,0,1,The Disputed Lands,"Tyrosh,The Orange Shore,Lower Rhoyne,The Golden Fields,The Flatlands",0,semleges,0
-New Ghis,0,1,Slaver's Bay,"Old Ghis",0,semleges,0
-Old Ghis,0,0,Slaver's Bay,"New Ghis,The Red Waste,Astapor",0,semleges,0
-Samyrian,0,0,Jade Sea Coast,"Bayasabhad,The Red Waste,Eastern Dothraki Sea,Vaes Dothrak,Northern Jade Sea",0,semleges,0
-Yunkai,1,0,Slaver's Bay,"Astapor,The Red Waste,Lhazar,Mereen",0,semleges,0
-Mereen,1,1,Slaver's Bay,"Mantarys,Western Dothraki Sea,Eastern Dothraki Sea,Lhazar,Yunkai",0,semleges,0
-Western Dothraki Sea,0,0,The Dothraki Sea,"Forest of Qohor,Lower Rhoyne,Mantarys,Mereen,Eastern Dothraki Sea,Northern Dothraki Sea, Sarnor",0,semleges,0
-Valyria,1,0,Lands of Long Summer,"The Sea of Sights,Oros",0,semleges,0
-The Sea of Sights,0,1,Lands of Long Summer,"Mantarys,Oros,Valyria",0,semleges,0
-Northern Jade Sea,0,0,Jade Sea Coast,"The Footprint,Vaes Dothrak,Samyrian",0,semleges,0
-Upper Rhoyne,0,0,Andalos,"Braavosian Coastlands,The Flatlands,The Golden Fields, Lower Rhoyne,Forest of Qohor,Hills of Norvos",0,semleges,0
+The Red Waste,0,0,Slaver's Bay,"Old Ghis,Astapor,Yunkai,Lhazar,Eastern Dothraki Sea,Samyrian,Bayasabhad,Qarth",0,neutral,0
+Astapor,1,1,Slaver's Bay,"Yunkai,The Red Waste,Old Ghis",0,neutral,0
+Volantis,1,1,The Disputed Lands,"The Orange Shore,Lower Rhoyne,Mantarys",0,neutral,0
+The Flatlands,1,1,Andalos,"Braavosian Coastlands,Upper Rhoyne,The Golden Fields,Myr",0,neutral,0
+Eastern Dothraki Sea,0,0,The Dothraki Sea,"Western Dothraki Sea,Northern Dothraki Sea,Mereen,Lhazar,The Red Waste,Samyrian,Vaes Dothrak,The Footprint",0,neutral,0
+The Footprint,0,0,The Dothraki Sea,"Eastern Dothraki Sea,Vaes Dothrak,Northern Jade Sea",0,neutral,0
+Northern Dothraki Sea,0,0,The Dothraki Sea,"Sarnor,Western Dothraki Sea,Eastern Dothraki Sea",0,neutral,0
+Mantarys,1,0,Lands of Long Summer,"Volantis,Lower Rhoyne,Western Dothraki Sea,Mereen,The Sea of Sights",0,neutral,0
+Bayasabhad,0,0,Jade Sea Coast,"Samyrian,The Red Waste,Qarth",0,neutral,0
+Hills of Norvos,0,0,Andalos,"Braavosian Coastlands,Upper Rhoyne,Forest of Qohor,The Axe",0,neutral,0
+Vaes Dothrak,1,0,The Dothraki Sea,"Eastern Dothraki Sea,Samyrian,Northern Jade Sea,The Footprint",0,neutral,0
+Tyrosh,1,0,The Disputed Lands,"Myr,The Orange Shore",0,neutral,0
+Lhazar,1,0,The Dothraki Sea,"Eastern Dothraki Sea,Mereen,Yunkai,The Red Waste",0,neutral,0
+Oros,0,0,Lands of Long Summer,"The Sea of Sights,Valyria",0,neutral,0
+Lys,0,1,The Disputed Lands,"The Orange Shore",0,neutral,0
+Sarnor,1,0,The Dothraki Sea,"Forest of Qohor,Western Dothraki Sea,Northern Dothraki Sea",0,neutral,0
+The Orange Shore,0,0,The Disputed Lands,"Tyrosh,Myr,Lower Rhoyne,Volantis,Lys",0,neutral,0
+The Axe,0,0,Andalos,"Braavosian Coastlands,Hills of Norvos,Forest of Qohor",0,neutral,0
+Lower Rhoyne,0,0,The Disputed Lands,"Upper Rhoyne,The Golden Fields,Myr,The Orange Shore,Volantis,Mantarys,Western Dothraki Sea,Forest of Qohor",0,neutral,0
+The Golden Fields,0,0,Andalos,"Upper Rhoyne,The Flatlands,Myr,Lower Rhoyne",0,neutral,0
+Braavosian Coastlands,1,1,Andalos,"The Flatlands,Upper Rhoyne,Hills of Norvos,The Axe",0,neutral,0
+Qarth,1,1,Jade Sea Coast,"The Red Waste,Bayasabhad",0,neutral,0
+Forest of Qohor,1,0,Andalos,"The Axe,Hills of Norvos,Upper Rhoyne,Lower Rhoyne,Western Dothraki Sea,Sarnor",0,neutral,0
+Myr,0,1,The Disputed Lands,"Tyrosh,The Orange Shore,Lower Rhoyne,The Golden Fields,The Flatlands",0,neutral,0
+New Ghis,0,1,Slaver's Bay,"Old Ghis",0,neutral,0
+Old Ghis,0,0,Slaver's Bay,"New Ghis,The Red Waste,Astapor",0,neutral,0
+Samyrian,0,0,Jade Sea Coast,"Bayasabhad,The Red Waste,Eastern Dothraki Sea,Vaes Dothrak,Northern Jade Sea",0,neutral,0
+Yunkai,1,0,Slaver's Bay,"Astapor,The Red Waste,Lhazar,Mereen",0,neutral,0
+Mereen,1,1,Slaver's Bay,"Mantarys,Western Dothraki Sea,Eastern Dothraki Sea,Lhazar,Yunkai",0,neutral,0
+Western Dothraki Sea,0,0,The Dothraki Sea,"Forest of Qohor,Lower Rhoyne,Mantarys,Mereen,Eastern Dothraki Sea,Northern Dothraki Sea, Sarnor",0,neutral,0
+Valyria,1,0,Lands of Long Summer,"The Sea of Sights,Oros",0,neutral,0
+The Sea of Sights,0,1,Lands of Long Summer,"Mantarys,Oros,Valyria",0,neutral,0
+Northern Jade Sea,0,0,Jade Sea Coast,"The Footprint,Vaes Dothrak,Samyrian",0,neutral,0
+Upper Rhoyne,0,0,Andalos,"Braavosian Coastlands,The Flatlands,The Golden Fields, Lower Rhoyne,Forest of Qohor,Hills of Norvos",0,neutral,0

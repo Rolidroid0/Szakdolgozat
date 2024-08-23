@@ -1,6 +1,9 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { connectToDb } from "../config/db";
 import { getWebSocketServer } from "../config/websocket";
+import shuffle from './shuffleService';
+import { allocateTerritories } from './territoriesService';
+import { generatePlayers } from './playersService';
 
 
 export const startGameService = async () => {
@@ -25,15 +28,15 @@ export const startGameService = async () => {
         }
 
         await battlesCollection.deleteMany({});
+
         await cardsCollection.updateMany({}, { $set: { owner_id: null } });
-        await playersCollection.deleteMany({});
+        await shuffle(getWebSocketServer());
 
-        const defaultPlayers = [
-            { house: 'Targaryen', plus_armies: 0, conquered: false, is_logged_in: false},
-            { house: 'Ghiscari', plus_armies: 0, conquered: false, is_logged_in: false}
-        ]
+        await generatePlayers(2);
 
-        await playersCollection.insertMany(defaultPlayers);
+        const defaultPlayers = await playersCollection.find({}).toArray();
+
+        await allocateTerritories();
 
         const newGame = {
             round: 1,

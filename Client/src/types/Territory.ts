@@ -6,5 +6,6 @@ export interface Territory {
     region: string;
     neighbors: string[];
     owner_id: string;
+    number_of_armies: number;
     last_attacked_from: number;
 }

@@ -13,6 +13,32 @@ export const getPlayers = async () => {
     return players;
 };
 
+export const generatePlayers = async (numberOfPlayers: number) => {
+    try {
+        const db = await connectToDb();
+        const playersCollection = db?.collection('Players');
+
+        if (!playersCollection) {
+            throw new Error("Players collection not found");
+        }
+
+        await playersCollection.deleteMany({});
+
+        const defaultPlayers = [
+            { house: 'Targaryen', plus_armies: 0, conquered: false, is_logged_in: false},
+            { house: 'Ghiscari', plus_armies: 0, conquered: false, is_logged_in: false}
+        ]
+
+        const players = defaultPlayers.slice(0, numberOfPlayers);
+
+        await playersCollection.insertMany(players);
+
+    } catch (error) {
+        console.error('Error during generating players: ', error);
+        throw error;
+    }
+};
+
 export const loginPlayer = async (playerId: string) => {
     try {
         const db = await connectToDb();
