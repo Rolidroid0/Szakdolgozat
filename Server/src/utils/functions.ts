@@ -13,9 +13,13 @@ function generateShuffledNumbers(n: number) {
 export const handleDisconnect = async (playerId: string) => {
     try {
         const db = await connectToDb();
-        const playersCollection = db?.collection('Játékosok');
+        const playersCollection = db?.collection('Players');
 
-        await playersCollection?.updateOne(
+        if (!playersCollection) {
+            throw new Error("Players collection not found");
+        }
+
+        await playersCollection.updateOne(
             { _id: new ObjectId(playerId) },
             { $set: { isLoggedIn: false } }
         );
@@ -25,24 +29,39 @@ export const handleDisconnect = async (playerId: string) => {
 };
 
 export const calculatePlusArmies = async (playerId: ObjectId) => {
-    /*// 1. Lekérdezzük a játékost és a hozzá tartozó területeket az adatbázisból
+    const db = await connectToDb();
+    const playersCollection = db?.collection('Players');
+    const territoriesCollection = db?.collection('EssosTerritories');
+    const regionsCollection = db?.collection('Regions');
+
+    if (!playersCollection || !territoriesCollection || !regionsCollection) {
+        throw new Error("Collections not found");
+    }
+    
     const player = await playersCollection.findOne({ _id: playerId });
-    const territories = await territoriesCollection.find({ owner_id: playerId }).toArray();
-    
-    // 2. Példa szabályok: Egy alap 3 sereg plusz, és minden 3 területért egy extra sereg
-    let additionalArmies = 3; // Minimum seregszám minden kör elején
 
-    // Számoljuk meg a játékos által birtokolt területek számát
+    if (!player) {
+        throw new Error("No player found");
+    }
+
+    const territories = await territoriesCollection.find({ owner_id: player.house }).toArray();
+
     const territoryCount = territories.length;
+    const fortressCount = territories.filter(territory => territory.fortress === 1).length;
     
-    // Minden 3 területért adunk egy extra sereget
-    additionalArmies += Math.floor(territoryCount / 3);
+    let additionalArmies = Math.floor((territoryCount + fortressCount) / 3);
 
-    // 3. Itt adhatunk bónuszokat (pl. kontinens birtoklása)
-    // ... implementálható extra bónusz logika
+    if (additionalArmies < 3) additionalArmies = 3;
 
-    return additionalArmies;*/
-    return 0;
+    const regions = await regionsCollection.find({}).toArray();
+    for (const region of regions) {
+        const ownedTerritoriesInRegion = territories.filter(territory => territory.region === region.name);
+        if (ownedTerritoriesInRegion.length === region.territory_count) {
+            additionalArmies += region.region_bonus;
+        }
+    }
+
+    return additionalArmies;
 }
 
 export default generateShuffledNumbers;
