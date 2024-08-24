@@ -2,6 +2,7 @@ import { WebSocketServer } from "ws";
 import { connectToDb } from "../config/db";
 import { calculatePlusArmies } from "../utils/functions";
 import { ObjectId } from "mongodb";
+import { WebSocket } from 'ws';
 
 export const getCurrentRound = async () => {
     const db = await connectToDb();
@@ -47,18 +48,23 @@ export const endTurn = async (wss: WebSocketServer, data: any) => {
         throw new Error("Collections not found");
     }
 
-    const players = await playersCollection.find({}).sort({ _id: 1 }).toArray();
-
-    const currentPlayerIndex = players.findIndex(player => player._id.equals(data.currentPlayerId));
-
-    const nextPlayerIndex = (currentPlayerIndex + 1) % players.length;
-
     const ongoingGame = await gamesCollection.findOne({ state: "ongoing" });
 
     if (!ongoingGame) {
         throw new Error("No ongoing game found");
     }
-    
+
+    const currentPlayer = ongoingGame.currentPlayer;
+    const currentPlayerDoc = await playersCollection.findOne({ _id: new ObjectId(data.playerId) });
+
+    if (!currentPlayerDoc || currentPlayerDoc.house !== currentPlayer) {
+        throw new Error("It's not your turn!");
+    }
+
+    const players = await playersCollection.find({}).toArray();
+    const currentPlayerIndex = players.findIndex(player => player._id.equals(data.playerId));
+    const nextPlayerIndex = (currentPlayerIndex + 1) % players.length;
+
     let currentRound = ongoingGame.round;
     if (nextPlayerIndex === 0) {
         currentRound += 1;
@@ -71,12 +77,12 @@ export const endTurn = async (wss: WebSocketServer, data: any) => {
 
         await gamesCollection.updateOne(
             { state: "ongoing" },
-            { $set: { currentPlayer: nextPlayer.hosue, round: currentRound } }
+            { $set: { currentPlayer: nextPlayer.house, round: currentRound } }
         );
 
         wss.clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN) {
-                client.send(JSON.stringify({ action: 'round-updated', currentRound: currentRound }));
+                client.send(JSON.stringify({ action: 'round-updated', data: { currentRound: currentRound, currentHouse: nextPlayer.house } }));
             }
         });
     } else {

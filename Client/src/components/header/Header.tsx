@@ -5,6 +5,7 @@ import { Player } from "../../types/Player";
 import { WebSocketService } from "../../services/WebSocketService";
 import { useNavigate } from 'react-router-dom';
 import StartGameButton from "../StartGameButton";
+import EndTurnButton from "../EndTurnButton";
 
 interface HeaderProps {
     wsService: WebSocketService;
@@ -106,8 +107,9 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn }) => {
                         navigate('/');
                     }
                 } else if (message.action === 'round-updated') {
-                    const { round, currentHouse } = message.data;
-                    setRound(round);
+                    console.log(message);
+                    const { currentRound, currentHouse } = message.data;
+                    setRound(currentRound);
                     setCurrentHouse(currentHouse);
                 }
             };
@@ -157,6 +159,9 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn }) => {
                         Logout
                     </button>
                     <h1>Round {round} : {currentHouse}</h1>
+                    {players.find(p => p._id === selectedPlayer)?.house === currentHouse && 
+                    <EndTurnButton wsService={wsService} selectedPlayer={selectedPlayer}></EndTurnButton>
+                    }
                 </div>
             )}
         </header>
