@@ -27,7 +27,7 @@ const actions: Record<string, (wss: WebSocketServer, ws: CustomWebSocket, data: 
     },
     'end-of-player-turn': async (wss, ws, data) => {
         try {
-            await endTurn(wss);
+            await endTurn(wss, data);
             console.log('Players turn ended');
         } catch (error) {
             console.log('Error during ending players turn: ', error);

@@ -4,6 +4,7 @@ import { getWebSocketServer } from "../config/websocket";
 import shuffle from './shuffleService';
 import { allocateTerritories } from './territoriesService';
 import { generatePlayers } from './playersService';
+import { applyAdditionalArmies } from './gamesService';
 
 
 export const startGameService = async () => {
@@ -37,6 +38,8 @@ export const startGameService = async () => {
         const defaultPlayers = await playersCollection.find({}).toArray();
 
         await allocateTerritories();
+
+        await applyAdditionalArmies(defaultPlayers[0]._id);
 
         const newGame = {
             round: 1,
