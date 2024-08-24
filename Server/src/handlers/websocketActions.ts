@@ -2,6 +2,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { shuffle } from '../services/shuffleService';
 import { startGameService } from '../services/startGameService';
 import { CustomWebSocket } from '../config/websocket';
+import { endTurn } from '../services/gamesService';
 
 const actions: Record<string, (wss: WebSocketServer, ws: CustomWebSocket, data: any) => void> = {
     'shuffle-cards': async (wss, ws, data) => {
@@ -24,7 +25,14 @@ const actions: Record<string, (wss: WebSocketServer, ws: CustomWebSocket, data: 
         ws.playerId = data.playerId;
         console.log(`Player ID set for WebSocket: ${ws.playerId}`);
     },
-    // Add other actions here
+    'end-of-player-turn': async (wss, ws, data) => {
+        try {
+            await endTurn(wss);
+            console.log('Players turn ended');
+        } catch (error) {
+            console.log('Error during ending players turn: ', error);
+        }
+    }
 };
 
 export default actions;

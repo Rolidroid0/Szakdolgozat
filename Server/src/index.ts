@@ -6,6 +6,7 @@ import { initializeWebSocket } from './config/websocket';
 import cardsRoutes from './routes/cardsRoutes';
 import playersRoutes from './routes/playersRoutes';
 import territoriesRoutes from './routes/territoriesRoutes';
+import gameRoutes from './routes/gameRoutes';
 
 dotenv.config();
 
@@ -25,6 +26,7 @@ app.use(express.json());
 app.use('/api/', cardsRoutes);
 app.use('/api/', playersRoutes);
 app.use('/api/', territoriesRoutes);
+app.use('/api/', gameRoutes);
 
 app.get('/', (req, res) => {
     res.send('Hello, World!');

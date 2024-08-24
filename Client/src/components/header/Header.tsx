@@ -15,6 +15,8 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn }) => {
     const [players, setPlayers] = useState<Player[]>([]);
     const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+    const [round, setRound] = useState(0);
+    const [currentHouse, setCurrentHouse] = useState('');
     const navigate = useNavigate();
 
     const ws = wsService.getWebSocket();
@@ -46,6 +48,7 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn }) => {
                 if (data.success) {
                     setIsLoggedIn(true);
                     handleLoggedIn(true);
+                    fetchCurrentRound();
 
                     if (ws && ws.readyState === WebSocket.OPEN) {
                         ws.send(JSON.stringify({ action: 'set-player-id', data: {playerId: selectedPlayer} }));
@@ -79,6 +82,18 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn }) => {
         }
     };
 
+    const fetchCurrentRound = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/current-round`);
+            const data = await response.json();
+
+            setRound(data.round);
+            setCurrentHouse(data.currentPlayer);
+        } catch (error) {
+            console.error('Error fetching current round: ', error);
+        }
+    };
+
     useEffect(() => {
         if (ws) {
             ws.onmessage = (event: MessageEvent) => {
@@ -90,6 +105,10 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn }) => {
                         alert("The game restarted, you were logged out.");
                         navigate('/');
                     }
+                } else if (message.action === 'round-updated') {
+                    const { round, currentHouse } = message.data;
+                    setRound(round);
+                    setCurrentHouse(currentHouse);
                 }
             };
         };
@@ -105,7 +124,7 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn }) => {
         return () => {
             window.removeEventListener("beforeunload", handleWindowClose);
         };
-    }, [isLoggedIn, selectedPlayer]);
+    }, [ws, isLoggedIn, selectedPlayer]);
 
     return (
         <header className="header">
@@ -137,6 +156,7 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn }) => {
                     <button onClick={handleLogout} className="header-button">
                         Logout
                     </button>
+                    <h1>Round {round} : {currentHouse}</h1>
                 </div>
             )}
         </header>
