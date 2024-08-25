@@ -21,7 +21,7 @@ export const handleDisconnect = async (playerId: string) => {
 
         await playersCollection.updateOne(
             { _id: new ObjectId(playerId) },
-            { $set: { isLoggedIn: false } }
+            { $set: { is_logged_in: false } }
         );
     } catch (error) {
         console.error('Error during player disconnect:', error);
@@ -63,5 +63,28 @@ export const calculatePlusArmies = async (playerId: ObjectId) => {
 
     return additionalArmies;
 }
+
+export const checkPlayerCardsLimit = async (playerId: ObjectId) => {
+    const db = await connectToDb();
+    const playersCollection = db?.collection('Players');
+    const cardsCollection = db?.collection('EssosCards');
+
+    if (!playersCollection || !cardsCollection) {
+        throw new Error("Collections not found");
+    }
+
+    const player = await playersCollection.findOne({ _id: playerId });
+    if (!player) {
+        throw new Error("Player not found");
+    }
+
+    const playerCardsCount = await cardsCollection.countDocuments({ owner_id: player.house });
+
+    if (playerCardsCount > 5) {
+        throw new Error("Player cannot hold more than 5 cards.");
+    }
+
+    return playerCardsCount;
+};
 
 export default generateShuffledNumbers;

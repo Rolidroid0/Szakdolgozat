@@ -1,8 +1,9 @@
 import { WebSocketServer, WebSocket } from 'ws';
-import { shuffle } from '../services/shuffleService';
+import { shuffle, tradeCardsForArmies } from '../services/cardsService';
 import { startGameService } from '../services/startGameService';
 import { CustomWebSocket } from '../config/websocket';
 import { endTurn } from '../services/gamesService';
+import { ObjectId } from 'mongodb';
 
 const actions: Record<string, (wss: WebSocketServer, ws: CustomWebSocket, data: any) => void> = {
     'shuffle-cards': async (wss, ws, data) => {
@@ -31,6 +32,16 @@ const actions: Record<string, (wss: WebSocketServer, ws: CustomWebSocket, data: 
             console.log('Players turn ended');
         } catch (error) {
             console.log('Error during ending players turn: ', error);
+        }
+    },
+    'trade-cards': async (wss, ws, data) => {
+        try {
+            const { playerId, cardIds } = data;
+            const additionalArmies = await tradeCardsForArmies(new ObjectId(playerId), cardIds);
+
+            ws.send(JSON.stringify({ action: 'cards-traded', data: { success: true, additionalArmies } }));
+        } catch (error) {
+            ws.send(JSON.stringify({ action: 'cards-traded', data: { success: false, message: error } }));
         }
     }
 };

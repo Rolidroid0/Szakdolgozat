@@ -1,7 +1,7 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { connectToDb } from "../config/db";
 import { getWebSocketServer } from "../config/websocket";
-import shuffle from './shuffleService';
+import shuffle from './cardsService';
 import { allocateTerritories } from './territoriesService';
 import { generatePlayers } from './playersService';
 import { applyAdditionalArmies } from './gamesService';

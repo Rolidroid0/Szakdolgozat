@@ -4,16 +4,27 @@ import ShuffleCardsButton from "./components/ShuffleCardsButton";
 import { WebSocketService } from "./services/WebSocketService";
 import Header from "./components/header/Header";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import CardsDisplay from "./components/cards/CardsDisplay";
 
 const App: React.FC = () => {
 
   const [loggedIn, setLoggedIn] = useState(false);
+  const [showCards, setShowCards] = useState<boolean>(false);
+  const playerId = "playerId"; //beilleszteni ide az igazi playerId-t
 
   const wsService = WebSocketService.getInstance();
   wsService.connect('ws://localhost:3000');
 
   const handleLoggedIn = (isLoggedIn: boolean) => {
     setLoggedIn(isLoggedIn);
+  };
+
+  const handleToggleCards = () => {
+    setShowCards(!showCards);
+  };
+
+  const handleTradeCards = (additionalArmies: number) => {
+    console.log(`Traded cards for ${additionalArmies} additional armies`);
   };
 
   return (
@@ -32,6 +43,20 @@ const App: React.FC = () => {
             ) : (
               <>
                 <ShuffleCardsButton wsService={wsService} />
+                {!showCards ? (
+                        <button onClick={handleToggleCards} className="header-button">
+                            Show Cards
+                        </button>
+                    ) : (
+                        <div className="cards-panel">
+                            <CardsDisplay 
+                              playerId={playerId}
+                              onTradeSuccess={handleTradeCards} />
+                            <button onClick={handleToggleCards} className="header-button">
+                                Hide Cards
+                            </button>
+                        </div>
+                    )}
                 <Map />
               </>
             )} />
