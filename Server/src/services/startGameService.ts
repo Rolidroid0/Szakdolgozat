@@ -45,7 +45,8 @@ export const startGameService = async () => {
             round: 1,
             currentPlayer: defaultPlayers[0].house,
             players: defaultPlayers.map(p => p.house),
-            state: "ongoing"
+            state: "ongoing",
+            roundState: "reinforcement"
         }
 
         const gameResult = await gamesCollection.insertOne(newGame);

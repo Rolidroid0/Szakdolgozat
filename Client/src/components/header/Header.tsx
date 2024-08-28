@@ -18,6 +18,7 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn }) => {
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
     const [round, setRound] = useState(0);
     const [currentHouse, setCurrentHouse] = useState('');
+    const [roundState, setRoundState] = useState<string>('');
     const navigate = useNavigate();
 
     const ws = wsService.getWebSocket();
@@ -90,8 +91,36 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn }) => {
 
             setRound(data.round);
             setCurrentHouse(data.currentPlayer);
+            setRoundState(data.roundState);
         } catch (error) {
             console.error('Error fetching current round: ', error);
+        }
+    };
+
+    const handleEndPhase = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/end-phase`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ playerId: selectedPlayer }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData || "Error ending current phase");
+            }
+
+            const data = await response.json();
+            if (data.message === "Turn ended") {
+                console.log("Turn ended, waiting for the next player's move.");
+                fetchCurrentRound();
+            } else {
+                setRoundState(data.nextRoundState);
+            }
+        } catch (error) {
+            console.error("Error ending phase: ", error);
         }
     };
 
@@ -108,9 +137,14 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn }) => {
                     }
                 } else if (message.action === 'round-updated') {
                     console.log(message);
-                    const { currentRound, currentHouse } = message.data;
+                    const { currentRound, currentHouse, roundState } = message.data;
                     setRound(currentRound);
                     setCurrentHouse(currentHouse);
+                    setRoundState(roundState);
+                } else if (message.action === 'round-state-updated') {
+                    console.log(message);
+                    const { roundState } = message.data;
+                    setRoundState(roundState);
                 }
             };
         };
@@ -159,8 +193,14 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn }) => {
                         Logout
                     </button>
                     <h1>Round {round} : {currentHouse}</h1>
+                    <h2>Current Phase: {roundState}</h2>
                     {players.find(p => p._id === selectedPlayer)?.house === currentHouse && 
-                    <EndTurnButton wsService={wsService} selectedPlayer={selectedPlayer}></EndTurnButton>
+                    <>
+                        <EndTurnButton wsService={wsService} selectedPlayer={selectedPlayer}></EndTurnButton>
+                        <button onClick={handleEndPhase} className="header-button">
+                            End {roundState} Phase
+                        </button>
+                    </>
                     }
                 </div>
             )}

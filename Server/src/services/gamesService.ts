@@ -3,6 +3,8 @@ import { connectToDb } from "../config/db";
 import { calculatePlusArmies } from "../utils/functions";
 import { ObjectId } from "mongodb";
 import { WebSocket } from 'ws';
+import { getWebSocketServer } from "../config/websocket";
+import { Game } from "../models/gamesModel";
 
 export const getCurrentRound = async () => {
     const db = await connectToDb();
@@ -18,9 +20,9 @@ export const getCurrentRound = async () => {
         return { message: "No ongoing game found" };
     }
 
-    const { round, currentPlayer } = ongoingGame;
+    const { round, currentPlayer, roundState } = ongoingGame;
 
-    return { round, currentPlayer };
+    return { round, currentPlayer, roundState };
 };
 
 export const applyAdditionalArmies = async (playerId: ObjectId) => {
@@ -75,17 +77,79 @@ export const endTurn = async (wss: WebSocketServer, data: any) => {
     if (nextPlayer) {
         await applyAdditionalArmies(nextPlayer._id);
 
+        const nextRoundState = "reinforcement";
+
         await gamesCollection.updateOne(
             { state: "ongoing" },
-            { $set: { currentPlayer: nextPlayer.house, round: currentRound } }
+            { $set: { currentPlayer: nextPlayer.house, round: currentRound, roundState: nextRoundState } }
         );
 
         wss.clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN) {
-                client.send(JSON.stringify({ action: 'round-updated', data: { currentRound: currentRound, currentHouse: nextPlayer.house } }));
+                client.send(JSON.stringify({ action: 'round-updated', data: { currentRound: currentRound, currentHouse: nextPlayer.house, roundState: nextRoundState } }));
             }
         });
     } else {
         console.error('No next player found');
+    }
+};
+
+export const endPhase = async (playerId: ObjectId) => {
+    try {
+        const db = await connectToDb();
+        const gamesCollection = db?.collection('Games');
+        const playersCollection = db?.collection('Players');
+
+        if (!gamesCollection || !playersCollection) {
+            throw new Error("Collections not found");
+        }
+
+        const ongoingGame = await gamesCollection.findOne({ state: "ongoing" });
+
+        if (!ongoingGame) {
+            throw new Error("No ongoing game found");
+        }
+
+        const player = await playersCollection.findOne({ _id: new ObjectId(playerId) });
+
+        if (!player) {
+            throw new Error("No player found");
+        }
+
+        if (ongoingGame.currentPlayer !== player.house) {
+            throw new Error("Not your turn");
+        }
+
+        const phaseOrder = ["reinforcement", "invasion", "maneuver"];
+        const currentPhaseIndex = phaseOrder.indexOf(ongoingGame.roundState);
+        let nextRoundState;
+
+        if (currentPhaseIndex === -1) {
+            throw new Error("Invalid game phase");
+        } else if (currentPhaseIndex < phaseOrder.length - 1) {
+            nextRoundState = phaseOrder[currentPhaseIndex + 1];
+        } else {
+            await endTurn(getWebSocketServer(), { playerId: playerId });
+            return "endTurn";
+        }
+
+        await gamesCollection.updateOne(
+            { _id: ongoingGame._id },
+            { $set: { roundState: nextRoundState } }
+        );
+
+        const wss = getWebSocketServer();
+        wss.clients.forEach(client => {
+            if (client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify({
+                    action: 'round-state-updated',
+                    data: { roundState: nextRoundState }
+                }));
+            }
+        });
+
+        return nextRoundState;
+    } catch (error) {
+        console.error("Error ending reinforcement phase: ", error);
     }
 };
