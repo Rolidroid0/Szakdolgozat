@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import { getWebSocketServer } from "../config/websocket";
 import shuffle, { getPlayerCardsService, tradeCardsForArmies } from "../services/cardsService";
 import { ObjectId } from "mongodb";
-import { checkPlayerCardsLimit } from "../utils/functions";
 
 export const shuffleCards = async (req: Request, res: Response) => {
     try {
@@ -15,7 +14,7 @@ export const shuffleCards = async (req: Request, res: Response) => {
 };
 
 export const getPlayerCards = async (req: Request, res: Response) => {
-    const { playerId } = req.body;
+    const { playerId } = req.params;
 
     try {
         const playerCards = await getPlayerCardsService(playerId);
@@ -32,15 +31,7 @@ export const tradeCards = async (req: Request, res: Response) => {
         const playerObjectId = new ObjectId(playerId);
         const cardObjectIds = cardIds.map((id: string) => new ObjectId(id));
 
-        const playerCardsCount = await checkPlayerCardsLimit(playerObjectId);
-
-        if (playerCardsCount >= 5) {
-            if (cardObjectIds.length !== 3) {
-                return res.status(400).json({ message: "You must trade exactly 3 cards if you have 5 or more." });
-            }
-        }
-
-        const additionalArmies = await tradeCardsForArmies(playerId, cardIds);
+        const additionalArmies = await tradeCardsForArmies(playerObjectId, cardObjectIds);
 
         return res.json({ success: true, additionalArmies });
     } catch (error) {

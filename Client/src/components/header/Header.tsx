@@ -9,7 +9,7 @@ import EndTurnButton from "../EndTurnButton";
 
 interface HeaderProps {
     wsService: WebSocketService;
-    handleLoggedIn: (isLoggedIn: boolean) => void;
+    handleLoggedIn: (isLoggedIn: boolean, playerId: string | null) => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn }) => {
@@ -48,7 +48,7 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn }) => {
                 
                 if (data.success) {
                     setIsLoggedIn(true);
-                    handleLoggedIn(true);
+                    handleLoggedIn(true, selectedPlayer);
                     fetchCurrentRound();
 
                     if (ws && ws.readyState === WebSocket.OPEN) {
@@ -76,7 +76,7 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn }) => {
 
                 setSelectedPlayer(null);
                 setIsLoggedIn(false);
-                handleLoggedIn(false);
+                handleLoggedIn(false, null);
             } catch (error) {
                 console.error('Error during logout:', error);
             }

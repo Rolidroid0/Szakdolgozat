@@ -4,7 +4,7 @@ import './Cards.css';
 import { API_BASE_URL } from '../../config/config';
 
 interface CardsDisplayProps {
-    playerId: string;
+    playerId: string | null;
     onTradeSuccess: (additionalArmies: number) => void;
 }
 
@@ -15,6 +15,10 @@ const CardsDisplay: React.FC<CardsDisplayProps> = ({ playerId, onTradeSuccess })
     useEffect(() => {
         const loadPlayerCards = async () => {
             try {
+                if (!playerId)
+                { 
+                    throw Error("No playerId");
+                }
                 const cards = await fetchPlayerCards(playerId);
                 setPlayerCards(cards);
             } catch (error) {
@@ -35,9 +39,14 @@ const CardsDisplay: React.FC<CardsDisplayProps> = ({ playerId, onTradeSuccess })
 
     const handleTrade = async () => {
         try {
+            if (!playerId) {
+                throw Error("No playerId");
+            }
             const data = await tradeCardsForArmies(playerId, selectedCards);
             onTradeSuccess(data.additionalArmies);
             setSelectedCards([]);
+            const cards = await fetchPlayerCards(playerId);
+            setPlayerCards(cards);
         } catch (error) {
             console.error(error);
             alert(error);
@@ -90,8 +99,8 @@ const CardsDisplay: React.FC<CardsDisplayProps> = ({ playerId, onTradeSuccess })
                         className={`card ${selectedCards.includes(card._id) ? 'selected' : ''}`}
                         onClick={() => handleCardClick(card._id)}
                     >
-                        {card.name}
-                        {card.symbol}
+                        <div>{card.name},
+                        {card.symbol}</div>
                     </div>
                 ))}
             </div>

@@ -27,7 +27,7 @@ export const seedEssosCards = async () => {
                     name: row.name,
                     symbol: row.symbol,
                     sequence_number: null,
-                    owner_id: null,
+                    owner_id: "in deck",
                 });
             })
             .on('end', async () => {

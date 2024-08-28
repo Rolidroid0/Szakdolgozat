@@ -10,13 +10,14 @@ const App: React.FC = () => {
 
   const [loggedIn, setLoggedIn] = useState(false);
   const [showCards, setShowCards] = useState<boolean>(false);
-  const playerId = "playerId"; //beilleszteni ide az igazi playerId-t
+  const [playerId, setPlayerId] = useState<string | null>(null);
 
   const wsService = WebSocketService.getInstance();
   wsService.connect('ws://localhost:3000');
 
-  const handleLoggedIn = (isLoggedIn: boolean) => {
+  const handleLoggedIn = (isLoggedIn: boolean, playerId: string | null) => {
     setLoggedIn(isLoggedIn);
+    setPlayerId(playerId);
   };
 
   const handleToggleCards = () => {

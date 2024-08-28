@@ -91,7 +91,7 @@ export const tradeCardsForArmies = async (playerId: ObjectId, cardIds: ObjectId[
         { $inc: { plus_armies: additionalArmies } }
     );
 
-    await cardsCollection.updateMany({ _id: { $in: cardIds } }, { owner_id: "usedThisGame"});
+    await cardsCollection.updateMany({ _id: { $in: cardIds } }, { $set: { owner_id: "usedThisGame" } });
 
     return additionalArmies;
 };
