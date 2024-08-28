@@ -13,13 +13,14 @@
 4. Húzás
 
 ### Mezők
-1. Terület: név (id), vár, kikötő, régió (fk), szomszédok, seregek száma, birtokos (fk), támadtakInnen*
-2. Játékos: ház (id), pluszSeregek, hódított**
-3. Régió: név (id), régióBónusz, területekSzáma
-4. Területkártya***: név (id), birtokos (fk), szimbólum, sorszám
+1. Terület: _id, tábla, név, vár, kikötő, régió (fk), szomszédok, seregek száma, birtokos (fk), utoljáraTámadtadInnen*
+2. Játékos: _id, ház, pluszSeregek, hódított**, bejelentkezve
+3. Régió: _id, tábla, név, régióBónusz, területekSzáma
+4. Területkártya***: _id, tábla, név, birtokos (fk), szimbólum, sorszám
 5. Csata: honnan (fk), hová (fk), támadó seregek száma
+6. Játék: _id, kör, jelenlegiJátékos, játékosok, állapot
 
-*Azt mutatja, hogy adott körben innen indult-e már támadás, mert egy körben csak egyszer lehet. Minden kör elején hamis lesz az értéke.
+*Azt mutatja, hogy melyik körben indult innen támadás, mert egy körben csak egyszer lehet. Minden támadásnál növelődik az értéke.
 
 **Azt mutatja, hogy az adott körben hódított-e már a játékos sikeresen területet.
 
@@ -28,6 +29,8 @@
 ((régibónusz jár e: COUNT területNév FROM területek WHERE birtokos = ház AND régió = régióNév -- ezt minden régióval és megnézni, hogy egyenlő-e a régió területeinek számával))
 
 ### Jegyzet magamnak
+
+Legyen eltárolva, hogy a körön belül melyik lépés van?  erősítés, invázió, manőver és húzás. egyrészt könnyebb követni, hogy most mi jön, másrészt tudjuk pontosan, hogy még várunk-e a felhasználóra, pl a kártyák beváltásánál. Erősítés rész felbontása: kártyák beváltása, seregek elhelyezése.
 
 React keretrendszerben van a client aki websocket segítségével kommunikál a nodejs szerverrel, ezáltal biztosítható a dinamikusság.
 
