@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
-import { getPlayers, loginPlayer, logoutPlayer } from "../services/playersService";
+import { getPlayerById, getPlayers, loginPlayer, logoutPlayer } from "../services/playersService";
+import { ObjectId } from "mongodb";
 
 export const getPlayersController = async (req: Request, res: Response) => {
     try {
@@ -7,6 +8,18 @@ export const getPlayersController = async (req: Request, res: Response) => {
         res.status(200).json(players);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching players' });
+    }
+};
+
+export const getPlayerController = async (req: Request, res: Response) => {
+    const { playerId } = req.params;
+
+    try {
+        const player = await getPlayerById(new ObjectId(playerId));
+        res.status(200).json(player);
+    } catch (error) {
+        console.error('Error fetching player details: ', error);
+        res.status(500).json({ message: 'Failed to fetch player details' });
     }
 };
 

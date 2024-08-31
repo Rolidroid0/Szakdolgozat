@@ -13,6 +13,27 @@ export const getPlayers = async () => {
     return players;
 };
 
+export const getPlayerById = async (playerId: ObjectId) => {
+    try {
+        const db = await connectToDb();
+        const playersCollection = db?.collection('Players');
+
+        if (!playersCollection) {
+            throw new Error("Players collection not found");
+        }
+
+        const player = await playersCollection.findOne({ _id: new ObjectId(playerId) });
+        if (!player) {
+            throw new Error("Player not found");
+        }
+        
+        return player;
+    } catch (error) {
+        console.error('Error getting player: ', error);
+        throw error;
+    }
+};
+
 export const generatePlayers = async (numberOfPlayers: number) => {
     try {
         const db = await connectToDb();

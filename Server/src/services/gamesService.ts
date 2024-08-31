@@ -6,6 +6,27 @@ import { WebSocket } from 'ws';
 import { getWebSocketServer } from "../config/websocket";
 import { Game } from "../models/gamesModel";
 
+export const getOngoingGame = async () => {
+    try {
+        const db = await connectToDb();
+        const gamesCollection = db?.collection('Games');
+
+        if (!gamesCollection) {
+            throw new Error("Games collection not found");
+        }
+
+        const game = await gamesCollection.findOne({ state: "ongoing" });
+        if (!game) {
+            throw new Error("No ongoing game found");
+        }
+        
+        return game;
+    } catch (error) {
+        console.error('Error getting game: ', error);
+        throw error;
+    }
+};
+
 export const getCurrentRound = async () => {
     const db = await connectToDb();
     const gamesCollection = db?.collection('Games');

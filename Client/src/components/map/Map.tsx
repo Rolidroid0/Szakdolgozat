@@ -1,13 +1,17 @@
 import { ReactSVG } from 'react-svg';
 import essosSvg from '../../assets/svg/essos.svg';
 import './Map.css';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Territory } from '../../types/Territory';
 import { API_BASE_URL } from '../../config/config';
 import { WebSocketService } from '../../services/WebSocketService';
 import TerritoryDetails from '../territoryDetails/TerritoryDetails';
 
-const Map = () => {
+interface MapProps {
+  playerId: string;
+}
+
+const Map: React.FC<MapProps> = ({ playerId }) => {
   const [territories, setTerritories] = useState<Territory[]>([]);
   const [selectedTerritory, setSelectedTerritory] = useState<Territory | null>(null);
   const [showDetails, setShowDetails] = useState<boolean>(false);
@@ -76,8 +80,9 @@ const Map = () => {
       </div>
       {showDetails && selectedTerritory && (
         <TerritoryDetails
-          territory={selectedTerritory}
+          territoryId={selectedTerritory._id}
           onClose={handleCloseDetails}
+          playerId={playerId}
         />
       )}
     </div>

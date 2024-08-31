@@ -10,12 +10,12 @@ const App: React.FC = () => {
 
   const [loggedIn, setLoggedIn] = useState(false);
   const [showCards, setShowCards] = useState<boolean>(false);
-  const [playerId, setPlayerId] = useState<string | null>(null);
+  const [playerId, setPlayerId] = useState<string>('');
 
   const wsService = WebSocketService.getInstance();
   wsService.connect('ws://localhost:3000');
 
-  const handleLoggedIn = (isLoggedIn: boolean, playerId: string | null) => {
+  const handleLoggedIn = (isLoggedIn: boolean, playerId: string) => {
     setLoggedIn(isLoggedIn);
     setPlayerId(playerId);
   };
@@ -58,7 +58,7 @@ const App: React.FC = () => {
                             </button>
                         </div>
                     )}
-                <Map />
+                <Map playerId={playerId} />
               </>
             )} />
         </Routes>
