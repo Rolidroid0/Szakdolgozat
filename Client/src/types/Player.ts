@@ -3,5 +3,5 @@ export interface Player {
     house: string;
     plus_armies: number;
     conquered: boolean;
-    isLoggedIn: boolean;
+    is_logged_in: boolean;
 }
