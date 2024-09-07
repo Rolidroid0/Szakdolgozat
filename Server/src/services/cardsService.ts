@@ -96,4 +96,8 @@ export const tradeCardsForArmies = async (playerId: ObjectId, cardIds: ObjectId[
     return additionalArmies;
 };
 
+export const drawCard = async (playerId: ObjectId) => {
+
+}
+
 export default shuffle;

@@ -2,7 +2,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { shuffle, tradeCardsForArmies } from '../services/cardsService';
 import { startGameService } from '../services/startGameService';
 import { CustomWebSocket } from '../config/websocket';
-import { endTurn } from '../services/gamesService';
+import { applyManeuver, endTurn } from '../services/gamesService';
 import { ObjectId } from 'mongodb';
 import { reinforceTerritory } from '../services/territoriesService';
 
@@ -53,6 +53,16 @@ const actions: Record<string, (wss: WebSocketServer, ws: CustomWebSocket, data: 
             ws.send(JSON.stringify({ action: 'territory-reinforced', data: { success: true } }));
         } catch (error) {
             ws.send(JSON.stringify({ action: 'territory-reinforced', data: { success: false, message: error } }));
+        }
+    },
+    'maneuver': async (wss, ws, data) => {
+        try {
+            const { playerId, fromTerritoryId, toTerritoryId, armies } = data;
+            await applyManeuver(new ObjectId(playerId), new ObjectId(fromTerritoryId), new ObjectId(toTerritoryId), armies);
+
+            ws.send(JSON.stringify({ action: 'maneuver-done', data: { success: true } }));
+        } catch (error) {
+            ws.send(JSON.stringify({ action: 'maneuver-done', data: { success: false, message: error } }));
         }
     },
 };

@@ -21,6 +21,8 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
     const [game, setGame] = useState<Game | null>(null);
     const [armiesToAdd, setArmiesToAdd] = useState(0);
     const [availableArmies, setAvailableArmies] = useState(0);
+    const [armiesToManeuver, setArmiesToManeuver] = useState(0);
+    const [targetTerritoryId, setTargetTerritoryId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
@@ -56,6 +58,12 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
                     if (message.territory._id === territory?._id){
                         fetchDetails();
                     }
+                } else if (message.action === 'territories-updated') {
+                    if (message.data.fromTerritoryId === territory?._id
+                        || message.data.toTerritoryId === territory?._id
+                    ) {
+                        fetchDetails();
+                    }
                 }
             };
         };
@@ -67,12 +75,31 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
         setArmiesToAdd(parseInt(e.target.value, 10));
     };
 
+    const handleManeuverSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setArmiesToManeuver(parseInt(e.target.value, 10));
+    };
+
     const handleReinforce = () => {
         wsService.send(JSON.stringify({
             action: 'reinforce-territory',
             data: { territoryId, armies: armiesToAdd, playerId },
         }));
         setAvailableArmies(availableArmies - armiesToAdd);
+    };
+
+    const handleManeuver = () => {
+        if (targetTerritoryId) {
+            wsService.send(JSON.stringify({
+                action: 'maneuver',
+                data: { 
+                    playerId,
+                    fromTerritoryId: territoryId,
+                    toTerritoryId: targetTerritoryId,
+                    armies: armiesToManeuver,
+                }
+            }));
+            setArmiesToManeuver(0);
+        }
     };
 
     if (loading) {
@@ -121,6 +148,32 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
                         </button>
                     </div>
                 )}
+
+                {game.roundState === "maneuver"
+                    && game.currentPlayer === player.house
+                    && territory.owner_id === player.house && (
+                    <div className="maneuver-controls">
+                        <p>Select target territory for maneuver:</p>
+                        <select 
+                            value={targetTerritoryId || ""}
+                            onChange={(e) => setTargetTerritoryId(e.target.value)}
+                            >
+                                <option value="">Select a territory</option>
+                            </select>
+
+                            <input 
+                                type="range" 
+                                min="0"
+                                max={territory.number_of_armies - 1}
+                                value={armiesToManeuver}
+                                onChange={handleManeuverSliderChange}
+                            />
+                            <p>Armies to maneuver: {armiesToManeuver}</p>
+                            <button onClick={handleManeuver} disabled={armiesToManeuver === 0 || !targetTerritoryId}>
+                                Maneuver
+                            </button>
+                    </div>
+                    )}
             </div>
         </div>
     );

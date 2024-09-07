@@ -5,6 +5,7 @@ import { ObjectId } from "mongodb";
 import { WebSocket } from 'ws';
 import { getWebSocketServer } from "../config/websocket";
 import { Game } from "../models/gamesModel";
+import { drawCard } from "./cardsService";
 
 export const getOngoingGame = async () => {
     try {
@@ -141,6 +142,15 @@ export const endPhase = async (playerId: ObjectId) => {
             throw new Error("Not your turn");
         }
 
+        if (player.conquered) {
+            await drawCard(playerId);
+            player.conquered = false;
+            await playersCollection.updateOne(
+                { _id: player._id },
+                { $set: { conquered: false } }
+            );
+        }
+
         const phaseOrder = ["reinforcement", "invasion", "maneuver"];
         const currentPhaseIndex = phaseOrder.indexOf(ongoingGame.roundState);
         let nextRoundState;
@@ -173,4 +183,58 @@ export const endPhase = async (playerId: ObjectId) => {
     } catch (error) {
         console.error("Error ending reinforcement phase: ", error);
     }
+};
+
+export const applyManeuver = async (playerId: ObjectId, fromTerritoryId: ObjectId, toTerritoryId: ObjectId, armies: number) => {
+    const db = await connectToDb();
+    const territoriesCollection = db?.collection('EssosTerritories');
+    const playersCollection = db?.collection('Players');
+    const gamesCollection = db?.collection('Games');
+
+    if (!territoriesCollection || !playersCollection || !gamesCollection) {
+        throw new Error("Collections not found");
+    }
+
+    const player = await playersCollection.findOne({ _id: playerId });
+
+    if (!player) {
+        throw new Error("Player not found");
+    }
+
+    const fromTerritory = await territoriesCollection.findOne({ _id: fromTerritoryId });
+    const toTerritory = await territoriesCollection.findOne({ _id: toTerritoryId });
+
+    if (!fromTerritory || !toTerritory) {
+        throw new Error("Territories not found");
+    }
+
+    if (fromTerritory.owner_id !== player.house || toTerritory.owner_id !== player.house) {
+        throw new Error("You can only maneuver armies between your own territories");
+    }
+
+    if (fromTerritory.number_of_armies <= armies) {
+        throw new Error("Not enough armies to maneuver.");
+    }
+
+    await territoriesCollection.updateOne(
+        { _id: fromTerritoryId },
+        { $inc: { number_of_armies: -armies } }
+    );
+
+    await territoriesCollection.updateOne(
+        { _id: fromTerritoryId },
+        { $inc: { number_of_armies: -armies } }
+    );
+
+    const wss = getWebSocketServer();
+    wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({
+                action: 'territories-updated',
+                data: { fromTerritoryId, toTerritoryId }
+            }));
+        }
+    });
+
+    endPhase(playerId);
 };
