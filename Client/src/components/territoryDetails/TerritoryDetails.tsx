@@ -6,7 +6,7 @@ import { WebSocketService } from '../../services/WebSocketService';
 import { Player } from '../../types/Player';
 import { Game } from '../../types/Game';
 import { getPlayerDetails } from '../../services/playerService';
-import { getTerritoryDetails } from '../../services/territoryService';
+import { getManeuverableTerritories, getTerritoryDetails } from '../../services/territoryService';
 import { getGameDetails } from '../../services/gameService';
 
 interface TerritoryDetailsProps {
@@ -23,6 +23,7 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
     const [availableArmies, setAvailableArmies] = useState(0);
     const [armiesToManeuver, setArmiesToManeuver] = useState(0);
     const [targetTerritoryId, setTargetTerritoryId] = useState<string | null>(null);
+    const [maneuverableTerritories, setManeuverableTerritories] = useState<Territory[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
@@ -40,6 +41,10 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
                 setAvailableArmies(playerData.plus_armies);
                 setTerritory(territoryData);
                 setGame(gameData);
+
+                if (gameData.roundState === 'maneuver' && territoryData.owner_id === playerData.house) {
+                    await fetchManeuverableTerritories();
+                }
             } catch (error) {
                 console.error('Error fetching details: ', error);
                 setError('Failed to fetch details.');
@@ -79,6 +84,16 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
         setArmiesToManeuver(parseInt(e.target.value, 10));
     };
 
+    const fetchManeuverableTerritories = async () => {
+        try {
+            const fetchedTerritories = await getManeuverableTerritories(playerId, territoryId);
+            setManeuverableTerritories(fetchedTerritories);
+        } catch (error) {
+            console.error('Error fetching maneuverable territories: ', error);
+            setError('Failed to fetch maneuverable territories.');
+        }
+    };
+
     const handleReinforce = () => {
         wsService.send(JSON.stringify({
             action: 'reinforce-territory',
@@ -102,8 +117,25 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
         }
     };
 
+    const renderLoadingSpinner = () => (
+        <div className='spinner-container'>
+            <div className='spinner'></div>
+            <p>Loading...</p>
+        </div>
+    );
+
     if (loading) {
-        return <div>Loading...</div>;
+        return (
+            <div className='territory-details-panel'>
+                <div className='header'>
+                    <h2>Loading Territory...</h2>
+                    <button className='close-button' onClick={onClose}>
+                        &times;
+                    </button>
+                </div>
+                {renderLoadingSpinner()}
+            </div>
+        );
     }
 
     if (error) {
@@ -159,6 +191,11 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
                             onChange={(e) => setTargetTerritoryId(e.target.value)}
                             >
                                 <option value="">Select a territory</option>
+                                {maneuverableTerritories.map(territory => (
+                                    <option key={territory._id} value={territory._id}>
+                                        {territory.name}
+                                    </option>
+                                ))}
                             </select>
 
                             <input 

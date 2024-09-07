@@ -14,3 +14,16 @@ export const getTerritoryDetails = async (territoryId: string): Promise<Territor
         throw error;
     }
 };
+
+export const getManeuverableTerritories = async (playerId: string, territoryId: string) => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/territories/maneuverable?playerId=${playerId}&territoryId=${territoryId}`);
+        if (!response.ok) {
+            throw new Error('Failer to fetch maneuverable territories');
+        }
+        return response.json();
+    } catch (error) {
+        console.error('Error fetching maneuverable territories: ', error);
+        throw error;
+    }
+};

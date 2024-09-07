@@ -1,5 +1,6 @@
 import { ObjectId } from "mongodb";
 import { connectToDb } from "../config/db";
+import { findConnectedTerritories } from "../services/territoriesService";
 
 function generateShuffledNumbers(n: number) {
     const numbers = Array.from({ length: n}, (_, i) => i);
@@ -8,7 +9,7 @@ function generateShuffledNumbers(n: number) {
         [numbers[i], numbers[j]] = [numbers[j], numbers[i]];
     }
     return numbers;
-}
+};
 
 export const handleDisconnect = async (playerId: string) => {
     try {
@@ -62,6 +63,17 @@ export const calculatePlusArmies = async (playerId: ObjectId) => {
     }
 
     return additionalArmies;
-}
+};
+
+export const validateManeuver = async (fromTerritoryId: ObjectId, toTerritoryId: ObjectId, playerId: ObjectId) => {
+    const connectedTerritories = await findConnectedTerritories(fromTerritoryId, playerId);
+    const isConnected = connectedTerritories.some(t => t._id.equals(toTerritoryId));
+
+    if (!isConnected) {
+        throw new Error("The target territory is not connected to the starting territory");
+    }
+
+    return true;
+};
 
 export default generateShuffledNumbers;

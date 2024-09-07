@@ -87,8 +87,72 @@ export const allocateTerritories = async () => {
   } catch (error) {
     console.error('Error in allocateTerritories: ', error);
   }
-}
+};
 
+export const findConnectedTerritories = async (startingTerritoryId: ObjectId, playerId: ObjectId) => {
+  const db = await connectToDb();
+  const territoriesCollection = db?.collection('EssosTerritories');
+  const playersCollection = db?.collection('Players');
+
+  if (!territoriesCollection || !playersCollection) {
+    throw new Error("Collections not found");
+  }
+
+  const player = await playersCollection.findOne({ _id: new ObjectId(playerId) });
+  if (!player) {
+    throw new Error("Player not found");
+  }
+
+  const startingTerritory = await territoriesCollection.findOne({ _id: startingTerritoryId });
+
+  if (!startingTerritory || startingTerritory.owner_id !== player.house) {
+    throw new Error("Invalid starting territory or you do not own it");
+  }
+
+  const visited = new Set<string>();
+  const queue = [startingTerritoryId];
+  const connectedTerritories = [];
+
+  visited.add(startingTerritoryId.toString());
+
+  while (queue.length > 0) {
+    const currentTerritoryId = queue.shift()!;
+    const currentTerritory = await territoriesCollection.findOne({ _id: currentTerritoryId });
+
+    if (!currentTerritory) continue;
+
+    if (currentTerritory.owner_id === player.house) {
+      connectedTerritories.push(currentTerritory);
+    }
+
+    for (const neighborId of currentTerritory.neighbors) {
+      const neighborIdStr = neighborId.toString();
+
+      if (!visited.has(neighborIdStr)) {
+        const neighborTerritory = await territoriesCollection.findOne({ _id: neighborId });
+        if (neighborTerritory?.owner_id === player.house) {
+          visited.add(neighborIdStr);
+          queue.push(neighborId);
+        }
+      }
+    }
+
+    if (currentTerritory.port === 1) {
+      const portTerritories = await territoriesCollection.find({ port: 1, owner_id: player.house }).toArray();
+
+      for (const portTerritory of portTerritories) {
+        const portTerritoryIdStr = portTerritory._id.toString();
+
+        if (!visited.has(portTerritoryIdStr) && portTerritoryIdStr !== currentTerritoryId.toString()) {
+          visited.add(portTerritoryIdStr);
+          queue.push(portTerritory._id);
+        }
+      }
+    }
+  }
+
+  return connectedTerritories.filter(t => t._id.toString() !== startingTerritoryId.toString());
+};
 
 export const reinforceTerritory = async (playerId: ObjectId, territoryId: ObjectId, armies: number) => {
   try {

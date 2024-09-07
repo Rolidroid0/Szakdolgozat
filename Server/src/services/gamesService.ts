@@ -1,6 +1,6 @@
 import { WebSocketServer } from "ws";
 import { connectToDb } from "../config/db";
-import { calculatePlusArmies } from "../utils/functions";
+import { calculatePlusArmies, validateManeuver } from "../utils/functions";
 import { ObjectId } from "mongodb";
 import { WebSocket } from 'ws';
 import { getWebSocketServer } from "../config/websocket";
@@ -211,6 +211,11 @@ export const applyManeuver = async (playerId: ObjectId, fromTerritoryId: ObjectI
     if (fromTerritory.owner_id !== player.house || toTerritory.owner_id !== player.house) {
         throw new Error("You can only maneuver armies between your own territories");
     }
+    
+    const validManeuver = validateManeuver(fromTerritoryId, toTerritoryId, playerId);
+    if (!validManeuver) {
+        throw new Error("Not a valid maneuver.");
+    }
 
     if (fromTerritory.number_of_armies <= armies) {
         throw new Error("Not enough armies to maneuver.");
@@ -222,8 +227,8 @@ export const applyManeuver = async (playerId: ObjectId, fromTerritoryId: ObjectI
     );
 
     await territoriesCollection.updateOne(
-        { _id: fromTerritoryId },
-        { $inc: { number_of_armies: -armies } }
+        { _id: toTerritoryId },
+        { $inc: { number_of_armies: armies } }
     );
 
     const wss = getWebSocketServer();
