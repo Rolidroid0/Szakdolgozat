@@ -97,7 +97,37 @@ export const tradeCardsForArmies = async (playerId: ObjectId, cardIds: ObjectId[
 };
 
 export const drawCard = async (playerId: ObjectId) => {
+    try {
+        const db = await connectToDb();
+        const playersCollection = db?.collection('Players');
+        const cardsCollection = db?.collection('EssosCards');
 
-}
+        if (!playersCollection || !cardsCollection) {
+            throw new Error("Collections not found");
+        }
+
+        const player = await playersCollection.findOne({ _id: playerId });
+        if (!player) {
+            throw new Error("Player not found");
+        }
+
+        if (player.conquered) {
+            const topCard = await cardsCollection.findOne({ owner_id: "in deck" }, { sort: { sequence_number: 1 } });
+
+            if (!topCard) {
+                throw new Error('No cards left in deck');
+            }
+
+            await cardsCollection.updateOne({ _id: topCard._id }, { $set: { owner_id: player.house } });
+
+            return topCard;
+        } else {
+            throw new Error('Player has not conquered a territory');
+        }
+    } catch (error) {
+        console.error(error);
+        throw new Error('Error drawing card');
+    }
+};
 
 export default shuffle;

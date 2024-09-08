@@ -85,6 +85,24 @@ export const endTurn = async (wss: WebSocketServer, data: any) => {
         throw new Error("It's not your turn!");
     }
 
+    if (currentPlayerDoc.conquered) {
+        await drawCard(currentPlayerDoc._id);
+        currentPlayerDoc.conquered = false;
+        await playersCollection.updateOne(
+            { _id: currentPlayerDoc._id },
+            { $set: { conquered: false } }
+        );
+
+        wss.clients.forEach(client => {
+            if (client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify({
+                    action: 'cards-updated',
+                    data: { playerId: currentPlayerDoc._id }
+                }));
+            }
+        });
+    }
+
     const players = await playersCollection.find({}).toArray();
     const currentPlayerIndex = players.findIndex(player => player._id.equals(data.playerId));
     const nextPlayerIndex = (currentPlayerIndex + 1) % players.length;
@@ -140,15 +158,6 @@ export const endPhase = async (playerId: ObjectId) => {
 
         if (ongoingGame.currentPlayer !== player.house) {
             throw new Error("Not your turn");
-        }
-
-        if (player.conquered) {
-            await drawCard(playerId);
-            player.conquered = false;
-            await playersCollection.updateOne(
-                { _id: player._id },
-                { $set: { conquered: false } }
-            );
         }
 
         const phaseOrder = ["reinforcement", "invasion", "maneuver"];

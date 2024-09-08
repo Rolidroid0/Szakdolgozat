@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card } from '../../types/Card';
 import './Cards.css';
 import { API_BASE_URL } from '../../config/config';
+import { WebSocketService } from '../../services/WebSocketService';
 
 interface CardsDisplayProps {
     playerId: string | null;
@@ -27,6 +28,24 @@ const CardsDisplay: React.FC<CardsDisplayProps> = ({ playerId, onTradeSuccess })
         };
 
         loadPlayerCards();
+
+        const wsService = WebSocketService.getInstance();
+        const ws = wsService.getWebSocket();
+
+        if (ws) {
+            ws.onmessage = (event: MessageEvent) => {
+                const message = JSON.parse(event.data);
+                if (message.action === 'cards-updated' && message.data.playerId === playerId) {
+                    loadPlayerCards();
+                }
+            };
+        }
+
+        return () => {
+            if (ws) {
+                ws.onmessage = null;
+            }
+        };
     }, [playerId]);
 
     const handleCardClick = (cardId: string) => {
