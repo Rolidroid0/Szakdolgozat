@@ -128,6 +128,7 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn }) => {
         if (ws) {
             ws.onmessage = (event: MessageEvent) => {
                 const message = JSON.parse(event.data);
+                console.log(message);
     
                 if (message.action === 'start-game') {
                     if (isLoggedIn){
@@ -148,6 +149,16 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn }) => {
                 }
             };
         };
+
+        const handleWebSocketMessage = (event: MessageEvent) => {
+            const message = JSON.parse(event.data);
+            if (message.action === 'round-updated') {
+                const { currentRound, currentHouse, roundState } = message.data;
+                setRound(currentRound);
+                setCurrentHouse(currentHouse);
+                setRoundState(roundState);
+            }
+        };
         
         const handleWindowClose = async () => {
             if (isLoggedIn && selectedPlayer) {
@@ -155,10 +166,12 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn }) => {
             }
         };
 
+        ws?.addEventListener('message', handleWebSocketMessage);
         window.addEventListener("beforeunload", handleWindowClose);
 
         return () => {
             window.removeEventListener("beforeunload", handleWindowClose);
+            ws?.removeEventListener('message', handleWebSocketMessage);
         };
     }, [ws, isLoggedIn, selectedPlayer]);
 

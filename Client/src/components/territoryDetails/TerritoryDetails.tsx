@@ -56,8 +56,9 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
         fetchDetails();
 
         if (ws) {
-            ws.onmessage = (event: MessageEvent) => {
+            ws.onmessage = async (event: MessageEvent) => {
                 const message = JSON.parse(event.data);
+                console.log(message);
     
                 if (message.action === 'territory-updated') {
                     if (message.territory._id === territory?._id){
@@ -69,6 +70,12 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
                     ) {
                         fetchDetails();
                     }
+                } else if (message.action === 'maneuver-done') {
+                    if (message.data.success) {
+                        fetchDetails();
+                    }
+                } else if (message.action === 'round-updated' || message.action === 'round-state-updated') {
+                    fetchDetails();
                 }
             };
         };
