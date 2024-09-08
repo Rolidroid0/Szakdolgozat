@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { connectToDb } from "../config/db"
 import { getWebSocketServer } from "../config/websocket";
 import WebSocket from "ws";
+import { endPhase } from "./gamesService";
 
 export const getTerritories = async () => {
     const db = await connectToDb();
@@ -214,6 +215,10 @@ export const reinforceTerritory = async (playerId: ObjectId, territoryId: Object
         }));
       }
     });
+
+    if (player.plus_armies - armies === 0) {
+      endPhase(playerId);
+    }
 
   } catch (error) {
     console.error("Error reinforcing territory: ", error);

@@ -157,6 +157,9 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn }) => {
                 setRound(currentRound);
                 setCurrentHouse(currentHouse);
                 setRoundState(roundState);
+            } else if (message.action === 'round-state-updated') {
+                const { roundState } = message.data;
+                setRoundState(roundState);
             }
         };
         

@@ -76,6 +76,8 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
                     }
                 } else if (message.action === 'round-updated' || message.action === 'round-state-updated') {
                     fetchDetails();
+                } else if (message.action === 'territory-reinforced' && message.data.success) {
+                    fetchDetails();
                 }
             };
         };
@@ -107,6 +109,7 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
             data: { territoryId, armies: armiesToAdd, playerId },
         }));
         setAvailableArmies(availableArmies - armiesToAdd);
+        setArmiesToAdd(0);
     };
 
     const handleManeuver = () => {
