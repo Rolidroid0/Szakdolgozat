@@ -27,7 +27,6 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn }) => {
         try {
             const response = await fetch(`${API_BASE_URL}/api/players`);
             const data: Player[] = await response.json();
-            console.log(data);
             setPlayers(data);
         } catch (error) {
             console.error('Error fetching players: ', error);

@@ -50,3 +50,11 @@ Adatbázis (MongoDB):
 
 A MongoDB az adatokat tárolja, mint például a játék állapotát, a kártyák eloszlását stb.
 A Node.js szerver kapcsolódik a MongoDB-hez, és onnan olvas vagy ír adatokat.
+
+### TODO
+
+1. Akkor lehet a reinforce fázisnak vége, ha nincs több + serege a játékosnak.
+2. Csata lebonyolítása
+3. Területeken lévő seregek megjelenítése (térkép javítása)
+4. Kártyák beváltásánál + seregek száma (szimbólumok + saját területre még 2 sereg)
+5. Refaktorálás
