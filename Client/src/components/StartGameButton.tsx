@@ -18,7 +18,7 @@ const StartGameButton: React.FC<StartGameButtonProps> = ({ wsService }) => {
 
     return (
         <div>
-            <button onClick={handleClick}>Start Game</button>
+            <button onClick={handleClick} className="header-button">Start Game</button>
             {responseMessage && <p>{responseMessage}</p>}
         </div>
     );

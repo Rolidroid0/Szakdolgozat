@@ -32,7 +32,7 @@ const EndTurnButton: React.FC<EndTurnButtonProps> = ({ wsService, selectedPlayer
 
     return (
         <div>
-            <button onClick={handleClick}>End Turn</button>
+            <button onClick={handleClick} className="header-button">End Turn</button>
             {responseMessage && <p>{responseMessage}</p>}
         </div>
     );

@@ -1,10 +1,10 @@
 import { useState } from "react";
 import Map from "./components/map/Map";
-import ShuffleCardsButton from "./components/ShuffleCardsButton";
 import { WebSocketService } from "./services/WebSocketService";
 import Header from "./components/header/Header";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import CardsDisplay from "./components/cards/CardsDisplay";
+import './App.css';
 
 const App: React.FC = () => {
 
@@ -29,39 +29,36 @@ const App: React.FC = () => {
   };
 
   return (
-    /*<div>
-      <h1>WebSocket React App</h1>
-      <ShuffleCardsButton />
-      <StartGameButton />
-      <Map />
-    </div>*/
     <Router>
-      <div>
+      <div id="root">
         <Header wsService={wsService} handleLoggedIn={handleLoggedIn}/>
-        <Routes>
-          <Route path="/" element={!loggedIn ? (
-              <h1>Game Of Thrones RISK</h1>
-            ) : (
-              <>
-                <ShuffleCardsButton wsService={wsService} />
-                {!showCards ? (
-                        <button onClick={handleToggleCards} className="header-button">
-                            Show Cards
-                        </button>
-                    ) : (
-                        <div className="cards-panel">
-                            <CardsDisplay 
-                              playerId={playerId}
-                              onTradeSuccess={handleTradeCards} />
-                            <button onClick={handleToggleCards} className="header-button">
-                                Hide Cards
-                            </button>
-                        </div>
-                    )}
-                <Map playerId={playerId} />
-              </>
-            )} />
-        </Routes>
+        <div className="app-container">
+          <Routes>
+            <Route path="/" element={!loggedIn ? (
+                <div className="game-title-container">
+                  <h1 className="game-title">Game Of Thrones RISK</h1>
+                </div>
+              ) : (
+                <>
+                  {!showCards ? (
+                          <button onClick={handleToggleCards} className="header-button">
+                              Show Cards
+                          </button>
+                      ) : (
+                          <div className="cards-panel">
+                              <CardsDisplay 
+                                playerId={playerId}
+                                onTradeSuccess={handleTradeCards} />
+                              <button onClick={handleToggleCards} className="header-button">
+                                  Hide Cards
+                              </button>
+                          </div>
+                      )}
+                  <Map playerId={playerId} />
+                </>
+              )} />
+          </Routes>
+        </div>
       </div>
     </Router>
   );
