@@ -162,7 +162,7 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
     
     return (
         <div className="territory-details-panel">
-            <div className="header" style={headerStyle}>
+            <div className="territory-header" style={headerStyle}>
                 <h2>{territory.name}</h2>
                 <button className="close-button" onClick={onClose}>
                     &times;

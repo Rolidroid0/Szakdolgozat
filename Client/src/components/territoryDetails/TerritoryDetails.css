@@ -11,7 +11,7 @@
   flex-direction: column;
 }
   
-.header {
+.territory-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
