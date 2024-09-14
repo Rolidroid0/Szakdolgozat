@@ -8,6 +8,7 @@
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
     width: 100%;
     box-sizing: border-box;
+    height: 60px;
 }
 
 .header-select {

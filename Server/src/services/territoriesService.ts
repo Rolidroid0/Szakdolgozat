@@ -155,6 +155,48 @@ export const findConnectedTerritories = async (startingTerritoryId: ObjectId, pl
   return connectedTerritories.filter(t => t._id.toString() !== startingTerritoryId.toString());
 };
 
+export const findAttackableTerritories = async (startingTerritoryId: ObjectId, playerId: ObjectId) => {
+  const db = await connectToDb();
+  const territoriesCollection = db?.collection('EssosTerritories');
+  const playersCollection = db?.collection('Players');
+
+  if (!territoriesCollection || !playersCollection) {
+    throw new Error("Collections not found");
+  }
+
+  const player = await playersCollection.findOne({ _id: playerId });
+  if (!player) {
+    throw new Error("Player not found");
+  }
+
+  const startingTerritory = await territoriesCollection.findOne({ _id: startingTerritoryId });
+  if (!startingTerritory || startingTerritory.owner_id !== player.house) {
+    throw new Error("Invalid starting territory or you do not own it");
+  }
+
+  const attackableTerritories = [];
+
+  for (const neighborId of startingTerritory.neighbors) {
+    const attackableTerritory = await territoriesCollection.findOne({ _id: neighborId });
+    if (attackableTerritory && attackableTerritory.owner_id !== player.house) {
+      attackableTerritories.push(attackableTerritory);
+    }
+  }
+
+  if (startingTerritory.port === 1) {
+    const portTerritories = await territoriesCollection.find({ port: 1, owner_id: { $ne: player.house } }).toArray();
+
+    for (const portTerritory of portTerritories) {
+      const isAlreadyIncluded = attackableTerritories.some(t => t._id.equals(portTerritory._id));
+      if (!isAlreadyIncluded) {
+        attackableTerritories.push(portTerritory);
+      }
+    }
+  }
+
+  return attackableTerritories;
+};
+
 export const reinforceTerritory = async (playerId: ObjectId, territoryId: ObjectId, armies: number) => {
   try {
     const db = await connectToDb();

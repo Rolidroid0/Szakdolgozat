@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { findConnectedTerritories, getTerritories, getTerritoryById, reinforceTerritory } from "../services/territoriesService";
+import { findAttackableTerritories, findConnectedTerritories, getTerritories, getTerritoryById, reinforceTerritory } from "../services/territoriesService";
 import { ObjectId } from "mongodb";
 
 export const getTerritoriesController = async (req: Request, res: Response) => {
@@ -35,6 +35,22 @@ export const getManeuverableTerritoriesController = async (req: Request, res: Re
         res.status(200).json(maneuverableTerritories);
     } catch (error) {
         console.error('Error fetching maneuverable territories: ', error);
+        res.status(500).json({ message: 'Failed to fetch maneuverable territories' });
+    }
+};
+
+export const getAttackableTerritoriesController = async (req: Request, res: Response) => {
+    const { playerId, territoryId } = req.query;
+
+    try {
+        if (typeof playerId !== 'string' || typeof territoryId !== 'string') {
+            return res.status(400).json({ message: 'Invalid playerId or territoryId' });
+        }
+
+        const attackableTerritories = await findAttackableTerritories(new ObjectId(territoryId), new ObjectId(playerId));
+        res.status(200).json(attackableTerritories);
+    } catch (error) {
+        console.error('Error fetching attackable territories: ', error);
         res.status(500).json({ message: 'Failed to fetch maneuverable territories' });
     }
 };

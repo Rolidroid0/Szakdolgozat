@@ -6,7 +6,7 @@ import { WebSocketService } from '../../services/WebSocketService';
 import { Player } from '../../types/Player';
 import { Game } from '../../types/Game';
 import { getPlayerDetails } from '../../services/playerService';
-import { getManeuverableTerritories, getTerritoryDetails } from '../../services/territoryService';
+import { getAttackableTerritories, getManeuverableTerritories, getTerritoryDetails } from '../../services/territoryService';
 import { getGameDetails } from '../../services/gameService';
 
 interface TerritoryDetailsProps {
@@ -20,10 +20,12 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
     const [player, setPlayer] = useState<Player | null>(null);
     const [game, setGame] = useState<Game | null>(null);
     const [armiesToAdd, setArmiesToAdd] = useState(0);
+    const [armiesToAttack, setArmiesToAttack] = useState(0);
     const [availableArmies, setAvailableArmies] = useState(0);
     const [armiesToManeuver, setArmiesToManeuver] = useState(0);
     const [targetTerritoryId, setTargetTerritoryId] = useState<string | null>(null);
     const [maneuverableTerritories, setManeuverableTerritories] = useState<Territory[]>([]);
+    const [attackableTerritories, setAttackableTerritories] = useState<Territory[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
@@ -42,8 +44,13 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
                 setTerritory(territoryData);
                 setGame(gameData);
 
-                if (gameData.roundState === 'maneuver' && territoryData.owner_id === playerData.house) {
-                    await fetchManeuverableTerritories();
+                if (territoryData.owner_id === playerData.house) {
+                    if (gameData.roundState === 'maneuver') {
+                        await fetchManeuverableTerritories();
+                    }
+                    else if (gameData.roundState === 'invasion') {
+                        await fetchEnemyTerritories();
+                    }
                 }
             } catch (error) {
                 console.error('Error fetching details: ', error);
@@ -78,6 +85,8 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
                     fetchDetails();
                 } else if (message.action === 'territory-reinforced' && message.data.success) {
                     fetchDetails();
+                } else if (message.action === 'attack-failed') {
+                    alert(message.data.message);
                 }
             };
         };
@@ -93,6 +102,10 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
         setArmiesToManeuver(parseInt(e.target.value, 10));
     };
 
+    const handleAttackSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setArmiesToAttack(parseInt(e.target.value, 10));
+    };
+
     const fetchManeuverableTerritories = async () => {
         try {
             const fetchedTerritories = await getManeuverableTerritories(playerId, territoryId);
@@ -102,6 +115,16 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
             setError('Failed to fetch maneuverable territories.');
         }
     };
+
+    const fetchEnemyTerritories = async () => {
+        try {
+            const enemyTerritories = await getAttackableTerritories(playerId, territoryId);
+            setAttackableTerritories(enemyTerritories);
+        } catch (error) {
+            console.error('Error fetching attackable territories: ', error);
+            setError('Failed to fetch attackable territories.');
+        }
+    }
 
     const handleReinforce = () => {
         wsService.send(JSON.stringify({
@@ -124,6 +147,23 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
                 }
             }));
             setArmiesToManeuver(0);
+            setTargetTerritoryId(null);
+        }
+    };
+
+    const handleStartBattle = () => {
+        if (targetTerritoryId) {
+            wsService.send(JSON.stringify({
+                action: 'start-battle',
+                data: {
+                    playerId,
+                    fromTerritoryId: territoryId,
+                    toTerritoryId: targetTerritoryId,
+                    armies: armiesToAttack,
+                }
+            }));
+            setArmiesToAttack(0);
+            setTargetTerritoryId(null);
         }
     };
 
@@ -159,6 +199,11 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
     const headerStyle = {
         backgroundColor: houseColors[territory.owner_id] || '#8d8f8e',
     };
+
+    const isInvasionAllowed = game.roundState === 'invasion'
+        && game.currentPlayer === player.house
+        && territory.owner_id === player.house
+        && territory.last_attacked_from !== game.round;
     
     return (
         <div className="territory-details-panel">
@@ -221,6 +266,35 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
                             </button>
                     </div>
                     )}
+
+                {isInvasionAllowed && attackableTerritories.length != 0 && (
+                    <div className='invasion-controls'>
+                        <p>Select enemy territory to attack:</p>
+                        <select 
+                            value={targetTerritoryId || ""}
+                            onChange={(e) => setTargetTerritoryId(e.target.value)}
+                        >
+                            <option value="">Select a territory</option>
+                            {attackableTerritories.map(enemyTerritory => (
+                                <option key={enemyTerritory._id} value={enemyTerritory._id}>
+                                    {enemyTerritory.name}
+                                </option>
+                            ))}
+                        </select>
+
+                        <input 
+                            type="range"
+                            min="0"
+                            max={territory.number_of_armies - 1}
+                            value={armiesToAttack}
+                            onChange={handleAttackSliderChange}
+                        />
+                        <p>Armies to attack: {armiesToAttack}</p>
+                        <button onClick={handleStartBattle} disabled={armiesToAttack === 0 || !targetTerritoryId}>
+                            Start Battle
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

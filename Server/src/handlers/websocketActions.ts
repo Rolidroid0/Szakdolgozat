@@ -5,6 +5,7 @@ import { CustomWebSocket } from '../config/websocket';
 import { applyManeuver, endTurn } from '../services/gamesService';
 import { ObjectId } from 'mongodb';
 import { reinforceTerritory } from '../services/territoriesService';
+import { startBattle } from '../services/battlesService';
 
 const actions: Record<string, (wss: WebSocketServer, ws: CustomWebSocket, data: any) => void> = {
     'shuffle-cards': async (wss, ws, data) => {
@@ -63,6 +64,15 @@ const actions: Record<string, (wss: WebSocketServer, ws: CustomWebSocket, data: 
             ws.send(JSON.stringify({ action: 'maneuver-done', data: { success: true } }));
         } catch (error) {
             ws.send(JSON.stringify({ action: 'maneuver-done', data: { success: false, message: error } }));
+        }
+    },
+    'start-battle': async (wss, ws, data) => {
+        try {
+            const { playerId, fromTerritoryId, toTerritoryId, armies } = data;
+            await startBattle(new ObjectId(playerId), new ObjectId(fromTerritoryId), new ObjectId(toTerritoryId), armies);
+            ws.send(JSON.stringify({ action: 'attack-started', data: { success: true } }));
+        } catch (error) {
+            ws.send(JSON.stringify({ action: 'attack-failed', data: { success: false, message: error } }));
         }
     },
 };
