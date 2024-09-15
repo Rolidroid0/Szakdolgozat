@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { WebSocket } from 'ws';
 import { getWebSocketServer } from "../config/websocket";
 import { connectToDb } from "../config/db";
+import { Battle } from "../models/battlesModel";
 
 export const getOngoingBattle = async () => {
     try {
@@ -75,14 +76,67 @@ export const startBattle = async (playerId: ObjectId, fromTerritoryId: ObjectId,
             throw new Error("Not enough armies");
         }
 
+        const battle = await createBattle(fromTerritoryId, toTerritoryId, armies);
+
         const wss = getWebSocketServer();
         wss.clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN) {
-                client.send(JSON.stringify({ action: 'battle-started', data: { } }));
+                client.send(JSON.stringify({ action: 'battle-started', data: { battle } }));
             }
         });
     } catch (error) {
         console.error("Error starting battle: ", error);
+        throw error;
+    }
+};
+
+export const createBattle = async (attackerTerritoryId: ObjectId, defenderTerritoryId: ObjectId, attackerArmies: number) => {
+    try {
+        const db = await connectToDb();
+        const battlesCollection = db?.collection('Battles');
+        const gamesCollection = db?.collection('Games');
+        const territoriesCollection = db?.collection('EssosTerritories');
+
+        if (!battlesCollection || !gamesCollection || !territoriesCollection) {
+            throw new Error("Collections not found");
+        }
+
+        const ongoingGame = await gamesCollection.findOne({ state: "ongoing" });
+
+        if (!ongoingGame) {
+            throw new Error("No ongoing game found");
+        }
+
+        const defenderTerritory = await territoriesCollection.findOne({ _id: defenderTerritoryId });
+        const attackerTerritory = await territoriesCollection.findOne({ _id: attackerTerritoryId });
+
+        if (!defenderTerritory || !attackerTerritory) {
+            throw new Error("Territories not found");
+        }
+
+        await battlesCollection.insertOne({
+            state: "ongoing",
+            attacker_id: attackerTerritory.owner_id,
+            defender_id: defenderTerritory.owner_id,
+            attacker_territory_id: attackerTerritoryId.toString(),
+            defender_territory_id: defenderTerritoryId.toString(),
+            attacker_armies: attackerArmies,
+            defender_armies: defenderTerritory.number_of_armies,
+            current_attacker_armies: attackerArmies,
+            current_defender_armies: defenderTerritory.number_of_armies,
+            battle_log: [],
+            round_number: ongoingGame.round,
+        });
+
+        const insertedBattle = await battlesCollection.findOne({ state: "ongoing" });
+
+        if (!insertedBattle) {
+            throw new Error("Failed to retrieve the inserted battle");
+        }
+
+        return insertedBattle;
+    } catch (error) {
+        console.error("Error creating battle: ", error);
         throw error;
     }
 };

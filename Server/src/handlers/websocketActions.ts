@@ -72,7 +72,8 @@ const actions: Record<string, (wss: WebSocketServer, ws: CustomWebSocket, data: 
             await startBattle(new ObjectId(playerId), new ObjectId(fromTerritoryId), new ObjectId(toTerritoryId), armies);
             ws.send(JSON.stringify({ action: 'attack-started', data: { success: true } }));
         } catch (error) {
-            ws.send(JSON.stringify({ action: 'attack-failed', data: { success: false, message: error } }));
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            ws.send(JSON.stringify({ action: 'attack-failed', data: { success: false, message: errorMessage } }));
         }
     },
 };
