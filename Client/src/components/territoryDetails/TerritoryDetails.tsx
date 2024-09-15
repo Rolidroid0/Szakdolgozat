@@ -8,6 +8,7 @@ import { Game } from '../../types/Game';
 import { getPlayerDetails } from '../../services/playerService';
 import { getAttackableTerritories, getManeuverableTerritories, getTerritoryDetails } from '../../services/territoryService';
 import { getGameDetails } from '../../services/gameService';
+import Spinner from '../spinner/Spinner';
 
 interface TerritoryDetailsProps {
     playerId: string;
@@ -167,13 +168,6 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
         }
     };
 
-    const renderLoadingSpinner = () => (
-        <div className='spinner-container'>
-            <div className='spinner'></div>
-            <p>Loading...</p>
-        </div>
-    );
-
     if (loading) {
         return (
             <div className='territory-details-panel'>
@@ -183,7 +177,7 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
                         &times;
                     </button>
                 </div>
-                {renderLoadingSpinner()}
+                <Spinner />
             </div>
         );
     }

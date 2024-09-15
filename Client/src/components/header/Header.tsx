@@ -6,13 +6,15 @@ import { WebSocketService } from "../../services/WebSocketService";
 import { useNavigate } from 'react-router-dom';
 import StartGameButton from "../StartGameButton";
 import EndTurnButton from "../EndTurnButton";
+import { Battle } from "../../types/Battle";
 
 interface HeaderProps {
     wsService: WebSocketService;
     handleLoggedIn: (isLoggedIn: boolean, playerId: string) => void;
+    ongoingBattle: Battle | null;
 }
 
-const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn }) => {
+const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn, ongoingBattle }) => {
     const [players, setPlayers] = useState<Player[]>([]);
     const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
@@ -209,7 +211,7 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn }) => {
                     </button>
                     <h1>Round {round} : {currentHouse}</h1>
                     <h2>Current Phase: {roundState}</h2>
-                    {players.find(p => p._id === selectedPlayer)?.house === currentHouse && 
+                    {players.find(p => p._id === selectedPlayer)?.house === currentHouse && !ongoingBattle &&
                     <>
                         <EndTurnButton wsService={wsService} selectedPlayer={selectedPlayer}></EndTurnButton>
                         <button onClick={handleEndPhase} className="header-button">

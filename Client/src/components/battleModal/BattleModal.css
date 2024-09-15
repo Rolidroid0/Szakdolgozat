@@ -1,0 +1,37 @@
+.modal {
+  background-color: #222; 
+  padding: 30px;
+  border-radius: 10px; 
+  color: white;
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.modal h2 {
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+
+.modal p {
+  margin: 10px 0;
+  font-size: 18px;
+}
+
+.popup-overlay {
+  background: rgba(0, 0, 0, 0.8);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.popup-content {
+  position: relative;
+}

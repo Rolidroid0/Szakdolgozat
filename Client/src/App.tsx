@@ -6,13 +6,16 @@ import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import CardsDisplay from "./components/cards/CardsDisplay";
 import './App.css';
 import { getOngoingBattle } from "./services/battleService";
+import BattleModal from "./components/battleModal/BattleModal";
+import Spinner from "./components/spinner/Spinner";
 
 const App: React.FC = () => {
 
   const [loggedIn, setLoggedIn] = useState(false);
   const [showCards, setShowCards] = useState<boolean>(false);
   const [playerId, setPlayerId] = useState<string>('');
-  const [ongoingBattle, setOngoingBattle] = useState<boolean>(false);
+  const [ongoingBattle, setOngoingBattle] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   const wsService = WebSocketService.getInstance();
   wsService.connect('ws://localhost:3000');
@@ -20,17 +23,23 @@ const App: React.FC = () => {
   useEffect(() => {
     if (loggedIn) {
       const checkOngoingBattle = async () => {
+        setLoading(true);
         try {
           const battle = await getOngoingBattle();
           if (battle) {
             console.log('Ongoing battle found: ', battle);
-            setOngoingBattle(true);
+            setOngoingBattle(battle);
           }
         } catch (error) {
           console.error("Error checking ongoing battle: ", error);
+        } finally {
+          setLoading(false);
         }
       };
       checkOngoingBattle();
+    } else {
+      setOngoingBattle(null);
+      setLoading(false);
     }
   }, [loggedIn]);
 
@@ -43,7 +52,7 @@ const App: React.FC = () => {
 
         if (message.action === 'battle-started') {
           console.log('Battle started: ', message.data);
-          setOngoingBattle(true);
+          setOngoingBattle(message.data);
         }
       };
     }
@@ -71,33 +80,40 @@ const App: React.FC = () => {
   return (
     <Router>
       <div id="root">
-        <Header wsService={wsService} handleLoggedIn={handleLoggedIn}/>
+        <Header wsService={wsService} handleLoggedIn={handleLoggedIn} ongoingBattle={ongoingBattle}/>
         <div className="app-container">
-          <Routes>
-            <Route path="/" element={!loggedIn ? (
-                <div className="game-title-container">
-                  <h1 className="game-title">Game Of Thrones RISK</h1>
-                </div>
-              ) : (
-                <>
-                  {!showCards ? (
-                          <button onClick={handleToggleCards} className="header-button">
-                              Show Cards
-                          </button>
-                      ) : (
-                          <div className="cards-panel">
-                              <CardsDisplay 
-                                playerId={playerId}
-                                onTradeSuccess={handleTradeCards} />
-                              <button onClick={handleToggleCards} className="header-button">
-                                  Hide Cards
-                              </button>
-                          </div>
-                      )}
-                  <Map playerId={playerId} />
-                </>
-              )} />
-          </Routes>
+          {loading ? (
+            <Spinner />
+          ) : (
+            <>
+            {ongoingBattle && <BattleModal battle={ongoingBattle} />}
+            <Routes>
+              <Route path="/" element={!loggedIn ? (
+                  <div className="game-title-container">
+                    <h1 className="game-title">Game Of Thrones RISK</h1>
+                  </div>
+                ) : (
+                  <>
+                    {!showCards ? (
+                            <button onClick={handleToggleCards} className="header-button">
+                                Show Cards
+                            </button>
+                        ) : (
+                            <div className="cards-panel">
+                                <CardsDisplay 
+                                  playerId={playerId}
+                                  onTradeSuccess={handleTradeCards} />
+                                <button onClick={handleToggleCards} className="header-button">
+                                    Hide Cards
+                                </button>
+                            </div>
+                        )}
+                    <Map playerId={playerId} />
+                  </>
+                )} />
+            </Routes>
+            </>
+          )}
         </div>
       </div>
     </Router>
