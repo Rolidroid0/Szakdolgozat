@@ -3,6 +3,27 @@ import { WebSocket } from 'ws';
 import { getWebSocketServer } from "../config/websocket";
 import { connectToDb } from "../config/db";
 
+export const getOngoingBattle = async () => {
+    try {
+        const db = await connectToDb();
+        const battlesCollection = db?.collection('Battles');
+
+        if (!battlesCollection) {
+            throw new Error("Battles collection not found");
+        }
+
+        const battle = await battlesCollection.findOne({ state: "ongoing" });
+        if (!battle) {
+            return null;
+        }
+        
+        return battle;
+    } catch (error) {
+        console.error('Error getting battle: ', error);
+        throw error;
+    }
+};
+
 export const startBattle = async (playerId: ObjectId, fromTerritoryId: ObjectId, toTerritoryId: ObjectId, armies: number) => {
     try {
         const db = await connectToDb();
