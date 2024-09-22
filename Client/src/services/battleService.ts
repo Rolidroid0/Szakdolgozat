@@ -24,3 +24,24 @@ export const getOngoingBattle = async (): Promise<Battle | null> => {
         throw error;
     }
 };
+
+export const rollDice = async (playerId: string) => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/battles/roll-dice`, { 
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ playerId }),
+        });
+    
+        if (!response.ok) {
+            throw new Error("Failed to roll dice");
+        }
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error("Error rolling dice: ", error);
+    }
+};

@@ -3,6 +3,9 @@ import { WebSocket } from 'ws';
 import { getWebSocketServer } from "../config/websocket";
 import { connectToDb } from "../config/db";
 import { Battle } from "../models/battlesModel";
+import { error } from "console";
+import { compareRolls, rollDice } from "../utils/functions";
+import { broadcastBattleEnd, broadcastBattleUpdate, broadcastRollResult } from "./broadcastService";
 
 export const getOngoingBattle = async () => {
     try {
@@ -126,6 +129,10 @@ export const createBattle = async (attackerTerritoryId: ObjectId, defenderTerrit
             current_defender_armies: defenderTerritory.number_of_armies,
             battle_log: [],
             round_number: ongoingGame.round,
+            attackerRolls: [],
+            defenderRolls: [],
+            hasAttackerRolled: false,
+            hasDefenderRolled: false,
         });
 
         const insertedBattle = await battlesCollection.findOne({ state: "ongoing" });
@@ -137,6 +144,86 @@ export const createBattle = async (attackerTerritoryId: ObjectId, defenderTerrit
         return insertedBattle;
     } catch (error) {
         console.error("Error creating battle: ", error);
+        throw error;
+    }
+};
+
+export const rollDiceService = async (playerId: ObjectId) => {
+    try {
+        const db = await connectToDb();
+        const playersCollection = db?.collection('Players');
+        const battlesCollection = db?.collection('Battles');
+
+        if (!playersCollection || !battlesCollection) {
+            throw new Error("Collections not found");
+        }
+
+        const player = await playersCollection.findOne({ _id: playerId });
+
+        if (!player) {
+            throw new Error("Player not found");
+        }
+
+        const battle = await getOngoingBattle();
+
+        if (!battle) {
+            throw new Error("No ongoing battle found");
+        }
+
+        let playerRole;
+        if (player.house === battle.attacker_id) {
+            playerRole = 'attacker';
+        } else if (player.house === battle.defender_id) {
+            playerRole = 'defender';
+        } else {
+            throw new Error("Invalid player for this battle");
+        }
+
+        if (battle[`${playerRole}HasRolled`]) {
+            throw new Error("Player has already rolled this round");
+        }
+
+        const rollResult = await rollDice(playerRole === 'attacker' ? battle.current_attacker_armies : battle.current_defender_armies);
+
+        battle[`${playerRole}Rolls`] = rollResult;
+        battle[`${playerRole}HasRolled`] = true;
+
+        await broadcastRollResult(playerRole, rollResult, battle);
+
+        if (battle.attackerHasRolled && battle.defenderHasRolled) {
+            const { attackerLosses, defenderLosses } = await compareRolls(battle.attackerRolls, battle.defenderRolls);
+
+            battle.attackerHasRolled = false;
+            battle.defenderHasRolled = false;
+
+            const roundResult = {
+                attackerRolls: battle.attackerRolls,
+                defenderRolls: battle.defenderRolls,
+                attackerLosses,
+                defenderLosses,
+                remainingAttackerArmies: battle.current_attacker_armies,
+                remainingDefenderArmies: battle.current_defender_armies
+            };
+
+            battle.battle_log.push(roundResult);
+
+            await battlesCollection.updateOne({ _id: battle._id }, { $set: battle });
+
+            await broadcastBattleUpdate(battle, roundResult);
+
+            if (battle.current_attacker_armies <= 0 || battle.current_defender_armies <= 0) {
+                battle.state = battle.current_attacker_armies > 0 ? "attacker-won" : "defender-won";
+                await battlesCollection.updateOne({ _id: battle._id }, { $set: battle });
+                
+                await broadcastBattleEnd(battle);
+            }
+        } else {
+            await battlesCollection.updateOne({ _id: battle._id }, { $set: battle });
+        }
+
+        return rollResult;
+    } catch (error) {
+        console.error("Error rolling dice: ", error);
         throw error;
     }
 };

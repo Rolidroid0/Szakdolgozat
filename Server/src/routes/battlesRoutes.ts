@@ -1,8 +1,9 @@
 import express from 'express';
-import { getOngoingBattleController } from '../controllers/battlesController';
+import { getOngoingBattleController, rollDiceController } from '../controllers/battlesController';
 
 const router = express.Router();
 
 router.get('/battles/ongoing', getOngoingBattleController);
+router.post('/battles/roll-dice', rollDiceController);
 
 export default router;

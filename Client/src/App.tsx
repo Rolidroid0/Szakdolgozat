@@ -52,7 +52,7 @@ const App: React.FC = () => {
 
         if (message.action === 'battle-started') {
           console.log('Battle started: ', message.data);
-          setOngoingBattle(message.data);
+          setOngoingBattle(message.data.battle);
         }
       };
     }
@@ -86,7 +86,7 @@ const App: React.FC = () => {
             <Spinner />
           ) : (
             <>
-            {ongoingBattle && <BattleModal battle={ongoingBattle} />}
+            {ongoingBattle && <BattleModal wsService={wsService} battle={ongoingBattle} playerId={playerId} />}
             <Routes>
               <Route path="/" element={!loggedIn ? (
                   <div className="game-title-container">

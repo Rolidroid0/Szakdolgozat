@@ -76,4 +76,28 @@ export const validateManeuver = async (fromTerritoryId: ObjectId, toTerritoryId:
     return true;
 };
 
+export const rollDice = async (armies: number) => {
+    const rolls = [];
+    for (let i = 0; i < Math.min(3, armies); i++) {
+        rolls.push(Math.floor(Math.random() * 6) + 1);
+    }
+    return rolls.sort((a, b) => b - a);
+};
+
+export const compareRolls = async (attackerRolls: number[], defenderRolls: number[]) => {
+    const minRolls = Math.min(attackerRolls.length, defenderRolls.length);
+    let attackerLosses = 0;
+    let defenderLosses = 0;
+
+    for (let i = 0; i < minRolls; i++) {
+        if (attackerRolls[i] > defenderRolls[i]) {
+            defenderLosses++;
+        } else {
+            attackerLosses++;
+        }
+    }
+
+    return { attackerLosses, defenderLosses };
+};
+
 export default generateShuffledNumbers;
