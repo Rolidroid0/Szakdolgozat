@@ -21,8 +21,6 @@ const BattleModal: React.FC<BattleModalProps> = ({ wsService, battle, playerId }
   const [player, setPlayer] = useState<Player>();
   const [loadingPlayer, setLodaingPlayer] = useState<boolean>(true);
 
-  const ws = wsService.getWebSocket();
-
   useEffect(() => {
     const fetchPlayer = async () => {
       setLodaingPlayer(true);
@@ -62,6 +60,8 @@ const BattleModal: React.FC<BattleModalProps> = ({ wsService, battle, playerId }
   };
 
   useEffect(() => {
+    const ws = wsService.getWebSocket();
+
     if (!ws) return;
 
     const handleMessage = (message: MessageEvent) => {
@@ -91,7 +91,7 @@ const BattleModal: React.FC<BattleModalProps> = ({ wsService, battle, playerId }
     return () => {
       ws.removeEventListener('message', handleMessage);
     };
-  }, [ws, battle._id]);
+  }, [battle._id]);
 
   return (
         <Popup open={true} modal closeOnDocumentClick={false} lockScroll={true}>

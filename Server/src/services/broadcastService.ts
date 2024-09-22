@@ -17,7 +17,7 @@ export const broadcastBattleUpdate = async (battle: any, roundResult: any) => {
     wss.clients.forEach((client) => {
         client.send(JSON.stringify({
             type: 'battleUpdate',
-            battleId: battle._id,
+            battle: battle,
             roundResult,
         }));
     });

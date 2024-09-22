@@ -196,6 +196,9 @@ export const rollDiceService = async (playerId: ObjectId) => {
             battle.attackerHasRolled = false;
             battle.defenderHasRolled = false;
 
+            battle.current_attacker_armies -= attackerLosses;
+            battle.current_defender_armies -= defenderLosses;
+
             const roundResult = {
                 attackerRolls: battle.attackerRolls,
                 defenderRolls: battle.defenderRolls,

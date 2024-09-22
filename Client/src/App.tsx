@@ -8,6 +8,8 @@ import './App.css';
 import { getOngoingBattle } from "./services/battleService";
 import BattleModal from "./components/battleModal/BattleModal";
 import Spinner from "./components/spinner/Spinner";
+import { useWebSocket } from "./contexts/WebSocketContext";
+import { WebSocketProvider } from "./providers/WebSocketProvider";
 
 const App: React.FC = () => {
 
@@ -18,7 +20,8 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
 
   const wsService = WebSocketService.getInstance();
-  wsService.connect('ws://localhost:3000');
+  //wsService.connect('ws://localhost:3000');
+  const ws = useWebSocket();
 
   useEffect(() => {
     if (loggedIn) {
@@ -44,15 +47,27 @@ const App: React.FC = () => {
   }, [loggedIn]);
 
   useEffect(() => {
-    const ws = wsService.getWebSocket();
+    //const ws = wsService.getWebSocket();
 
     if (ws) {
       ws.onmessage = (event: MessageEvent) => {
         const message = JSON.parse(event.data);
+        console.log("üzenet jött");
 
         if (message.action === 'battle-started') {
           console.log('Battle started: ', message.data);
           setOngoingBattle(message.data.battle);
+          console.log(ongoingBattle);
+        }
+
+        if (message.action === 'battle-update') {
+          setOngoingBattle(message.data.battle);
+          console.log(ongoingBattle);
+        }
+
+        if (message.action === 'battle-ended') {
+          console.log('Battle ended: ', message.data);
+          setOngoingBattle(null);
         }
       };
     }
@@ -78,6 +93,7 @@ const App: React.FC = () => {
   };
 
   return (
+    <WebSocketProvider>
     <Router>
       <div id="root">
         <Header wsService={wsService} handleLoggedIn={handleLoggedIn} ongoingBattle={ongoingBattle}/>
@@ -117,6 +133,7 @@ const App: React.FC = () => {
         </div>
       </div>
     </Router>
+    </WebSocketProvider>
   );
 };
 
