@@ -7,7 +7,6 @@ import CardsDisplay from "./components/cards/CardsDisplay";
 import './App.css';
 import { getOngoingBattle } from "./services/battleService";
 import BattleModal from "./components/battleModal/BattleModal";
-import Spinner from "./components/spinner/Spinner";
 
 const App: React.FC = () => {
 
@@ -15,7 +14,6 @@ const App: React.FC = () => {
   const [showCards, setShowCards] = useState<boolean>(false);
   const [playerId, setPlayerId] = useState<string>('');
   const [ongoingBattle, setOngoingBattle] = useState<any>(null);
-  const [loading, setLoading] = useState<boolean>(true);
 
   const wsService = WebSocketService.getInstance();
   wsService.connect('ws://localhost:3000');
@@ -23,7 +21,6 @@ const App: React.FC = () => {
   useEffect(() => {
     if (loggedIn) {
       const checkOngoingBattle = async () => {
-        setLoading(true);
         try {
           const battle = await getOngoingBattle();
           if (battle) {
@@ -32,14 +29,11 @@ const App: React.FC = () => {
           }
         } catch (error) {
           console.error("Error checking ongoing battle: ", error);
-        } finally {
-          setLoading(false);
         }
       };
       checkOngoingBattle();
     } else {
       setOngoingBattle(null);
-      setLoading(false);
     }
   }, [loggedIn]);
 
@@ -82,9 +76,6 @@ const App: React.FC = () => {
       <div id="root">
         <Header wsService={wsService} handleLoggedIn={handleLoggedIn} ongoingBattle={ongoingBattle}/>
         <div className="app-container">
-          {loading ? (
-            <Spinner />
-          ) : (
             <>
             {ongoingBattle && <BattleModal wsService={wsService} battle={ongoingBattle} playerId={playerId} />}
             <Routes>
@@ -113,7 +104,6 @@ const App: React.FC = () => {
                 )} />
             </Routes>
             </>
-          )}
         </div>
       </div>
     </Router>
