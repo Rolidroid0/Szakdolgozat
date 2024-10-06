@@ -126,33 +126,7 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn, ongoingBattl
     };
 
     useEffect(() => {
-        if (ws) {
-            ws.onmessage = (event: MessageEvent) => {
-                const message = JSON.parse(event.data);
-                console.log(message);
-    
-                if (message.action === 'start-game') {
-                    if (isLoggedIn){
-                        handleLogout();
-                        alert("The game restarted, you were logged out.");
-                        navigate('/');
-                    }
-                } else if (message.action === 'round-updated') {
-                    console.log(message);
-                    const { currentRound, currentHouse, roundState } = message.data;
-                    setRound(currentRound);
-                    setCurrentHouse(currentHouse);
-                    setRoundState(roundState);
-                } else if (message.action === 'round-state-updated') {
-                    console.log(message);
-                    const { roundState } = message.data;
-                    setRoundState(roundState);
-                }
-            };
-        };
-
-        const handleWebSocketMessage = (event: MessageEvent) => {
-            const message = JSON.parse(event.data);
+        const headerHandler = (message: any) => {
             if (message.action === 'round-updated') {
                 const { currentRound, currentHouse, roundState } = message.data;
                 setRound(currentRound);
@@ -161,6 +135,12 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn, ongoingBattl
             } else if (message.action === 'round-state-updated') {
                 const { roundState } = message.data;
                 setRoundState(roundState);
+            } else if (message.action === 'start-game') {
+                if (isLoggedIn){
+                    handleLogout();
+                    alert("The game restarted, you were logged out.");
+                    navigate('/');
+                }
             }
         };
         
@@ -170,12 +150,16 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn, ongoingBattl
             }
         };
 
-        ws?.addEventListener('message', handleWebSocketMessage);
+        wsService.registerHandler('round-updated', headerHandler);
+        wsService.registerHandler('round-state-updated', headerHandler);
+        wsService.registerHandler('start-game', headerHandler);
         window.addEventListener("beforeunload", handleWindowClose);
 
         return () => {
             window.removeEventListener("beforeunload", handleWindowClose);
-            ws?.removeEventListener('message', handleWebSocketMessage);
+            wsService.unregisterHandler('round-updated');
+            wsService.unregisterHandler('round-state-updated');
+            wsService.unregisterHandler('start-game');
         };
     }, [ws, isLoggedIn, selectedPlayer]);
 

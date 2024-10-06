@@ -39,9 +39,9 @@ const BattleModal: React.FC<BattleModalProps> = ({ wsService, battle, playerId }
 
   useEffect(() => {
     if (player) {
-      if (player.house === battle.attacker_id && !battle.hasAttackerRolled) {
+      if (player.house === battle.attacker_id && !battle.attackerHasRolled) {
         setCanRoll(true);
-      } else if (player.house === battle.defender_id && !battle.hasDefenderRolled) {
+      } else if (player.house === battle.defender_id && !battle.defenderHasRolled) {
         setCanRoll(true);
       } else {
         setCanRoll(false);
@@ -77,8 +77,12 @@ const BattleModal: React.FC<BattleModalProps> = ({ wsService, battle, playerId }
 
       if (data.type === 'battleUpdate' && data.battleId === battle._id) {
         console.log("Battle update: ", data.roundResult);
-        setAttackerRolls(data.roundResult.attackerRolls);
-        setDefenderRolls(data.roundResult.defenderRolls);
+        const { roundResult } = data;
+
+        setAttackerRolls(roundResult.attackerRolls);
+        setDefenderRolls(roundResult.defenderRolls);
+
+        //setbattle
       }
 
       if (data.type === 'battleEnd' && data.battleId === battle._id) {

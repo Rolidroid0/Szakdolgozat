@@ -57,8 +57,10 @@ export const startGameService = async () => {
                 client.send(JSON.stringify({ 
                     action: 'start-game',
                     success: true,
+                    data: {
                     gameId: gameResult.insertedId,
                     players: defaultPlayers
+                    }
                 }));
             }
         });

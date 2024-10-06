@@ -31,6 +31,7 @@ export class WebSocketService {
 
         this.ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
+            console.log("Received message from server: ", data);
             const action = data.action;
             const handler = this.actionHandlers[action];
             if (handler) {

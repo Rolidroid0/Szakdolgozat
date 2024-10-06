@@ -253,7 +253,7 @@ export const reinforceTerritory = async (playerId: ObjectId, territoryId: Object
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify({
           action: 'territory-updated',
-          territory
+          data: { territory }
         }));
       }
     });

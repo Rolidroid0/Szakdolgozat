@@ -30,21 +30,17 @@ const CardsDisplay: React.FC<CardsDisplayProps> = ({ playerId, onTradeSuccess })
         loadPlayerCards();
 
         const wsService = WebSocketService.getInstance();
-        const ws = wsService.getWebSocket();
 
-        if (ws) {
-            ws.onmessage = (event: MessageEvent) => {
-                const message = JSON.parse(event.data);
+        const cardsDisplayHandler = (message: any) => {
                 if (message.action === 'cards-updated' && message.data.playerId === playerId) {
                     loadPlayerCards();
                 }
-            };
-        }
+        };
+
+        wsService.registerHandler('cards-updated', cardsDisplayHandler);
 
         return () => {
-            if (ws) {
-                ws.onmessage = null;
-            }
+            wsService.unregisterHandler('cards-updated');
         };
     }, [playerId]);
 

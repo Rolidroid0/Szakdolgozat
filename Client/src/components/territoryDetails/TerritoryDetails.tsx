@@ -31,7 +31,6 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
     const [error, setError] = useState<string | null>(null);
     
     const wsService = WebSocketService.getInstance();
-    const ws = wsService.getWebSocket();
 
     useEffect(() => {
         const fetchDetails = async () => {
@@ -63,13 +62,9 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
 
         fetchDetails();
 
-        if (ws) {
-            ws.onmessage = async (event: MessageEvent) => {
-                const message = JSON.parse(event.data);
-                console.log(message);
-    
+        const territoryDetailsHandler = (message: any) => {
                 if (message.action === 'territory-updated') {
-                    if (message.territory._id === territory?._id){
+                    if (message.data.territory._id === territory?._id){
                         fetchDetails();
                     }
                 } else if (message.action === 'territories-updated') {
@@ -89,10 +84,23 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
                 } else if (message.action === 'attack-failed') {
                     alert(message.data.message);
                 }
-            };
         };
 
-        return () => {};
+        wsService.registerHandler('territory-updated', territoryDetailsHandler);
+        wsService.registerHandler('territories-updated', territoryDetailsHandler);
+        wsService.registerHandler('maneuver-done', territoryDetailsHandler);
+        wsService.registerHandler('round-updated', territoryDetailsHandler);
+        wsService.registerHandler('territory-reinforced', territoryDetailsHandler);
+        wsService.registerHandler('attack-failed', territoryDetailsHandler);
+
+        return () => {
+            wsService.unregisterHandler('territory-updated');
+            wsService.unregisterHandler('territories-updated');
+            wsService.unregisterHandler('maneuver-done');
+            wsService.unregisterHandler('round-updated');
+            wsService.unregisterHandler('territory-reinforced');
+            wsService.unregisterHandler('attack-failed');
+        };
     }, [wsService, territoryId, playerId]);
 
     const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {

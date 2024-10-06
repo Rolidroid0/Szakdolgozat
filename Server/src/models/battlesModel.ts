@@ -13,6 +13,6 @@ export interface Battle {
     round_number: number;
     attackerRolls: number[];
     defenderRolls: number[];
-    hasAttackerRolled: boolean;
-    hasDefenderRolled: boolean;
+    attackerHasRolled: boolean;
+    defenderHasRolled: boolean;
 }

@@ -7,8 +7,6 @@ import CardsDisplay from "./components/cards/CardsDisplay";
 import './App.css';
 import { getOngoingBattle } from "./services/battleService";
 import BattleModal from "./components/battleModal/BattleModal";
-import Spinner from "./components/spinner/Spinner";
-import { useWebSocket } from "./contexts/WebSocketContext";
 import { WebSocketProvider } from "./providers/WebSocketProvider";
 
 const App: React.FC = () => {
@@ -17,16 +15,13 @@ const App: React.FC = () => {
   const [showCards, setShowCards] = useState<boolean>(false);
   const [playerId, setPlayerId] = useState<string>('');
   const [ongoingBattle, setOngoingBattle] = useState<any>(null);
-  const [loading, setLoading] = useState<boolean>(true);
 
   const wsService = WebSocketService.getInstance();
   //wsService.connect('ws://localhost:3000');
-  const ws = useWebSocket();
 
   useEffect(() => {
     if (loggedIn) {
       const checkOngoingBattle = async () => {
-        setLoading(true);
         try {
           const battle = await getOngoingBattle();
           if (battle) {
@@ -35,47 +30,37 @@ const App: React.FC = () => {
           }
         } catch (error) {
           console.error("Error checking ongoing battle: ", error);
-        } finally {
-          setLoading(false);
         }
       };
       checkOngoingBattle();
     } else {
       setOngoingBattle(null);
-      setLoading(false);
     }
   }, [loggedIn]);
 
   useEffect(() => {
-    //const ws = wsService.getWebSocket();
-
-    if (ws) {
-      ws.onmessage = (event: MessageEvent) => {
-        const message = JSON.parse(event.data);
-        console.log("üzenet jött");
-
+      const appHandler = (message: any) => {
         if (message.action === 'battle-started') {
           console.log('Battle started: ', message.data);
           setOngoingBattle(message.data.battle);
           console.log(ongoingBattle);
-        }
-
-        if (message.action === 'battle-update') {
-          setOngoingBattle(message.data.battle);
-          console.log(ongoingBattle);
-        }
-
-        if (message.action === 'battle-ended') {
+        } else if (message.action === 'battle-update') {
+          console.log('Battle updated: ', message.data);
+          //setOngoingBattle(message.data.battle);
+        } else if (message.action === 'battle-ended') {
           console.log('Battle ended: ', message.data);
           setOngoingBattle(null);
         }
       };
-    }
+
+      wsService.registerHandler('battle-started', appHandler);
+      wsService.registerHandler('battle-update', appHandler);
+      wsService.registerHandler('battle-ended', appHandler);
 
     return () => {
-      if (ws) {
-        ws.onmessage = null;
-      }
+      wsService.unregisterHandler('battle-started');
+      wsService.unregisterHandler('battle-update');
+      wsService.unregisterHandler('battle-ended');
     };
   }, [wsService]);
 
@@ -98,9 +83,6 @@ const App: React.FC = () => {
       <div id="root">
         <Header wsService={wsService} handleLoggedIn={handleLoggedIn} ongoingBattle={ongoingBattle}/>
         <div className="app-container">
-          {loading ? (
-            <Spinner />
-          ) : (
             <>
             {ongoingBattle && <BattleModal wsService={wsService} battle={ongoingBattle} playerId={playerId} />}
             <Routes>
@@ -129,7 +111,6 @@ const App: React.FC = () => {
                 )} />
             </Routes>
             </>
-          )}
         </div>
       </div>
     </Router>
