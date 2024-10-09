@@ -9,3 +9,8 @@ export enum Symbol {
     SiegeEngine = 'siegeEngine',
     End = 'end'
 }
+
+export enum Role {
+    Attacker = 'attacker',
+    Defender = 'defender'
+}

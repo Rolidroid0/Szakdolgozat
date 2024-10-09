@@ -6,6 +6,7 @@ import { Battle } from "../models/battlesModel";
 import { error } from "console";
 import { compareRolls, rollDice } from "../utils/functions";
 import { broadcastBattleEnd, broadcastBattleUpdate, broadcastRollResult } from "./broadcastService";
+import { Role } from "../models/enums";
 
 export const getOngoingBattle = async () => {
     try {
@@ -172,9 +173,9 @@ export const rollDiceService = async (playerId: ObjectId) => {
 
         let playerRole;
         if (player.house === battle.attacker_id) {
-            playerRole = 'attacker';
+            playerRole = Role.Attacker;
         } else if (player.house === battle.defender_id) {
-            playerRole = 'defender';
+            playerRole = Role.Defender;
         } else {
             throw new Error("Invalid player for this battle");
         }
@@ -183,7 +184,7 @@ export const rollDiceService = async (playerId: ObjectId) => {
             throw new Error("Player has already rolled this round");
         }
 
-        const rollResult = await rollDice(playerRole === 'attacker' ? battle.current_attacker_armies : battle.current_defender_armies);
+        const rollResult = await rollDice(playerRole === Role.Attacker ? battle.current_attacker_armies : battle.current_defender_armies, playerRole);
 
         battle[`${playerRole}Rolls`] = rollResult;
         battle[`${playerRole}HasRolled`] = true;

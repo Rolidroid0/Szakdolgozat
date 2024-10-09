@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { connectToDb } from "../config/db";
 import { findConnectedTerritories } from "../services/territoriesService";
+import { Role } from "../models/enums";
 
 function generateShuffledNumbers(n: number) {
     const numbers = Array.from({ length: n}, (_, i) => i);
@@ -76,9 +77,10 @@ export const validateManeuver = async (fromTerritoryId: ObjectId, toTerritoryId:
     return true;
 };
 
-export const rollDice = async (armies: number) => {
+export const rollDice = async (armies: number, role: Role) => {
+    const maxDice = role === Role.Attacker ? 3 : 2;
     const rolls = [];
-    for (let i = 0; i < Math.min(3, armies); i++) {
+    for (let i = 0; i < Math.min(maxDice, armies); i++) {
         rolls.push(Math.floor(Math.random() * 6) + 1);
     }
     return rolls.sort((a, b) => b - a);

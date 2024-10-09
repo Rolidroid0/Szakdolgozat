@@ -46,7 +46,7 @@ const App: React.FC = () => {
           console.log(ongoingBattle);
         } else if (message.action === 'battle-update') {
           console.log('Battle updated: ', message.data);
-          //setOngoingBattle(message.data.battle);
+          setOngoingBattle(message.data.battle);
         } else if (message.action === 'battle-ended') {
           console.log('Battle ended: ', message.data);
           setOngoingBattle(null);

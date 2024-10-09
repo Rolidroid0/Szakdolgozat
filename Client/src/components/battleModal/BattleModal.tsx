@@ -7,6 +7,7 @@ import { rollDice } from "../../services/battleService";
 import { getPlayerDetails } from "../../services/playerService";
 import { Player } from "../../types/Player";
 import Spinner from "../spinner/Spinner";
+import { houseColors } from "../../types/House";
 
 interface BattleModalProps {
     wsService: WebSocketService;
@@ -20,6 +21,8 @@ const BattleModal: React.FC<BattleModalProps> = ({ wsService, battle, playerId }
   const [canRoll, setCanRoll] = useState<boolean>(false);
   const [player, setPlayer] = useState<Player>();
   const [loadingPlayer, setLodaingPlayer] = useState<boolean>(true);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(true);
+  const [battleLog, setBattleLog] = useState<string[]>(battle.battle_log || []);
 
   useEffect(() => {
     const fetchPlayer = async () => {
@@ -45,6 +48,12 @@ const BattleModal: React.FC<BattleModalProps> = ({ wsService, battle, playerId }
         setCanRoll(true);
       } else {
         setCanRoll(false);
+      }
+
+      if (!battle.defenderHasRolled && !battle.attackerHasRolled) {
+        setAttackerRolls([]);
+        setDefenderRolls([]);
+        setBattleLog(battle.battle_log);
       }
     }
   }, [battle, player]);
@@ -75,19 +84,9 @@ const BattleModal: React.FC<BattleModalProps> = ({ wsService, battle, playerId }
         }
       }
 
-      if (data.type === 'battleUpdate' && data.battleId === battle._id) {
-        console.log("Battle update: ", data.roundResult);
-        const { roundResult } = data;
-
-        setAttackerRolls(roundResult.attackerRolls);
-        setDefenderRolls(roundResult.defenderRolls);
-
-        //setbattle
-      }
-
-      if (data.type === 'battleEnd' && data.battleId === battle._id) {
-        console.log("Battle has ended: ", data.winner);
-        //TODO: bezárni a modalt
+      if (data.type === 'battleEnd' && data.data.battleId === battle._id) {
+        console.log(`Battle has ended: ${data.data.winner} won`);
+        setIsModalOpen(false);
       }
     };
 
@@ -98,17 +97,47 @@ const BattleModal: React.FC<BattleModalProps> = ({ wsService, battle, playerId }
   }, [battle._id]);
 
   return (
-        <Popup open={true} modal closeOnDocumentClick={false} lockScroll={true}>
+        <Popup open={isModalOpen} modal closeOnDocumentClick={false} lockScroll={true}>
           <div className="modal">
             <h2>Battle in Progress</h2>
-            <p>Attacker: {battle.attacker_id}</p>
-            <p>Defender: {battle.defender_id}</p>
-            <p>Attacker Armies: {battle.current_attacker_armies}</p>
-            <p>Defender Armies: {battle.current_defender_armies}</p>
+
+            <div className="battle-header">
+              <div className="attacker">
+                <h3 style={{ backgroundColor: houseColors[battle.attacker_id] }}>{battle.attacker_id}</h3>
+                <p>Initial Armies: {battle.attacker_armies}</p>
+                <p>Current Armies: {battle.current_attacker_armies}</p>
+              </div>
+              <div className="defender" style={{ backgroundColor: houseColors[battle.defender_id] }}>
+                <h3>{battle.defender_id}</h3>
+                <p>Initial Armies: {battle.defender_armies}</p>
+                <p>Current Armies: {battle.current_defender_armies}</p>
+              </div>
+            </div>
 
             <div className="dice-rolls">
-              <h3>Attacker Rolls: {attackerRolls.join(", ")}</h3>
-              <h3>Defender Rolls: {defenderRolls.join(", ")}</h3>
+              <div>
+                <h4>Attacker Rolls: {attackerRolls.join(", ")}</h4>
+              </div>
+              <div>
+                <h4>Defender Rolls: {defenderRolls.join(", ")}</h4>
+              </div>
+            </div>
+
+            <div className="battle-log">
+              <h3>Battle Log</h3>
+              <div className="log-entries">
+                {battleLog.map((entry : any, index) => (
+                  <div key={index}>
+                    <p>Attacker Rolls: {entry.attackerRolls.join(', ')}</p>
+                    <p>Defender Rolls: {entry.defenderRolls.join(', ')}</p>
+                    <p>Attacker Losses: {entry.attackerLosses}</p>
+                    <p>Defender Losses: {entry.defenderLosses}</p>
+                    <p>Remaining Attacker Armies: {entry.remainingAttackerArmies}</p>
+                    <p>Remaining Defender Armies: {entry.remainingDefenderArmies}</p>
+                    <hr />
+                </div>
+                ))}
+              </div>
             </div>
 
             {loadingPlayer ? (
