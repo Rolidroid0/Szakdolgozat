@@ -37,7 +37,7 @@ React keretrendszerben van a client aki websocket segítségével kommunikál a 
 Frontend (React):
 
 ((npm run dev))
-A felhasználói felületet Reacttel fejleszted.
+A felhasználói felület React.
 A React alkalmazás WebSocketeken keresztül kommunikál a szerverrel.
 
 Backend (Node.js):
@@ -59,3 +59,5 @@ A Node.js szerver kapcsolódik a MongoDB-hez, és onnan olvas vagy ír adatokat.
 4. Kártyák beváltásánál + seregek száma (szimbólumok + saját területre még 2 sereg)
 5. Refaktorálás
 6. Csatához: ne csak akkor kapjon mindenki üzenetet, ha elkezdődik a csata, hanem folyamatosan figyelve legyen, hogy van-e ongoing csata, mert akkor meg kell nyílnia a csata ablaknak. Ha a csatának vége, akkor az ablak bezárul, legyen egy előzmények megnyitható fül majd, ahol az eddigi csaták lesznek majd láthatóak. Jelenleg megnézi a szerver, hogy kezdődhet-e csata, következő lépés ennek a létrehozása, battlesService startBattle hívjon egy createBattle metódust.
+
+7. AI: milyen bemenetei legyenek? milyen kimenetei legyenek? milyen adathalmazból tanuljon? 

@@ -136,6 +136,11 @@ export const createBattle = async (attackerTerritoryId: ObjectId, defenderTerrit
             hasDefenderRolled: false,
         });
 
+        await territoriesCollection.updateOne(
+            { _id: attackerTerritoryId },
+            { $inc: { number_of_armies: -attackerArmies } }
+        );
+
         const insertedBattle = await battlesCollection.findOne({ state: "ongoing" });
 
         if (!insertedBattle) {
@@ -154,8 +159,9 @@ export const rollDiceService = async (playerId: ObjectId) => {
         const db = await connectToDb();
         const playersCollection = db?.collection('Players');
         const battlesCollection = db?.collection('Battles');
+        const territoriesCollection = db?.collection('EssosTerritories');
 
-        if (!playersCollection || !battlesCollection) {
+        if (!playersCollection || !battlesCollection || !territoriesCollection) {
             throw new Error("Collections not found");
         }
 
@@ -217,6 +223,29 @@ export const rollDiceService = async (playerId: ObjectId) => {
 
             if (battle.current_attacker_armies <= 0 || battle.current_defender_armies <= 0) {
                 battle.state = battle.current_attacker_armies > 0 ? "attacker-won" : "defender-won";
+
+                if (battle.state === "attacker-won") {
+                    await territoriesCollection.updateOne(
+                        { _id: battle.defender_territory_id },
+                        {
+                            $set: {
+                                owner_id: battle.attacker_id,
+                                number_of_armies: battle.current_attacker_armies
+                            }
+                        }
+                    );
+
+                    await playersCollection.updateOne(
+                        { _id: playerId },
+                        { $set: { conquered: true } }
+                    );
+                } else if (battle.state === "defender-won") {
+                    await territoriesCollection.updateOne(
+                        { _id: battle.defender_territory_id },
+                        { $set: { number_of_armies: battle.current_defender_armies } }
+                    );
+                }
+
                 await battlesCollection.updateOne({ _id: battle._id }, { $set: battle });
                 
                 await broadcastBattleEnd(battle);
