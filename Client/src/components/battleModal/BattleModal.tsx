@@ -55,6 +55,10 @@ const BattleModal: React.FC<BattleModalProps> = ({ wsService, battle, playerId }
         setDefenderRolls([]);
         setBattleLog(battle.battle_log);
       }
+
+      if(battle != null) {
+        setIsModalOpen(true);
+      }
     }
   }, [battle, player]);
 

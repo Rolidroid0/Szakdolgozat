@@ -42,8 +42,7 @@ const App: React.FC = () => {
       const appHandler = (message: any) => {
         if (message.action === 'battle-started') {
           console.log('Battle started: ', message.data);
-          setOngoingBattle(message.data.battle);
-          console.log(ongoingBattle);
+          setOngoingBattle({...message.data.battle});
         } else if (message.action === 'battle-update') {
           console.log('Battle updated: ', message.data);
           setOngoingBattle(message.data.battle);
@@ -63,6 +62,12 @@ const App: React.FC = () => {
       wsService.unregisterHandler('battle-ended');
     };
   }, [wsService]);
+
+  useEffect(() => {
+    if (ongoingBattle) {
+      console.log(ongoingBattle);
+    }
+  }, [ongoingBattle]);
 
   const handleLoggedIn = (isLoggedIn: boolean, playerId: string) => {
     setLoggedIn(isLoggedIn);

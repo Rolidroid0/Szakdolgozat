@@ -138,7 +138,8 @@ export const createBattle = async (attackerTerritoryId: ObjectId, defenderTerrit
 
         await territoriesCollection.updateOne(
             { _id: attackerTerritoryId },
-            { $inc: { number_of_armies: -attackerArmies } }
+            { $inc: { number_of_armies: -attackerArmies },
+              $set: { last_attacked_from: ongoingGame.round } },
         );
 
         const insertedBattle = await battlesCollection.findOne({ state: "ongoing" });
@@ -226,7 +227,7 @@ export const rollDiceService = async (playerId: ObjectId) => {
 
                 if (battle.state === "attacker-won") {
                     await territoriesCollection.updateOne(
-                        { _id: battle.defender_territory_id },
+                        { _id: new ObjectId(battle.defender_territory_id) },
                         {
                             $set: {
                                 owner_id: battle.attacker_id,
@@ -236,12 +237,12 @@ export const rollDiceService = async (playerId: ObjectId) => {
                     );
 
                     await playersCollection.updateOne(
-                        { _id: playerId },
+                        { house: battle.attacker_id },
                         { $set: { conquered: true } }
                     );
                 } else if (battle.state === "defender-won") {
                     await territoriesCollection.updateOne(
-                        { _id: battle.defender_territory_id },
+                        { _id: new ObjectId(battle.defender_territory_id) },
                         { $set: { number_of_armies: battle.current_defender_armies } }
                     );
                 }

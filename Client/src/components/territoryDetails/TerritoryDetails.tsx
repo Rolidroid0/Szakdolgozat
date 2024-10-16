@@ -173,6 +173,7 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
             }));
             setArmiesToAttack(0);
             setTargetTerritoryId(null);
+            onClose();
         }
     };
 
