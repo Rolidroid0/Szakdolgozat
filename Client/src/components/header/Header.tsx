@@ -141,8 +141,6 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn, ongoingBattl
                     alert("The game restarted, you were logged out.");
                     navigate('/');
                 }
-            } else if (message.action === 'battle-ended') {
-                ongoingBattle = null;
             }
         };
         
@@ -155,7 +153,6 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn, ongoingBattl
         wsService.registerHandler('round-updated', headerHandler);
         wsService.registerHandler('round-state-updated', headerHandler);
         wsService.registerHandler('start-game', headerHandler);
-        wsService.registerHandler('battle-ended', headerHandler);
         window.addEventListener("beforeunload", handleWindowClose);
 
         return () => {

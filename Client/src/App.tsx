@@ -46,7 +46,7 @@ const App: React.FC = () => {
         } else if (message.action === 'battle-update') {
           console.log('Battle updated: ', message.data);
           setOngoingBattle(message.data.battle);
-        } else if (message.action === 'battle-ended') {
+        } else if (message.action === 'battle-end') {
           console.log('Battle ended: ', message.data);
           setOngoingBattle(null);
         }
@@ -54,12 +54,12 @@ const App: React.FC = () => {
 
       wsService.registerHandler('battle-started', appHandler);
       wsService.registerHandler('battle-update', appHandler);
-      wsService.registerHandler('battle-ended', appHandler);
+      wsService.registerHandler('battle-end', appHandler);
 
     return () => {
       wsService.unregisterHandler('battle-started');
       wsService.unregisterHandler('battle-update');
-      wsService.unregisterHandler('battle-ended');
+      wsService.unregisterHandler('battle-end');
     };
   }, [wsService]);
 

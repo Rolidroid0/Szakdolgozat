@@ -270,7 +270,7 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
                     </div>
                     )}
 
-                {isInvasionAllowed && attackableTerritories.length != 0 && (
+                {isInvasionAllowed && attackableTerritories.length != 0 && territory.number_of_armies > 1 && (
                     <div className='invasion-controls'>
                         <p>Select enemy territory to attack:</p>
                         <select 
