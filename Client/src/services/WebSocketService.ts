@@ -6,6 +6,10 @@ export class WebSocketService {
     private messageQueue: string[] = [];
     private actionHandlers: Record<string, MessageHandler> = {}
 
+    private reconnectAttempts = 0;
+    private maxReconnectAttempts = 5;
+    private reconnectDelay = 2000;
+
     private constructor() { }
 
     public static getInstance(): WebSocketService {
@@ -43,12 +47,22 @@ export class WebSocketService {
 
         this.ws.onclose = (event) => {
             console.log(`Disconnected from WebSocket server: ${event.code}, ${event.reason}`);
-            // Optionally, attempt to reconnect
+            this.handleReconnect(url);
         };
 
         this.ws.onerror = (error) => {
             console.error('WebSocket error:', error);
         };
+    }
+
+    private handleReconnect(url: string) {
+        if (this.reconnectAttempts < this.maxReconnectAttempts) {
+            this.reconnectAttempts++;
+            console.log(`Attempting to reconnect... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+            setTimeout(() => this.connect(url), this.reconnectDelay);
+        } else {
+            console.warn('Max reconnect attempts reached. No longer attempting to reconnect.');
+        }
     }
 
     public send(message: string): void {
