@@ -53,7 +53,7 @@ A Node.js szerver kapcsolódik a MongoDB-hez, és onnan olvas vagy ír adatokat.
 
 ### TODO
 
-1. Akkor lehet a reinforce fázisnak vége, ha nincs több + serege a játékosnak.
+1. Akkor lehet a reinforce fázisnak vége, ha nincs több + serege a játékosnak. EZ MÉG NINCS KÉSZ!
 2. Csata lebonyolítása
 3. Területeken lévő seregek megjelenítése (térkép javítása)
 4. Kártyák beváltásánál + seregek száma (szimbólumok + saját területre még 2 sereg)

@@ -64,9 +64,7 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
 
         const territoryDetailsHandler = (message: any) => {
                 if (message.action === 'territory-updated') {
-                    if (message.data.territory._id === territory?._id){
-                        fetchDetails();
-                    }
+                    fetchDetails();
                 } else if (message.action === 'territories-updated') {
                     if (message.data.fromTerritoryId === territory?._id
                         || message.data.toTerritoryId === territory?._id

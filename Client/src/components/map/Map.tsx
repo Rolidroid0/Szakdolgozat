@@ -25,7 +25,7 @@ const Map: React.FC<MapProps> = ({ playerId }) => {
     const wsService = WebSocketService.getInstance();
 
     wsService.registerHandler('territory-updated', (data) => {
-      const updatedTerritory = data.territory as Territory;
+      const updatedTerritory = data.data.territory as Territory;
       setTerritories(prevTerritories =>
         prevTerritories.map(territory =>
           territory._id === updatedTerritory._id ? updatedTerritory : territory
@@ -34,7 +34,8 @@ const Map: React.FC<MapProps> = ({ playerId }) => {
     });
 
     return () => {
-      wsService.disconnect();
+      wsService.unregisterHandler('territory-updated');
+      //wsService.disconnect();
     };
   }, []);
 

@@ -30,7 +30,7 @@ export const startGameService = async () => {
 
         await battlesCollection.deleteMany({});
 
-        await cardsCollection.updateMany({}, { $set: { owner_id: null } });
+        await cardsCollection.updateMany({}, { $set: { owner_id: "in deck" } });
         await shuffle(getWebSocketServer());
 
         await generatePlayers(2);
