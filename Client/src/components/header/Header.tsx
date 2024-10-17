@@ -157,11 +157,11 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn, ongoingBattl
 
         return () => {
             window.removeEventListener("beforeunload", handleWindowClose);
-            wsService.unregisterHandler('round-updated');
-            wsService.unregisterHandler('round-state-updated');
-            wsService.unregisterHandler('start-game');
+            wsService.unregisterHandler('round-updated', headerHandler);
+            wsService.unregisterHandler('round-state-updated', headerHandler);
+            wsService.unregisterHandler('start-game', headerHandler);
         };
-    }, [ws, isLoggedIn, selectedPlayer]);
+    }, [ws, isLoggedIn, selectedPlayer, round, currentHouse, roundState]);
 
     return (
         <header className="header">

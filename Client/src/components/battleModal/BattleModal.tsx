@@ -73,30 +73,26 @@ const BattleModal: React.FC<BattleModalProps> = ({ wsService, battle, playerId }
   };
 
   useEffect(() => {
-    const ws = wsService.getWebSocket();
-
-    if (!ws) return;
-
-    const handleMessage = (message: MessageEvent) => {
-      const data = JSON.parse(message.data);
-
-      if (data.type === 'rollResult' && data.battleId === battle._id) {
-        if (data.playerRole === 'attacker') {
-          setAttackerRolls(data.rollResult);
-        } else if (data.playerRole === 'defender') {
-          setDefenderRolls(data.rollResult);
+    const battleModalHandler = (message: any) => {
+      if (message.action === 'roll-result' && message.battleId === battle._id) {
+        if (message.playerRole === 'attacker') {
+          setAttackerRolls(message.rollResult);
+        } else if (message.playerRole === 'defender') {
+          setDefenderRolls(message.rollResult);
         }
       }
 
-      if (data.type === 'battleEnd' && data.data.battleId === battle._id) {
-        console.log(`Battle has ended: ${data.data.winner} won`);
+      if (message.action === 'battle-end' && message.data.battleId === battle._id) {
+        console.log(`Battle has ended: ${message.data.winner} won`);
         setIsModalOpen(false);
       }
     };
 
-    ws.addEventListener('message', handleMessage);
+    wsService.registerHandler('roll-result', battleModalHandler);
+    wsService.registerHandler('battle-end', battleModalHandler);
     return () => {
-      ws.removeEventListener('message', handleMessage);
+      wsService.unregisterHandler('roll-result', battleModalHandler);
+      wsService.unregisterHandler('battle-end', battleModalHandler);
     };
   }, [battle._id]);
 

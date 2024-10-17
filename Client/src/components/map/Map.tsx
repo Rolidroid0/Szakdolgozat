@@ -24,17 +24,19 @@ const Map: React.FC<MapProps> = ({ playerId }) => {
 
     const wsService = WebSocketService.getInstance();
 
-    wsService.registerHandler('territory-updated', (data) => {
-      const updatedTerritory = data.data.territory as Territory;
+    const mapHandler = (message: any) => {
+      const updatedTerritory = message.data.territory as Territory;
       setTerritories(prevTerritories =>
         prevTerritories.map(territory =>
           territory._id === updatedTerritory._id ? updatedTerritory : territory
         )
       );
-    });
+    };
+
+    wsService.registerHandler('territory-updated', mapHandler);
 
     return () => {
-      wsService.unregisterHandler('territory-updated');
+      wsService.unregisterHandler('territory-updated', mapHandler);
       //wsService.disconnect();
     };
   }, []);

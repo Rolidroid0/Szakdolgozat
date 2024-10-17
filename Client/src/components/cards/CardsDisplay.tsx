@@ -40,7 +40,7 @@ const CardsDisplay: React.FC<CardsDisplayProps> = ({ playerId, onTradeSuccess })
         wsService.registerHandler('cards-updated', cardsDisplayHandler);
 
         return () => {
-            wsService.unregisterHandler('cards-updated');
+            wsService.unregisterHandler('cards-updated', cardsDisplayHandler);
         };
     }, [playerId]);
 

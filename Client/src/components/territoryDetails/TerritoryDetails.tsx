@@ -88,16 +88,18 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
         wsService.registerHandler('territories-updated', territoryDetailsHandler);
         wsService.registerHandler('maneuver-done', territoryDetailsHandler);
         wsService.registerHandler('round-updated', territoryDetailsHandler);
+        wsService.registerHandler('round-state-updated', territoryDetailsHandler);
         wsService.registerHandler('territory-reinforced', territoryDetailsHandler);
         wsService.registerHandler('attack-failed', territoryDetailsHandler);
 
         return () => {
-            wsService.unregisterHandler('territory-updated');
-            wsService.unregisterHandler('territories-updated');
-            wsService.unregisterHandler('maneuver-done');
-            wsService.unregisterHandler('round-updated');
-            wsService.unregisterHandler('territory-reinforced');
-            wsService.unregisterHandler('attack-failed');
+            wsService.unregisterHandler('territory-updated', territoryDetailsHandler);
+            wsService.unregisterHandler('territories-updated', territoryDetailsHandler);
+            wsService.unregisterHandler('maneuver-done', territoryDetailsHandler);
+            wsService.unregisterHandler('round-updated', territoryDetailsHandler);
+            wsService.unregisterHandler('round-state-updated', territoryDetailsHandler);
+            wsService.unregisterHandler('territory-reinforced', territoryDetailsHandler);
+            wsService.unregisterHandler('attack-failed', territoryDetailsHandler);
         };
     }, [wsService, territoryId, playerId]);
 

@@ -1,10 +1,10 @@
-type MessageHandler = (data: any) => void;
+type MessageHandler = (message: any) => void;
 
 export class WebSocketService {
     private static instance: WebSocketService;
     private ws: WebSocket | null = null;
     private messageQueue: string[] = [];
-    private actionHandlers: Record<string, MessageHandler> = {}
+    private actionHandlers: Record<string, MessageHandler[]> = {}
 
     private reconnectAttempts = 0;
     private maxReconnectAttempts = 5;
@@ -35,12 +35,12 @@ export class WebSocketService {
         };
 
         this.ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            console.log("Received message from server: ", data);
-            const action = data.action;
+            const message = JSON.parse(event.data);
+            console.log("Received message from server: ", message);
+            const action = message.action;
             const handler = this.actionHandlers[action];
             if (handler) {
-                handler(data);
+                handler.forEach(handler => handler(message));
             } else {
                 console.warn(`No handler found for action: ${action}`);
             }
@@ -82,11 +82,16 @@ export class WebSocketService {
     }
 
     public registerHandler(action: string, handler: MessageHandler): void {
-        this.actionHandlers[action] = handler;
+        if (!this.actionHandlers[action]) {
+            this.actionHandlers[action] = [];
+        }
+        this.actionHandlers[action].push(handler);
     }
 
-    public unregisterHandler(action: string): void {
-        delete this.actionHandlers[action];
+    public unregisterHandler(action: string, handler: MessageHandler): void {
+        if (this.actionHandlers[action]) {
+            this.actionHandlers[action] = this.actionHandlers[action].filter(h => h !== handler);
+        }
     }
 
     getWebSocket() {

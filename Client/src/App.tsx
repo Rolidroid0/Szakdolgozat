@@ -57,9 +57,9 @@ const App: React.FC = () => {
       wsService.registerHandler('battle-end', appHandler);
 
     return () => {
-      wsService.unregisterHandler('battle-started');
-      wsService.unregisterHandler('battle-update');
-      wsService.unregisterHandler('battle-end');
+      wsService.unregisterHandler('battle-started', appHandler);
+      wsService.unregisterHandler('battle-update', appHandler);
+      wsService.unregisterHandler('battle-end', appHandler);
     };
   }, [wsService]);
 

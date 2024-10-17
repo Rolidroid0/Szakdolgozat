@@ -17,7 +17,7 @@ const ShuffleCardsButton: React.FC<ShuffleCardsButtonProps> = ({ wsService }) =>
         wsService.registerHandler('shuffle-cards', handleShuffleResponse);
 
         return () => {
-            wsService.unregisterHandler('shuffle-cards');
+            wsService.unregisterHandler('shuffle-cards', handleShuffleResponse);
         };
     }, [wsService]);
 
