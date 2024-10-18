@@ -34,6 +34,6 @@ export const endPhaseController = async (req: Request, res: Response) => {
             res.status(200).json({ message: "Phase ended", nextRoundState: result});
         }
     } catch (error) {
-        res.status(500).json({ message: 'Error ending phase' });
+        res.status(500).json({ message: 'Error ending phase', error });
     }
 };

@@ -8,6 +8,7 @@ import './App.css';
 import { getOngoingBattle } from "./services/battleService";
 import BattleModal from "./components/battleModal/BattleModal";
 import { WebSocketProvider } from "./providers/WebSocketProvider";
+import ErrorPopup from "./components/errorPopup/ErrorPopup";
 
 const App: React.FC = () => {
 
@@ -15,6 +16,7 @@ const App: React.FC = () => {
   const [showCards, setShowCards] = useState<boolean>(false);
   const [playerId, setPlayerId] = useState<string>('');
   const [ongoingBattle, setOngoingBattle] = useState<any>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const wsService = WebSocketService.getInstance();
   //wsService.connect('ws://localhost:3000');
@@ -49,17 +51,21 @@ const App: React.FC = () => {
         } else if (message.action === 'battle-end') {
           console.log('Battle ended: ', message.data);
           setOngoingBattle(null);
+        } else if (message.action === 'error') {
+          setErrorMessage(message.errorMessage);
         }
       };
 
       wsService.registerHandler('battle-started', appHandler);
       wsService.registerHandler('battle-update', appHandler);
       wsService.registerHandler('battle-end', appHandler);
+      wsService.registerHandler('error', appHandler);
 
     return () => {
       wsService.unregisterHandler('battle-started', appHandler);
       wsService.unregisterHandler('battle-update', appHandler);
       wsService.unregisterHandler('battle-end', appHandler);
+      wsService.unregisterHandler('error', appHandler);
     };
   }, [wsService]);
 
@@ -80,6 +86,10 @@ const App: React.FC = () => {
 
   const handleTradeCards = (additionalArmies: number) => {
     console.log(`Traded cards for ${additionalArmies} additional armies`);
+  };
+
+  const handleClosePopup = () => {
+    setErrorMessage(null);
   };
 
   return (
@@ -115,6 +125,8 @@ const App: React.FC = () => {
                   </>
                 )} />
             </Routes>
+
+            {errorMessage && <ErrorPopup message={errorMessage} onClose={handleClosePopup} />}
             </>
         </div>
       </div>

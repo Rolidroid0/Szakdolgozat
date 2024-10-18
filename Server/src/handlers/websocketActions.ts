@@ -34,6 +34,10 @@ const actions: Record<string, (wss: WebSocketServer, ws: CustomWebSocket, data: 
             console.log('Players turn ended');
         } catch (error) {
             console.log('Error during ending players turn: ', error);
+            if (error instanceof Error) {
+                const errorMessage = error.message;
+                ws.send(JSON.stringify({ action: 'error', errorMessage }));
+            }
         }
     },
     'trade-cards': async (wss, ws, data) => {

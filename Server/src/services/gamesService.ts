@@ -85,6 +85,10 @@ export const endTurn = async (wss: WebSocketServer, data: any) => {
         throw new Error("It's not your turn!");
     }
 
+    if (currentPlayerDoc.plus_armies > 0 && ongoingGame.roundState === "reinforcement") {
+        throw new Error("You still have armies to place");
+    }
+
     if (currentPlayerDoc.conquered) {
         await drawCard(currentPlayerDoc._id);
         currentPlayerDoc.conquered = false;
@@ -158,6 +162,10 @@ export const endPhase = async (playerId: ObjectId) => {
 
         if (ongoingGame.currentPlayer !== player.house) {
             throw new Error("Not your turn");
+        }
+
+        if (player.plus_armies > 0 && ongoingGame.roundState === "reinforcement") {
+            throw new Error("You still have armies to place");
         }
 
         const phaseOrder = ["reinforcement", "invasion", "maneuver"];
