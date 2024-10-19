@@ -2,8 +2,9 @@ import { connectToDb } from '../config/db';
 import csv from 'csv-parser';
 import fs from 'fs';
 import { WebSocketServer, WebSocket } from 'ws';
-import generateShuffledNumbers from '../utils/functions';
+import generateShuffledNumbers, { assignTerritoryBonus } from '../utils/functions';
 import { ObjectId } from 'mongodb';
+import { RoundState, Symbol } from '../models/enums';
 
 
 export const shuffle = async (wss: WebSocketServer) => {
@@ -69,8 +70,9 @@ export const tradeCardsForArmies = async (playerId: ObjectId, cardIds: ObjectId[
     const db = await connectToDb();
     const playersCollection = db?.collection('Players');
     const cardsCollection = db?.collection('EssosCards');
+    const gamesCollection = db?.collection('Games');
 
-    if (!playersCollection || !cardsCollection) {
+    if (!playersCollection || !cardsCollection || !gamesCollection) {
         throw new Error("Collections not found");
     }
 
@@ -79,19 +81,48 @@ export const tradeCardsForArmies = async (playerId: ObjectId, cardIds: ObjectId[
         throw new Error("Player not found");
     }
 
-    const selectedCards = await cardsCollection.find({ _id: { $in: cardIds }, owner_id: player.house }).toArray();
+    const ongoingGame = await gamesCollection.findOne({ state: "ongoing" });
+    if (!ongoingGame || ongoingGame.currentPlayer !== player.house || ongoingGame.roundState !== RoundState.Reinforcement) {
+        throw new Error("You can only trade cards during your reinforcement phase");
+    }
 
+    const selectedCards = await cardsCollection.find({ _id: { $in: cardIds }, owner_id: player.house }).toArray();
     if (selectedCards.length !== 3) {
         throw new Error("You must trade exactly 3 cards");
     }
 
-    const additionalArmies = 5; //Ide ki kell számolni, hogy mennyi lesz + ha a terület a játékosé, akkor arra a területre +2 sereg
+    const symbols = selectedCards.map(card => card.symbol);
+    const territories = selectedCards.map(card => card.name);
+
+    const symbolSet = new Set(symbols);
+    let additionalArmies = 0;
+
+    if (symbolSet.size === 1) {
+        switch (symbols[0]) {
+            case Symbol.Knight:
+                additionalArmies = 4;
+                break;
+            case Symbol.SiegeEngine:
+                additionalArmies = 5;
+                break;
+            case Symbol.Fortress:
+                additionalArmies = 6;
+                break;
+        }
+    } else if (symbolSet.size === 3) {
+        additionalArmies = 7;
+    } else {
+        throw new Error("Invalid combination of card symbols");
+    }
+
     await playersCollection.updateOne(
         { _id: playerId },
         { $inc: { plus_armies: additionalArmies } }
     );
 
     await cardsCollection.updateMany({ _id: { $in: cardIds } }, { $set: { owner_id: "usedThisGame" } });
+
+    await assignTerritoryBonus(playerId, territories);
 
     return additionalArmies;
 };

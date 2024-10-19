@@ -35,6 +35,6 @@ export const tradeCards = async (req: Request, res: Response) => {
 
         return res.json({ success: true, additionalArmies });
     } catch (error) {
-        return res.status(500).send('An error occurred while trading the cards');
+        return res.status(500).json({ message: "An error occurred while trading the cards", error });
     }
 };

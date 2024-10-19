@@ -2,6 +2,8 @@ import { ObjectId } from "mongodb";
 import { connectToDb } from "../config/db";
 import { findConnectedTerritories } from "../services/territoriesService";
 import { Role } from "../models/enums";
+import { getWebSocketServer } from "../config/websocket";
+import WebSocket from "ws";
 
 function generateShuffledNumbers(n: number) {
     const numbers = Array.from({ length: n}, (_, i) => i);
@@ -101,5 +103,39 @@ export const compareRolls = async (attackerRolls: number[], defenderRolls: numbe
 
     return { attackerLosses, defenderLosses };
 };
+
+export const assignTerritoryBonus = async (playerId: ObjectId, cardTerritories: string[]) => {
+    const db = await connectToDb();
+    const territoriesCollection = db?.collection('EssosTerritories');
+    const playersCollection = db?.collection('Players');
+
+    if (!territoriesCollection || !playersCollection) {
+        throw new Error("Collections not found");
+    }
+
+    const player = await playersCollection.findOne({ _id: playerId });
+    if (!player) {
+        throw new Error("Player not found");
+    }
+
+    const ownedTerritories = await territoriesCollection.find({ owner_id: player.house, name: { $in: cardTerritories } }).toArray();
+
+    for (const territory of ownedTerritories) {
+        await territoriesCollection.updateOne(
+            { _id: territory._id },
+            { $inc: { number_of_armies: 2 } }
+        );
+        const updatedTerritory = await territoriesCollection.findOne({ _id: territory._id });
+        const wss = getWebSocketServer();
+        wss.clients.forEach(client => {
+            if (client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify({
+                    action: 'territory-updated',
+                    data: { territory: updatedTerritory }
+                }));
+            }
+        });
+    }
+}
 
 export default generateShuffledNumbers;

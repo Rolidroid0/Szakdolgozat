@@ -14,3 +14,9 @@ export enum Role {
     Attacker = 'attacker',
     Defender = 'defender'
 }
+
+export enum RoundState {
+    Reinforcement = 'reinforcement',
+    Invasion = 'invasion',
+    Maneuver = 'maneuver'
+}
