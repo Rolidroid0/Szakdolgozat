@@ -187,6 +187,15 @@ export const rollDiceService = async (playerId: ObjectId) => {
             throw new Error("Invalid player for this battle");
         }
 
+        const enemyIsNeutral = battle.defender_id === 'neutral';
+
+        if (enemyIsNeutral && !battle.defenderHasRolled) {
+            const neutralRoll = await rollDice(battle.current_defender_armies, Role.Defender);
+            battle.defenderRolls = neutralRoll;
+            battle.defenderHasRolled = true;
+            await broadcastRollResult(Role.Defender, neutralRoll, battle);
+        }
+
         if (battle[`${playerRole}HasRolled`]) {
             throw new Error("Player has already rolled this round");
         }
