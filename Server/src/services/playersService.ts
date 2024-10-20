@@ -64,6 +64,16 @@ export const loginPlayer = async (playerId: string) => {
     try {
         const db = await connectToDb();
         const playersCollection = db?.collection('Players');
+        const gamesCollection = db?.collection('Games');
+
+        if (!playersCollection || !gamesCollection) {
+            throw new Error('Collections not found');
+        }
+
+        const ongoingGame = await gamesCollection.findOne({ state: "ongoing" });
+        if (!ongoingGame) {
+            return { success: false, message: 'No ongoing game found, start a new one' };
+        }
 
         const player = await playersCollection?.findOne({ _id: new ObjectId(playerId) });
 

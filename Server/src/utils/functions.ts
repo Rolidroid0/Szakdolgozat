@@ -138,4 +138,58 @@ export const assignTerritoryBonus = async (playerId: ObjectId, cardTerritories: 
     }
 }
 
+export const calculateScores = async () => {
+    try {
+        const db = await connectToDb();
+        const playersCollection = db?.collection('Players');
+        const territoriesCollection = db?.collection('EssosTerritories');
+        const gamesCollection = db?.collection('Games');
+
+        if (!playersCollection || !territoriesCollection || !gamesCollection) {
+            throw new Error('Collections not found');
+        }
+
+        const players = await playersCollection.find({}).toArray();
+        const scores: any[] = [];
+
+        for (const player of players) {
+            const territories = await territoriesCollection.find({ owner_id: player.house }).toArray();
+            let score = 0;
+
+            score += territories.length;
+
+            territories.forEach(territory => {
+                if (territory.fortress === 1) score++;
+                if (territory.port === 1) score++;
+            });
+
+            scores.push({ player, score });
+        }
+
+        const winner = scores.reduce((prev, current) => (prev.score > current.score ? prev : current));
+
+        await gamesCollection.updateOne(
+            { state: "ongoing" },
+            { $set: { state: `${winner.player.house} won` } }
+        );
+
+        const wss = getWebSocketServer();
+        wss.clients.forEach(client => {
+            if (client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify({
+                    action: 'game-over',
+                    data: {
+                        winner: winner.player.house,
+                        scores: scores.map(s => ({ player: s.player.house, score: s.score }))
+                    }
+                }));
+            }
+        });
+
+        return true;
+    } catch (error) {
+        console.error('Error calculating scores: ', error);
+    }
+};
+
 export default generateShuffledNumbers;

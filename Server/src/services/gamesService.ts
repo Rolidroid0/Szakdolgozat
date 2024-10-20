@@ -1,11 +1,12 @@
 import { WebSocketServer } from "ws";
 import { connectToDb } from "../config/db";
-import { calculatePlusArmies, validateManeuver } from "../utils/functions";
+import { calculatePlusArmies, calculateScores, validateManeuver } from "../utils/functions";
 import { ObjectId } from "mongodb";
 import { WebSocket } from 'ws';
 import { getWebSocketServer } from "../config/websocket";
 import { Game } from "../models/gamesModel";
 import { drawCard } from "./cardsService";
+import { Symbol } from "../models/enums";
 
 export const getOngoingGame = async () => {
     try {
@@ -105,6 +106,11 @@ export const endTurn = async (wss: WebSocketServer, data: any) => {
                 }));
             }
         });
+    }
+
+    const gameEnded = await checkGameEnd();
+    if (gameEnded) {
+        return;
     }
 
     const players = await playersCollection.find({}).toArray();
@@ -259,4 +265,41 @@ export const applyManeuver = async (playerId: ObjectId, fromTerritoryId: ObjectI
     });
 
     endPhase(playerId);
+};
+
+export const checkGameEnd = async () => {
+    try {
+        const db = await connectToDb();
+        const playersCollection = db?.collection('Players');
+        const territoriesCollection = db?.collection('EssosTerritories');
+        const cardsCollection = db?.collection('EssosCards');
+        const gamesCollection = db?.collection('Games');
+
+        if (!playersCollection || !territoriesCollection || !cardsCollection || !gamesCollection) {
+            throw new Error('Collections not found');
+        }
+
+        const ongoingGame = await gamesCollection.findOne({ state: "ongoing" });
+        if (!ongoingGame) {
+            throw new Error('No ongoing game found');
+        }
+
+        const endCard = await cardsCollection.findOne({ symbol: Symbol.End, owner_id: { $ne: "in deck" } });
+        if (endCard) {
+            console.log(`Game (_id: ${ongoingGame._id}) ends because 'Valar Morghulis' card was drawn.`);
+            return await calculateScores();
+        }
+
+        const players = await playersCollection.find({}).toArray();
+        for (const player of players) {
+            // if there are more than 2 players its bad, it should count if a players territories count equals with allTerritories count..
+            const playerTerritories = await territoriesCollection.countDocuments({ owner_id: player.house });
+            if (playerTerritories === 0) {
+                console.log(`Game (_id: ${ongoingGame._id}) ends because ${player.house} has no territories.`);
+                return await calculateScores();
+            }
+        }
+    } catch (error) {
+        console.error('Error checking game end: ', error);
+    }
 };

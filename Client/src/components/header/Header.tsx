@@ -141,6 +141,22 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn, ongoingBattl
                     alert("The game restarted, you were logged out.");
                     navigate('/');
                 }
+            } else if (message.action === 'game-over') {
+                if (isLoggedIn){
+                    console.log('Game over: ', message.data);
+
+                    const winner = message.data.winner;
+                    const scores: any[] = message.data.scores;
+
+                    let alertMessage = `Game over! Winner: ${winner}\n\nScores:\n`;
+                    scores.forEach(score => {
+                        alertMessage += `${score.player}: ${score.score}\n`;
+                    });
+
+                    handleLogout();
+                    alert(alertMessage);
+                    navigate('/');
+                }
             }
         };
         
@@ -153,6 +169,7 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn, ongoingBattl
         wsService.registerHandler('round-updated', headerHandler);
         wsService.registerHandler('round-state-updated', headerHandler);
         wsService.registerHandler('start-game', headerHandler);
+        wsService.registerHandler('game-over', headerHandler);
         window.addEventListener("beforeunload", handleWindowClose);
 
         return () => {
@@ -160,6 +177,7 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn, ongoingBattl
             wsService.unregisterHandler('round-updated', headerHandler);
             wsService.unregisterHandler('round-state-updated', headerHandler);
             wsService.unregisterHandler('start-game', headerHandler);
+            wsService.unregisterHandler('game-over', headerHandler);
         };
     }, [ws, isLoggedIn, selectedPlayer, round, currentHouse, roundState]);
 
