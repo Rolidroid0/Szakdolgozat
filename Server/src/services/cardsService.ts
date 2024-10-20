@@ -17,10 +17,11 @@ export const shuffle = async (wss: WebSocketServer) => {
             return;
         }
 
-        const cardCount = await essosCards.countDocuments();
+        const cardsCursor = essosCards.find({});
+
+        const cardCount = await essosCards.countDocuments({});
         const shuffledNumbers = generateShuffledNumbers(cardCount);
 
-        const cardsCursor = essosCards.find({});
         let index = 0;
         while (await cardsCursor.hasNext()) {
             const card = await cardsCursor.next();
@@ -32,6 +33,29 @@ export const shuffle = async (wss: WebSocketServer) => {
                 index++;
             }
         }
+
+        const endCard = await essosCards.findOne({ symbol: Symbol.End });
+
+        const minPosition = Math.floor(cardCount / 2);
+        const maxPosition = cardCount - 1;
+        const newEndPosition = Math.floor(Math.random() * (maxPosition - minPosition + 1)) + minPosition;
+
+        const otherCard = await essosCards.findOne({ sequence_number: newEndPosition });
+
+        if (!endCard || !otherCard) {
+            console.error('Cards not found');
+            return;
+        }
+
+        await essosCards.updateOne(
+            { _id: endCard._id },
+            { $set: { sequence_number: newEndPosition } }
+        );
+
+        await essosCards.updateOne(
+            { _id: otherCard._id },
+            { $set: { sequence_number: endCard.sequence_number } }
+        );
         
         const shuffledCards = await essosCards.find({}).toArray();
 
