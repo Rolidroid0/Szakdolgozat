@@ -132,8 +132,8 @@ export const createBattle = async (attackerTerritoryId: ObjectId, defenderTerrit
             round_number: ongoingGame.round,
             attackerRolls: [],
             defenderRolls: [],
-            hasAttackerRolled: false,
-            hasDefenderRolled: false,
+            attackerHasRolled: false,
+            defenderHasRolled: false,
         });
 
         await territoriesCollection.updateOne(

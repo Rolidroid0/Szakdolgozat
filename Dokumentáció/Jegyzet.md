@@ -61,3 +61,9 @@ A Node.js szerver kapcsolódik a MongoDB-hez, és onnan olvas vagy ír adatokat.
 6. Csatához: Ha a csatának vége, akkor az ablak bezárul, legyen egy előzmények megnyitható fül majd, ahol az eddigi csaták lesznek majd láthatóak.
 
 7. AI: milyen bemenetei legyenek? milyen kimenetei legyenek? milyen adathalmazból tanuljon? 
+
+8. ADATBÁZIS:
+    - Battles.hasAttackerRolled-et és hadDefenderRolled-et alsóvonalassá tenni
+    - Games.roundState-et és currentPlayer-t alsóvonalassá tenni
+    - Game_id hozzáadása az összes collection-hez és ezek beállítása mindenhol (seedelésnél, új példány létrehozásánál, minden function ahol használva van egy collection eleme, ott keresési feltételhez a game_id is egyezzen).
+    - EssosTerritoryNeighbors kapcsolótábla létrehozása: a szomszédok mindig ugyan azok maradnak. Módosítani a szomszédos területek keresése függvényt. 
