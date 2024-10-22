@@ -16,7 +16,7 @@ export const seedRegions = async () => {
         }
 
         const filePath = path.join(__dirname, 'Regions.csv');
-        const regions: Region[] = [];
+        const regions: any[] = [];
 
         fs.createReadStream(filePath)
             .pipe(csvParser())

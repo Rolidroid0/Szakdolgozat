@@ -26,7 +26,7 @@ export const initializeWebSocket = (server: Server) => {
 
                 const action = actions[parsedMessage.action];
                 if (action) {
-                    action(wss, ws, parsedMessage.data);
+                    action(ws, parsedMessage.data);
                 } else {
                     console.error('Unknown action:', parsedMessage.action);
                 }

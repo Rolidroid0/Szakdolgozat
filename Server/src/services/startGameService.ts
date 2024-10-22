@@ -5,6 +5,8 @@ import shuffle from './cardsService';
 import { allocateTerritories } from './territoriesService';
 import { generatePlayers } from './playersService';
 import { applyAdditionalArmies } from './gamesService';
+import { Game } from '../models/gamesModel';
+import { Player } from '../models/playersModel';
 
 
 export const startGameService = async () => {
@@ -19,7 +21,7 @@ export const startGameService = async () => {
             throw new Error("Required collections not found");
         }
 
-        const ongoingGame = await gamesCollection.findOne({ state: "ongoing" });
+        const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
 
         if (ongoingGame) {
             await gamesCollection.updateOne(
@@ -31,11 +33,11 @@ export const startGameService = async () => {
         await battlesCollection.deleteMany({});
 
         await cardsCollection.updateMany({}, { $set: { owner_id: "in deck" } });
-        await shuffle(getWebSocketServer());
+        await shuffle();
 
         await generatePlayers(2);
 
-        const defaultPlayers = await playersCollection.find({}).toArray();
+        const defaultPlayers = await playersCollection.find<Player>({}).toArray();
 
         await allocateTerritories();
 

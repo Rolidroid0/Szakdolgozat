@@ -1,5 +1,6 @@
 export interface Card {
     _id: string;
+    game_id: string;
     table: string;
     name: string;
     symbol: string;

@@ -1,7 +1,7 @@
 export interface Game {
     _id: string;
     round: number;
-    currentPlayer: string;
+    current_player: string;
     players: string[];
     state: string;
     roundState: string;

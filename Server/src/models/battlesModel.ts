@@ -1,10 +1,13 @@
+import { ObjectId } from "mongodb";
+
 export interface Battle {
-    _id: string;
+    _id: ObjectId;
+    game_id: ObjectId;
     state: string;
     attacker_id: string;
     defender_id: string;
-    attacker_territory_id: string;
-    defender_territory_id: string;
+    attacker_territory_id: ObjectId;
+    defender_territory_id: ObjectId;
     attacker_armies: number;
     defender_armies: number;
     current_attacker_armies: number;
@@ -13,6 +16,6 @@ export interface Battle {
     round_number: number;
     attackerRolls: number[];
     defenderRolls: number[];
-    attackerHasRolled: boolean;
-    defenderHasRolled: boolean;
+    attacker_has_rolled: boolean;
+    defender_has_rolled: boolean;
 }

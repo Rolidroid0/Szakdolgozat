@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { endPhase, getCurrentRound, getOngoingGame } from "../services/gamesService";
+import { ObjectId } from "mongodb";
 
 export const getOngoingGameController = async (req: Request, res: Response) => {
     try {
@@ -24,7 +25,7 @@ export const endPhaseController = async (req: Request, res: Response) => {
     const { playerId } = req.body;
 
     try {
-        const result = await endPhase(playerId);
+        const result = await endPhase(new ObjectId(playerId));
         if (!result) {
             throw new Error("Error ending phase");
         }

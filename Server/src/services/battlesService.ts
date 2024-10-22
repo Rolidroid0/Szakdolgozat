@@ -6,7 +6,10 @@ import { Battle } from "../models/battlesModel";
 import { error } from "console";
 import { compareRolls, rollDice } from "../utils/functions";
 import { broadcastBattleEnd, broadcastBattleUpdate, broadcastRollResult } from "./broadcastService";
-import { Role } from "../models/enums";
+import { Role, RoundState } from "../models/enums";
+import { Player } from "../models/playersModel";
+import { Territory } from "../models/territoriesModel";
+import { Game } from "../models/gamesModel";
 
 export const getOngoingBattle = async () => {
     try {
@@ -17,7 +20,7 @@ export const getOngoingBattle = async () => {
             throw new Error("Battles collection not found");
         }
 
-        const battle = await battlesCollection.findOne({ state: "ongoing" });
+        const battle = await battlesCollection.findOne<Battle>({ state: "ongoing" });
         if (!battle) {
             return null;
         }
@@ -41,16 +44,16 @@ export const startBattle = async (playerId: ObjectId, fromTerritoryId: ObjectId,
             throw new Error("Collections not found");
         }
 
-        const ongoingBattle = await battlesCollection.findOne({ state: "ongoing" });
+        const ongoingBattle = await battlesCollection.findOne<Battle>({ state: "ongoing" });
 
         if (ongoingBattle) {
             throw new Error("There is already a battle running");
         }
 
-        const player = await playersCollection.findOne({ _id: playerId });
-        const fromTerritory = await territoriesCollection.findOne({ _id: fromTerritoryId });
-        const toTerritory = await territoriesCollection.findOne({ _id: toTerritoryId });
-        const ongoingGame = await gamesCollection.findOne({ state: "ongoing" });
+        const player = await playersCollection.findOne<Player>({ _id: playerId });
+        const fromTerritory = await territoriesCollection.findOne<Territory>({ _id: fromTerritoryId });
+        const toTerritory = await territoriesCollection.findOne<Territory>({ _id: toTerritoryId });
+        const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
 
         if (!ongoingGame) {
             throw new Error("No ongoing game found");
@@ -64,7 +67,7 @@ export const startBattle = async (playerId: ObjectId, fromTerritoryId: ObjectId,
             throw new Error("Territories not found");
         }
 
-        if (ongoingGame.currentPlayer !== player.house || ongoingGame.roundState !== 'invasion') {
+        if (ongoingGame.currentPlayer !== player.house || ongoingGame.roundState !== RoundState.Invasion) {
             throw new Error("You can not start a battle now");
         }
 
@@ -105,14 +108,14 @@ export const createBattle = async (attackerTerritoryId: ObjectId, defenderTerrit
             throw new Error("Collections not found");
         }
 
-        const ongoingGame = await gamesCollection.findOne({ state: "ongoing" });
+        const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
 
         if (!ongoingGame) {
             throw new Error("No ongoing game found");
         }
 
-        const defenderTerritory = await territoriesCollection.findOne({ _id: defenderTerritoryId });
-        const attackerTerritory = await territoriesCollection.findOne({ _id: attackerTerritoryId });
+        const defenderTerritory = await territoriesCollection.findOne<Territory>({ _id: defenderTerritoryId });
+        const attackerTerritory = await territoriesCollection.findOne<Territory>({ _id: attackerTerritoryId });
 
         if (!defenderTerritory || !attackerTerritory) {
             throw new Error("Territories not found");
@@ -142,7 +145,7 @@ export const createBattle = async (attackerTerritoryId: ObjectId, defenderTerrit
               $set: { last_attacked_from: ongoingGame.round } },
         );
 
-        const insertedBattle = await battlesCollection.findOne({ state: "ongoing" });
+        const insertedBattle = await battlesCollection.findOne<Battle>({ state: "ongoing" });
 
         if (!insertedBattle) {
             throw new Error("Failed to retrieve the inserted battle");
@@ -166,7 +169,7 @@ export const rollDiceService = async (playerId: ObjectId) => {
             throw new Error("Collections not found");
         }
 
-        const player = await playersCollection.findOne({ _id: playerId });
+        const player = await playersCollection.findOne<Player>({ _id: playerId });
 
         if (!player) {
             throw new Error("Player not found");
@@ -189,29 +192,29 @@ export const rollDiceService = async (playerId: ObjectId) => {
 
         const enemyIsNeutral = battle.defender_id === 'neutral';
 
-        if (enemyIsNeutral && !battle.defenderHasRolled) {
+        if (enemyIsNeutral && !battle.defender_has_rolled) {
             const neutralRoll = await rollDice(battle.current_defender_armies, Role.Defender);
             battle.defenderRolls = neutralRoll;
-            battle.defenderHasRolled = true;
+            battle.defender_has_rolled = true;
             await broadcastRollResult(Role.Defender, neutralRoll, battle);
         }
 
-        if (battle[`${playerRole}HasRolled`]) {
+        if (battle[`${playerRole}_has_rolled`]) {
             throw new Error("Player has already rolled this round");
         }
 
         const rollResult = await rollDice(playerRole === Role.Attacker ? battle.current_attacker_armies : battle.current_defender_armies, playerRole);
 
         battle[`${playerRole}Rolls`] = rollResult;
-        battle[`${playerRole}HasRolled`] = true;
+        battle[`${playerRole}_has_rolled`] = true;
 
         await broadcastRollResult(playerRole, rollResult, battle);
 
-        if (battle.attackerHasRolled && battle.defenderHasRolled) {
+        if (battle.attacker_has_rolled && battle.defender_has_rolled) {
             const { attackerLosses, defenderLosses } = await compareRolls(battle.attackerRolls, battle.defenderRolls);
 
-            battle.attackerHasRolled = false;
-            battle.defenderHasRolled = false;
+            battle.attacker_has_rolled = false;
+            battle.defender_has_rolled = false;
 
             battle.current_attacker_armies -= attackerLosses;
             battle.current_defender_armies -= defenderLosses;
@@ -225,7 +228,7 @@ export const rollDiceService = async (playerId: ObjectId) => {
                 remainingDefenderArmies: battle.current_defender_armies
             };
 
-            battle.battle_log.push(roundResult);
+            battle.battle_log.push(JSON.stringify(roundResult));
 
             await battlesCollection.updateOne({ _id: battle._id }, { $set: battle });
 

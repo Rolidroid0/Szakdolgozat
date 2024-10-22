@@ -1,5 +1,7 @@
 import { connectToDb } from "../config/db"
 import { ObjectId } from "mongodb";
+import { Player } from "../models/playersModel";
+import { Game } from "../models/gamesModel";
 
 export const getPlayers = async () => {
     const db = await connectToDb();
@@ -9,7 +11,7 @@ export const getPlayers = async () => {
         throw new Error("Players collection not found");
     }
 
-    const players = await playersCollection.find({}).toArray();
+    const players = await playersCollection.find<Player>({}).toArray();
     return players;
 };
 
@@ -22,7 +24,7 @@ export const getPlayerById = async (playerId: ObjectId) => {
             throw new Error("Players collection not found");
         }
 
-        const player = await playersCollection.findOne({ _id: new ObjectId(playerId) });
+        const player = await playersCollection.findOne<Player>({ _id: new ObjectId(playerId) });
         if (!player) {
             throw new Error("Player not found");
         }
@@ -60,7 +62,7 @@ export const generatePlayers = async (numberOfPlayers: number) => {
     }
 };
 
-export const loginPlayer = async (playerId: string) => {
+export const loginPlayer = async (playerId: ObjectId) => {
     try {
         const db = await connectToDb();
         const playersCollection = db?.collection('Players');
@@ -70,19 +72,19 @@ export const loginPlayer = async (playerId: string) => {
             throw new Error('Collections not found');
         }
 
-        const ongoingGame = await gamesCollection.findOne({ state: "ongoing" });
+        const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
         if (!ongoingGame) {
             return { success: false, message: 'No ongoing game found, start a new one' };
         }
 
-        const player = await playersCollection?.findOne({ _id: new ObjectId(playerId) });
+        const player = await playersCollection.findOne<Player>({ _id: playerId });
 
         if (player?.is_logged_in) {
             return { success: false, message: 'This house is already occupied' };
         }
 
-        await playersCollection?.updateOne(
-            { _id: new ObjectId(playerId) },
+        await playersCollection.updateOne(
+            { _id: playerId },
             { $set: { is_logged_in: true } }
         );
 
@@ -93,13 +95,17 @@ export const loginPlayer = async (playerId: string) => {
     }
 };
 
-export const logoutPlayer = async (playerId: string) => {
+export const logoutPlayer = async (playerId: ObjectId) => {
     try {
         const db = await connectToDb();
         const playersCollection = db?.collection('Players');
 
-        await playersCollection?.updateOne(
-            { _id: new ObjectId(playerId) },
+        if (!playersCollection) {
+            throw new Error('Collection not found');
+        }
+
+        await playersCollection.updateOne(
+            { _id: playerId },
             { $set: { is_logged_in: false } }
         );
     } catch (error) {

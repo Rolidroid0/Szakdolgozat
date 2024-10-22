@@ -5,24 +5,32 @@ import { connectToDb } from "../config/db";
 import { Table } from '../models/enums';
 import { exit } from 'process';
 import { Territory } from '../models/territoriesModel';
+import { Game } from '../models/gamesModel';
 
 
 export const seedEssosTerritories = async () => {
     try {
         const db = await connectToDb();
         const essosTerritoriesCollection = db?.collection('EssosTerritories');
+        const gamesCollection = db?.collection('Games');
 
-        if (!essosTerritoriesCollection) {
-            throw new Error("EssosTerritories collection not found");
+        if (!essosTerritoriesCollection || !gamesCollection) {
+            throw new Error("Collections not found");
+        }
+
+        const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
+        if (!ongoingGame) {
+            throw new Error("No ongoing game found");
         }
 
         const filePath = path.join(__dirname, 'EssosTerritories.csv');
-        const essosTerritories: Territory[] = [];
+        const essosTerritories: any[] = [];
 
         fs.createReadStream(filePath)
             .pipe(csvParser())
             .on('data', (row) => {
                 essosTerritories.push({
+                    game_id: ongoingGame._id,
                     table: Table.Essos,
                     name: row.name,
                     fortress: parseInt(row.fortress),
@@ -36,12 +44,12 @@ export const seedEssosTerritories = async () => {
             })
             .on('end', async () => {
                 try {
-                    await essosTerritoriesCollection.deleteMany({});
+                    await essosTerritoriesCollection.deleteMany({ game_id: ongoingGame._id });
 
                     await essosTerritoriesCollection.insertMany(essosTerritories);
 
                     for (const territory of essosTerritories) {
-                        const neighborTerritories = await essosTerritoriesCollection.find({
+                        const neighborTerritories = await essosTerritoriesCollection.find<Territory>({
                             name: { $in: territory.neighbors }
                         }).toArray();
 

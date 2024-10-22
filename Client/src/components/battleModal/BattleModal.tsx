@@ -42,15 +42,15 @@ const BattleModal: React.FC<BattleModalProps> = ({ wsService, battle, playerId }
 
   useEffect(() => {
     if (player) {
-      if (player.house === battle.attacker_id && !battle.attackerHasRolled) {
+      if (player.house === battle.attacker_id && !battle.attacker_has_rolled) {
         setCanRoll(true);
-      } else if (player.house === battle.defender_id && !battle.defenderHasRolled) {
+      } else if (player.house === battle.defender_id && !battle.defender_has_rolled) {
         setCanRoll(true);
       } else {
         setCanRoll(false);
       }
 
-      if (!battle.defenderHasRolled && !battle.attackerHasRolled) {
+      if (!battle.defender_has_rolled && !battle.attacker_has_rolled) {
         setAttackerRolls([]);
         setDefenderRolls([]);
         setBattleLog(battle.battle_log);

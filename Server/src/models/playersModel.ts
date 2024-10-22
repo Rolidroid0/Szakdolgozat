@@ -1,5 +1,8 @@
+import { ObjectId } from "mongodb";
+
 export interface Player {
-    _id: string;
+    _id: ObjectId;
+    game_id: ObjectId;
     house: string;
     plus_armies: number;
     conquered: boolean;

@@ -1,5 +1,6 @@
 export interface Battle {
     _id: string;
+    game_id: string;
     state: string;
     attacker_id: string;
     defender_id: string;
@@ -13,6 +14,6 @@ export interface Battle {
     round_number: number;
     attackerRolls: number[];
     defenderRolls: number[];
-    attackerHasRolled: boolean;
-    defenderHasRolled: boolean;
+    attacker_has_rolled: boolean;
+    defender_has_rolled: boolean;
 }

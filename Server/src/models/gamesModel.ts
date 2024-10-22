@@ -1,8 +1,11 @@
+import { ObjectId } from "mongodb";
+import { RoundState } from "./enums";
+
 export interface Game {
-    _id: string;
+    _id: ObjectId;
     round: number;
     currentPlayer: string;
     players: string[];
     state: string;
-    roundState: string;
+    roundState: RoundState;
 }

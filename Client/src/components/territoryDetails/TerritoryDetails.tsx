@@ -204,7 +204,7 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
     };
 
     const isInvasionAllowed = game.roundState === 'invasion'
-        && game.currentPlayer === player.house
+        && game.current_player === player.house
         && territory.owner_id === player.house
         && territory.last_attacked_from !== game.round;
     
@@ -222,7 +222,7 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
                 <p>Region: {territory.region}</p>
                 <p>Armies: {territory.number_of_armies}</p>
                 {game.roundState === "reinforcement" 
-                    && game.currentPlayer === player.house
+                    && game.current_player === player.house
                     && territory.owner_id === player.house && (
                     <div className="reinforcement-controls">
                         <input
@@ -240,7 +240,7 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
                 )}
 
                 {game.roundState === "maneuver"
-                    && game.currentPlayer === player.house
+                    && game.current_player === player.house
                     && territory.owner_id === player.house && (
                     <div className="maneuver-controls">
                         <p>Select target territory for maneuver:</p>

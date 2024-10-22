@@ -7,16 +7,16 @@ import { ObjectId } from 'mongodb';
 import { reinforceTerritory } from '../services/territoriesService';
 import { startBattle } from '../services/battlesService';
 
-const actions: Record<string, (wss: WebSocketServer, ws: CustomWebSocket, data: any) => void> = {
-    'shuffle-cards': async (wss, ws, data) => {
+const actions: Record<string, (ws: CustomWebSocket, data: any) => void> = {
+    'shuffle-cards': async (ws, data) => {
         try {
-            await shuffle(wss);
+            await shuffle();
             console.log('Shuffle complete');
         } catch (error) {
             console.error('Error during shuffle: ', error);
         }
     },
-    'start-game': async (wss, ws, data) => {
+    'start-game': async (ws, data) => {
         try {
             await startGameService();
             console.log('Game started successfully');
@@ -24,13 +24,14 @@ const actions: Record<string, (wss: WebSocketServer, ws: CustomWebSocket, data: 
             console.log('Error during game start: ', error);
         }
     },
-    'set-player-id': (wss, ws, data) => {
+    'set-player-id': (ws, data) => {
         ws.playerId = data.playerId;
         console.log(`Player ID set for WebSocket: ${ws.playerId}`);
     },
-    'end-of-player-turn': async (wss, ws, data) => {
+    'end-of-player-turn': async (ws, data) => {
         try {
-            await endTurn(wss, data);
+            const playerId = data.playerId;
+            await endTurn(new ObjectId(playerId));
             console.log('Players turn ended');
         } catch (error) {
             console.log('Error during ending players turn: ', error);
@@ -40,7 +41,7 @@ const actions: Record<string, (wss: WebSocketServer, ws: CustomWebSocket, data: 
             }
         }
     },
-    'trade-cards': async (wss, ws, data) => {
+    'trade-cards': async (ws, data) => {
         try {
             const { playerId, cardIds } = data;
             const additionalArmies = await tradeCardsForArmies(new ObjectId(playerId), cardIds);
@@ -50,17 +51,17 @@ const actions: Record<string, (wss: WebSocketServer, ws: CustomWebSocket, data: 
             ws.send(JSON.stringify({ action: 'cards-traded', data: { success: false, message: error } }));
         }
     },
-    'reinforce-territory': async (wss, ws, data) => {
+    'reinforce-territory': async (ws, data) => {
         try {
             const { playerId, territoryId, armies } = data;
-            await reinforceTerritory(playerId, territoryId, armies);
+            await reinforceTerritory(new ObjectId(playerId), new ObjectId(territoryId), armies);
 
             ws.send(JSON.stringify({ action: 'territory-reinforced', data: { success: true } }));
         } catch (error) {
             ws.send(JSON.stringify({ action: 'territory-reinforced', data: { success: false, message: error } }));
         }
     },
-    'maneuver': async (wss, ws, data) => {
+    'maneuver': async (ws, data) => {
         try {
             const { playerId, fromTerritoryId, toTerritoryId, armies } = data;
             await applyManeuver(new ObjectId(playerId), new ObjectId(fromTerritoryId), new ObjectId(toTerritoryId), armies);
@@ -70,7 +71,7 @@ const actions: Record<string, (wss: WebSocketServer, ws: CustomWebSocket, data: 
             ws.send(JSON.stringify({ action: 'maneuver-done', data: { success: false, message: error } }));
         }
     },
-    'start-battle': async (wss, ws, data) => {
+    'start-battle': async (ws, data) => {
         try {
             const { playerId, fromTerritoryId, toTerritoryId, armies } = data;
             await startBattle(new ObjectId(playerId), new ObjectId(fromTerritoryId), new ObjectId(toTerritoryId), armies);

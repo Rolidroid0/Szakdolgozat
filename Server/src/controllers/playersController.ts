@@ -26,7 +26,7 @@ export const getPlayerController = async (req: Request, res: Response) => {
 export const loginPlayerController = async (req: Request, res: Response) => {
     const { playerId } = req.body;
     try {
-        const result = await loginPlayer(playerId);
+        const result = await loginPlayer(new ObjectId(playerId));
         res.json({ success: result.success, message: result.message });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Login failed' });
@@ -36,7 +36,7 @@ export const loginPlayerController = async (req: Request, res: Response) => {
 export const logoutPlayerController = async (req: Request, res: Response) => {
     const { playerId } = req.body;
     try {
-        await logoutPlayer(playerId);
+        await logoutPlayer(new ObjectId(playerId));
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Logout failed' });

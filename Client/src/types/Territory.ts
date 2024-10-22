@@ -1,5 +1,7 @@
 export interface Territory {
     _id: string;
+    game_id: string;
+    table: string;
     name: string;
     fortress: number;
     port: number;

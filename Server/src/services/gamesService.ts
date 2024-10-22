@@ -6,7 +6,10 @@ import { WebSocket } from 'ws';
 import { getWebSocketServer } from "../config/websocket";
 import { Game } from "../models/gamesModel";
 import { drawCard } from "./cardsService";
-import { Symbol } from "../models/enums";
+import { RoundState, Symbol } from "../models/enums";
+import { Player } from "../models/playersModel";
+import { Territory } from "../models/territoriesModel";
+import { Card } from "../models/cardsModel";
 
 export const getOngoingGame = async () => {
     try {
@@ -17,7 +20,7 @@ export const getOngoingGame = async () => {
             throw new Error("Games collection not found");
         }
 
-        const game = await gamesCollection.findOne({ state: "ongoing" });
+        const game = await gamesCollection.findOne<Game>({ state: "ongoing" });
         if (!game) {
             throw new Error("No ongoing game found");
         }
@@ -37,7 +40,7 @@ export const getCurrentRound = async () => {
         throw new Error("Games collection not found");
     }
 
-    const ongoingGame = await gamesCollection.findOne({ state: "ongoing" });
+    const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
 
     if (!ongoingGame) {
         return { message: "No ongoing game found" };
@@ -64,7 +67,7 @@ export const applyAdditionalArmies = async (playerId: ObjectId) => {
     );
 };
 
-export const endTurn = async (wss: WebSocketServer, data: any) => {
+export const endTurn = async (playerId: ObjectId) => {
     const db = await connectToDb();
     const playersCollection = db?.collection('Players');
     const gamesCollection = db?.collection('Games');
@@ -73,14 +76,14 @@ export const endTurn = async (wss: WebSocketServer, data: any) => {
         throw new Error("Collections not found");
     }
 
-    const ongoingGame = await gamesCollection.findOne({ state: "ongoing" });
+    const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
 
     if (!ongoingGame) {
         throw new Error("No ongoing game found");
     }
 
     const currentPlayer = ongoingGame.currentPlayer;
-    const currentPlayerDoc = await playersCollection.findOne({ _id: new ObjectId(data.playerId) });
+    const currentPlayerDoc = await playersCollection.findOne<Player>({ _id: playerId });
 
     if (!currentPlayerDoc || currentPlayerDoc.house !== currentPlayer) {
         throw new Error("It's not your turn!");
@@ -98,6 +101,7 @@ export const endTurn = async (wss: WebSocketServer, data: any) => {
             { $set: { conquered: false } }
         );
 
+        const wss = getWebSocketServer();
         wss.clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN) {
                 client.send(JSON.stringify({
@@ -113,8 +117,8 @@ export const endTurn = async (wss: WebSocketServer, data: any) => {
         return;
     }
 
-    const players = await playersCollection.find({}).toArray();
-    const currentPlayerIndex = players.findIndex(player => player._id.equals(data.playerId));
+    const players = await playersCollection.find<Player>({}).toArray();
+    const currentPlayerIndex = players.findIndex(player => player._id.equals(playerId));
     const nextPlayerIndex = (currentPlayerIndex + 1) % players.length;
 
     let currentRound = ongoingGame.round;
@@ -127,13 +131,14 @@ export const endTurn = async (wss: WebSocketServer, data: any) => {
     if (nextPlayer) {
         await applyAdditionalArmies(nextPlayer._id);
 
-        const nextRoundState = "reinforcement";
+        const nextRoundState = RoundState.Reinforcement;
 
         await gamesCollection.updateOne(
             { state: "ongoing" },
             { $set: { currentPlayer: nextPlayer.house, round: currentRound, roundState: nextRoundState } }
         );
 
+        const wss = getWebSocketServer();
         wss.clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN) {
                 client.send(JSON.stringify({ action: 'round-updated', data: { currentRound: currentRound, currentHouse: nextPlayer.house, roundState: nextRoundState } }));
@@ -154,13 +159,13 @@ export const endPhase = async (playerId: ObjectId) => {
             throw new Error("Collections not found");
         }
 
-        const ongoingGame = await gamesCollection.findOne({ state: "ongoing" });
+        const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
 
         if (!ongoingGame) {
             throw new Error("No ongoing game found");
         }
 
-        const player = await playersCollection.findOne({ _id: new ObjectId(playerId) });
+        const player = await playersCollection.findOne<Player>({ _id: new ObjectId(playerId) });
 
         if (!player) {
             throw new Error("No player found");
@@ -174,7 +179,7 @@ export const endPhase = async (playerId: ObjectId) => {
             throw new Error("You still have armies to place");
         }
 
-        const phaseOrder = ["reinforcement", "invasion", "maneuver"];
+        const phaseOrder = [RoundState.Reinforcement, RoundState.Invasion, RoundState.Maneuver];
         const currentPhaseIndex = phaseOrder.indexOf(ongoingGame.roundState);
         let nextRoundState;
 
@@ -183,7 +188,7 @@ export const endPhase = async (playerId: ObjectId) => {
         } else if (currentPhaseIndex < phaseOrder.length - 1) {
             nextRoundState = phaseOrder[currentPhaseIndex + 1];
         } else {
-            await endTurn(getWebSocketServer(), { playerId: playerId });
+            await endTurn(playerId);
             return "endTurn";
         }
 
@@ -218,14 +223,14 @@ export const applyManeuver = async (playerId: ObjectId, fromTerritoryId: ObjectI
         throw new Error("Collections not found");
     }
 
-    const player = await playersCollection.findOne({ _id: playerId });
+    const player = await playersCollection.findOne<Player>({ _id: playerId });
 
     if (!player) {
         throw new Error("Player not found");
     }
 
-    const fromTerritory = await territoriesCollection.findOne({ _id: fromTerritoryId });
-    const toTerritory = await territoriesCollection.findOne({ _id: toTerritoryId });
+    const fromTerritory = await territoriesCollection.findOne<Territory>({ _id: fromTerritoryId });
+    const toTerritory = await territoriesCollection.findOne<Territory>({ _id: toTerritoryId });
 
     if (!fromTerritory || !toTerritory) {
         throw new Error("Territories not found");
@@ -235,7 +240,7 @@ export const applyManeuver = async (playerId: ObjectId, fromTerritoryId: ObjectI
         throw new Error("You can only maneuver armies between your own territories");
     }
     
-    const validManeuver = validateManeuver(fromTerritoryId, toTerritoryId, playerId);
+    const validManeuver = await validateManeuver(fromTerritoryId, toTerritoryId, playerId);
     if (!validManeuver) {
         throw new Error("Not a valid maneuver.");
     }
@@ -264,7 +269,7 @@ export const applyManeuver = async (playerId: ObjectId, fromTerritoryId: ObjectI
         }
     });
 
-    endPhase(playerId);
+    await endPhase(playerId);
 };
 
 export const checkGameEnd = async () => {
@@ -279,12 +284,12 @@ export const checkGameEnd = async () => {
             throw new Error('Collections not found');
         }
 
-        const ongoingGame = await gamesCollection.findOne({ state: "ongoing" });
+        const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
         if (!ongoingGame) {
             throw new Error('No ongoing game found');
         }
 
-        const endCard = await cardsCollection.findOne({ symbol: Symbol.End, owner_id: { $ne: "in deck" } });
+        const endCard = await cardsCollection.findOne<Card>({ symbol: Symbol.End, owner_id: { $ne: "in deck" } });
         if (endCard) {
             console.log(`Game (_id: ${ongoingGame._id}) ends because 'Valar Morghulis' card was drawn.`);
             return await calculateScores();

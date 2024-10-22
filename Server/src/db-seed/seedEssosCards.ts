@@ -5,24 +5,32 @@ import { connectToDb } from "../config/db";
 import { Card } from '../models/cardsModel';
 import { Table } from '../models/enums';
 import { exit } from 'process';
+import { Game } from '../models/gamesModel';
 
 
 export const seedEssosCards = async () => {
     try {
         const db = await connectToDb();
         const essosCardsCollection = db?.collection('EssosCards');
+        const gamesCollection = db?.collection('Games');
 
-        if (!essosCardsCollection) {
-            throw new Error("EssosCards collection not found");
+        if (!essosCardsCollection || !gamesCollection) {
+            throw new Error("Collections not found");
+        }
+
+        const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
+        if (!ongoingGame) {
+            throw new Error("No ongoing game found");
         }
 
         const filePath = path.join(__dirname, 'EssosCards.csv');
-        const essosCards: Card[] = [];
+        const essosCards: any[] = [];
 
         fs.createReadStream(filePath)
             .pipe(csvParser())
             .on('data', (row) => {
                 essosCards.push({
+                    game_id: ongoingGame._id,
                     table: Table.Essos,
                     name: row.name,
                     symbol: row.symbol,
@@ -32,7 +40,7 @@ export const seedEssosCards = async () => {
             })
             .on('end', async () => {
                 try {
-                    await essosCardsCollection.deleteMany({});
+                    await essosCardsCollection.deleteMany({ game_id: ongoingGame._id });
 
                     await essosCardsCollection.insertMany(essosCards);
                     console.log('Essos cards seeded successfully.');

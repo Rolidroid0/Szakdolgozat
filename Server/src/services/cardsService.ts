@@ -5,9 +5,13 @@ import { WebSocketServer, WebSocket } from 'ws';
 import generateShuffledNumbers, { assignTerritoryBonus } from '../utils/functions';
 import { ObjectId } from 'mongodb';
 import { RoundState, Symbol } from '../models/enums';
+import { Card } from '../models/cardsModel';
+import { Player } from '../models/playersModel';
+import { Game } from '../models/gamesModel';
+import { getWebSocketServer } from '../config/websocket';
 
 
-export const shuffle = async (wss: WebSocketServer) => {
+export const shuffle = async () => {
     try {
         const db = await connectToDb();
         const essosCards = db?.collection('EssosCards');
@@ -17,7 +21,7 @@ export const shuffle = async (wss: WebSocketServer) => {
             return;
         }
 
-        const cardsCursor = essosCards.find({});
+        const cardsCursor = essosCards.find<Card>({});
 
         const cardCount = await essosCards.countDocuments({});
         const shuffledNumbers = generateShuffledNumbers(cardCount);
@@ -34,13 +38,13 @@ export const shuffle = async (wss: WebSocketServer) => {
             }
         }
 
-        const endCard = await essosCards.findOne({ symbol: Symbol.End });
+        const endCard = await essosCards.findOne<Card>({ symbol: Symbol.End });
 
         const minPosition = Math.floor(cardCount / 2);
         const maxPosition = cardCount - 1;
         const newEndPosition = Math.floor(Math.random() * (maxPosition - minPosition + 1)) + minPosition;
 
-        const otherCard = await essosCards.findOne({ sequence_number: newEndPosition });
+        const otherCard = await essosCards.findOne<Card>({ sequence_number: newEndPosition });
 
         if (!endCard || !otherCard) {
             console.error('Cards not found');
@@ -57,8 +61,9 @@ export const shuffle = async (wss: WebSocketServer) => {
             { $set: { sequence_number: endCard.sequence_number } }
         );
         
-        const shuffledCards = await essosCards.find({}).toArray();
+        const shuffledCards = await essosCards.find<Card>({}).toArray();
 
+        const wss = getWebSocketServer();
         wss.clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN) {
                 client.send(JSON.stringify({ action: 'shuffle-cards', cards: shuffledCards }));
@@ -80,7 +85,7 @@ export const getPlayerCardsService = async (playerId: string) => {
         throw new Error("Collections not found");
     }
 
-    const player = await playersCollection.findOne({ _id: new ObjectId(playerId) });
+    const player = await playersCollection.findOne<Player>({ _id: new ObjectId(playerId) });
     if (!player) {
         throw new Error("Player not found");
     }
@@ -100,17 +105,17 @@ export const tradeCardsForArmies = async (playerId: ObjectId, cardIds: ObjectId[
         throw new Error("Collections not found");
     }
 
-    const player = await playersCollection.findOne({ _id: playerId });
+    const player = await playersCollection.findOne<Player>({ _id: playerId });
     if (!player) {
         throw new Error("Player not found");
     }
 
-    const ongoingGame = await gamesCollection.findOne({ state: "ongoing" });
+    const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
     if (!ongoingGame || ongoingGame.currentPlayer !== player.house || ongoingGame.roundState !== RoundState.Reinforcement) {
         throw new Error("You can only trade cards during your reinforcement phase");
     }
 
-    const selectedCards = await cardsCollection.find({ _id: { $in: cardIds }, owner_id: player.house }).toArray();
+    const selectedCards = await cardsCollection.find<Card>({ _id: { $in: cardIds }, owner_id: player.house }).toArray();
     if (selectedCards.length !== 3) {
         throw new Error("You must trade exactly 3 cards");
     }
@@ -161,13 +166,13 @@ export const drawCard = async (playerId: ObjectId) => {
             throw new Error("Collections not found");
         }
 
-        const player = await playersCollection.findOne({ _id: playerId });
+        const player = await playersCollection.findOne<Player>({ _id: playerId });
         if (!player) {
             throw new Error("Player not found");
         }
 
         if (player.conquered) {
-            const topCard = await cardsCollection.findOne({ owner_id: "in deck" }, { sort: { sequence_number: 1 } });
+            const topCard = await cardsCollection.findOne<Card>({ owner_id: "in deck" }, { sort: { sequence_number: 1 } });
 
             if (!topCard) {
                 throw new Error('No cards left in deck');
