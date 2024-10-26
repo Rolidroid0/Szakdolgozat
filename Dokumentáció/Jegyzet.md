@@ -67,3 +67,5 @@ A Node.js szerver kapcsolódik a MongoDB-hez, és onnan olvas vagy ír adatokat.
     - Games.roundState-et és currentPlayer-t alsóvonalassá tenni
     - Game_id hozzáadása az összes collection-hez és ezek beállítása mindenhol (seedelésnél, új példány létrehozásánál, minden function ahol használva van egy collection eleme, ott keresési feltételhez a game_id is egyezzen).
     - EssosTerritoryNeighbors kapcsolótábla létrehozása: a szomszédok mindig ugyan azok maradnak. Módosítani a szomszédos területek keresése függvényt. 
+    - STARTGAMESERVICE: await cardscoll updatemany helyett seedelni az adatbázist.
+    Továbbá helytelen az egész, mert nem tud létrehozni ongoing-game-id-val játékosokat amíg nem fut a játék, szóval újra kell tervezni az egészet..

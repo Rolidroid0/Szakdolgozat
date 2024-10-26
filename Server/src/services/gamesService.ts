@@ -46,23 +46,29 @@ export const getCurrentRound = async () => {
         return { message: "No ongoing game found" };
     }
 
-    const { round, currentPlayer, roundState } = ongoingGame;
+    const { round, current_player, round_state } = ongoingGame;
 
-    return { round, currentPlayer, roundState };
+    return { round, current_player, round_state };
 };
 
 export const applyAdditionalArmies = async (playerId: ObjectId) => {
     const db = await connectToDb();
     const playersCollection = db?.collection('Players');
+    const gamesCollection = db?.collection('Games');
 
-    if (!playersCollection) {
-        throw new Error("Players collection not found");
+    if (!playersCollection || !gamesCollection) {
+        throw new Error("Collections not found");
+    }
+
+    const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
+    if (!ongoingGame) {
+        throw new Error("No ongoing game found");
     }
 
     const additionalArmies = await calculatePlusArmies(playerId);
 
     await playersCollection.updateOne(
-        { _id: playerId },
+        { _id: playerId, game_id: ongoingGame._id },
         { $inc: { plus_armies: additionalArmies } }
     );
 };
@@ -82,14 +88,14 @@ export const endTurn = async (playerId: ObjectId) => {
         throw new Error("No ongoing game found");
     }
 
-    const currentPlayer = ongoingGame.currentPlayer;
-    const currentPlayerDoc = await playersCollection.findOne<Player>({ _id: playerId });
+    const currentPlayer = ongoingGame.current_player;
+    const currentPlayerDoc = await playersCollection.findOne<Player>({ _id: playerId, game_id: ongoingGame._id });
 
     if (!currentPlayerDoc || currentPlayerDoc.house !== currentPlayer) {
         throw new Error("It's not your turn!");
     }
 
-    if (currentPlayerDoc.plus_armies > 0 && ongoingGame.roundState === "reinforcement") {
+    if (currentPlayerDoc.plus_armies > 0 && ongoingGame.round_state === "reinforcement") {
         throw new Error("You still have armies to place");
     }
 
@@ -97,7 +103,7 @@ export const endTurn = async (playerId: ObjectId) => {
         await drawCard(currentPlayerDoc._id);
         currentPlayerDoc.conquered = false;
         await playersCollection.updateOne(
-            { _id: currentPlayerDoc._id },
+            { _id: currentPlayerDoc._id, game_id: ongoingGame._id },
             { $set: { conquered: false } }
         );
 
@@ -117,7 +123,7 @@ export const endTurn = async (playerId: ObjectId) => {
         return;
     }
 
-    const players = await playersCollection.find<Player>({}).toArray();
+    const players = await playersCollection.find<Player>({ game_id: ongoingGame._id }).toArray();
     const currentPlayerIndex = players.findIndex(player => player._id.equals(playerId));
     const nextPlayerIndex = (currentPlayerIndex + 1) % players.length;
 
@@ -134,14 +140,14 @@ export const endTurn = async (playerId: ObjectId) => {
         const nextRoundState = RoundState.Reinforcement;
 
         await gamesCollection.updateOne(
-            { state: "ongoing" },
-            { $set: { currentPlayer: nextPlayer.house, round: currentRound, roundState: nextRoundState } }
+            { _id: ongoingGame._id },
+            { $set: { current_player: nextPlayer.house, round: currentRound, round_state: nextRoundState } }
         );
 
         const wss = getWebSocketServer();
         wss.clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN) {
-                client.send(JSON.stringify({ action: 'round-updated', data: { currentRound: currentRound, currentHouse: nextPlayer.house, roundState: nextRoundState } }));
+                client.send(JSON.stringify({ action: 'round-updated', data: { current_round: currentRound, currentHouse: nextPlayer.house, round_state: nextRoundState } }));
             }
         });
     } else {
@@ -165,22 +171,22 @@ export const endPhase = async (playerId: ObjectId) => {
             throw new Error("No ongoing game found");
         }
 
-        const player = await playersCollection.findOne<Player>({ _id: new ObjectId(playerId) });
+        const player = await playersCollection.findOne<Player>({ _id: new ObjectId(playerId), game_id: ongoingGame._id });
 
         if (!player) {
             throw new Error("No player found");
         }
 
-        if (ongoingGame.currentPlayer !== player.house) {
+        if (ongoingGame.current_player !== player.house) {
             throw new Error("Not your turn");
         }
 
-        if (player.plus_armies > 0 && ongoingGame.roundState === "reinforcement") {
+        if (player.plus_armies > 0 && ongoingGame.round_state === "reinforcement") {
             throw new Error("You still have armies to place");
         }
 
         const phaseOrder = [RoundState.Reinforcement, RoundState.Invasion, RoundState.Maneuver];
-        const currentPhaseIndex = phaseOrder.indexOf(ongoingGame.roundState);
+        const currentPhaseIndex = phaseOrder.indexOf(ongoingGame.round_state);
         let nextRoundState;
 
         if (currentPhaseIndex === -1) {
@@ -194,7 +200,7 @@ export const endPhase = async (playerId: ObjectId) => {
 
         await gamesCollection.updateOne(
             { _id: ongoingGame._id },
-            { $set: { roundState: nextRoundState } }
+            { $set: { round_state: nextRoundState } }
         );
 
         const wss = getWebSocketServer();
@@ -202,7 +208,7 @@ export const endPhase = async (playerId: ObjectId) => {
             if (client.readyState === WebSocket.OPEN) {
                 client.send(JSON.stringify({
                     action: 'round-state-updated',
-                    data: { roundState: nextRoundState }
+                    data: { round_state: nextRoundState }
                 }));
             }
         });
@@ -223,14 +229,20 @@ export const applyManeuver = async (playerId: ObjectId, fromTerritoryId: ObjectI
         throw new Error("Collections not found");
     }
 
-    const player = await playersCollection.findOne<Player>({ _id: playerId });
+    const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
+
+    if (!ongoingGame) {
+        throw new Error("No ongoing game found");
+    }
+
+    const player = await playersCollection.findOne<Player>({ _id: playerId, game_id: ongoingGame._id });
 
     if (!player) {
         throw new Error("Player not found");
     }
 
-    const fromTerritory = await territoriesCollection.findOne<Territory>({ _id: fromTerritoryId });
-    const toTerritory = await territoriesCollection.findOne<Territory>({ _id: toTerritoryId });
+    const fromTerritory = await territoriesCollection.findOne<Territory>({ _id: fromTerritoryId, game_id: ongoingGame._id });
+    const toTerritory = await territoriesCollection.findOne<Territory>({ _id: toTerritoryId, game_id: ongoingGame._id });
 
     if (!fromTerritory || !toTerritory) {
         throw new Error("Territories not found");
@@ -250,12 +262,12 @@ export const applyManeuver = async (playerId: ObjectId, fromTerritoryId: ObjectI
     }
 
     await territoriesCollection.updateOne(
-        { _id: fromTerritoryId },
+        { _id: fromTerritoryId, game_id: ongoingGame._id },
         { $inc: { number_of_armies: -armies } }
     );
 
     await territoriesCollection.updateOne(
-        { _id: toTerritoryId },
+        { _id: toTerritoryId, game_id: ongoingGame._id },
         { $inc: { number_of_armies: armies } }
     );
 
@@ -289,16 +301,16 @@ export const checkGameEnd = async () => {
             throw new Error('No ongoing game found');
         }
 
-        const endCard = await cardsCollection.findOne<Card>({ symbol: Symbol.End, owner_id: { $ne: "in deck" } });
+        const endCard = await cardsCollection.findOne<Card>({ game_id: ongoingGame._id, symbol: Symbol.End, owner_id: { $ne: "in deck" } });
         if (endCard) {
             console.log(`Game (_id: ${ongoingGame._id}) ends because 'Valar Morghulis' card was drawn.`);
             return await calculateScores();
         }
 
-        const players = await playersCollection.find({}).toArray();
+        const players = await playersCollection.find({ game_id: ongoingGame._id }).toArray();
         for (const player of players) {
             // if there are more than 2 players its bad, it should count if a players territories count equals with allTerritories count..
-            const playerTerritories = await territoriesCollection.countDocuments({ owner_id: player.house });
+            const playerTerritories = await territoriesCollection.countDocuments({ owner_id: player.house, game_id: ongoingGame._id });
             if (playerTerritories === 0) {
                 console.log(`Game (_id: ${ongoingGame._id}) ends because ${player.house} has no territories.`);
                 return await calculateScores();

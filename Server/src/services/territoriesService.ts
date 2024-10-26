@@ -10,12 +10,19 @@ import { Game } from "../models/gamesModel";
 export const getTerritories = async () => {
     const db = await connectToDb();
     const territoriesCollection = db?.collection('EssosTerritories');
+    const gamesCollection = db?.collection('Games');
 
-    if (!territoriesCollection) {
-        throw new Error("Territories collection not found");
+    if (!territoriesCollection || !gamesCollection) {
+        throw new Error("Collections not found");
     }
 
-    const territories = await territoriesCollection.find<Territory>({}).toArray();
+    const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
+
+    if (!ongoingGame) {
+        throw new Error("No ongoing game found");
+    }
+
+    const territories = await territoriesCollection.find<Territory>({ game_id: ongoingGame._id }).toArray();
     return territories;
 };
 
@@ -23,12 +30,19 @@ export const getTerritoryById = async (territoryId: ObjectId) => {
   try {
       const db = await connectToDb();
       const territoriesCollection = db?.collection('EssosTerritories');
+      const gamesCollection = db?.collection('Games');
 
-      if (!territoriesCollection) {
-          throw new Error("Territories collection not found");
+      if (!territoriesCollection || !gamesCollection) {
+          throw new Error("Collections not found");
       }
 
-      const territory = await territoriesCollection.findOne<Territory>({ _id: new ObjectId(territoryId) });
+      const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
+
+      if (!ongoingGame) {
+          throw new Error("No ongoing game found");
+      }
+
+      const territory = await territoriesCollection.findOne<Territory>({ _id: new ObjectId(territoryId), game_id: ongoingGame._id });
       if (!territory) {
           throw new Error("Territory not found");
       }
@@ -45,14 +59,21 @@ export const allocateTerritories = async () => {
     const db = await connectToDb();
     const territoriesCollection = db?.collection('EssosTerritories');
     const playersCollection = db?.collection('Players');
+    const gamesCollection = db?.collection('Games');
 
-    if (!territoriesCollection || !playersCollection) {
-      throw new Error("Required collections not found");
+    if (!territoriesCollection || !playersCollection || !gamesCollection) {
+      throw new Error("Collections not found");
     }
 
-    const territories = await territoriesCollection.find<Territory>({}).toArray();
+    const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
+
+    if (!ongoingGame) {
+      throw new Error("No ongoing game found");
+    }
+
+    const territories = await territoriesCollection.find<Territory>({ game_id: ongoingGame._id }).toArray();
     territories.sort(() => Math.random() - 0.5);
-    const players = await playersCollection.find<Player>({}).toArray();
+    const players = await playersCollection.find<Player>({ game_id: ongoingGame._id }).toArray();
 
     if (players.length < 2) {
       throw new Error("There are not enough players");
@@ -68,19 +89,19 @@ export const allocateTerritories = async () => {
     await Promise.all([
       ...player1Territories.map(territory =>
           territoriesCollection.updateOne(
-              { _id: territory._id },
+              { _id: territory._id, game_id: ongoingGame._id },
               { $set: { owner_id: player1, last_attacked_from : 0, number_of_armies : 2 } }
           )
       ),
       ...player2Territories.map(territory =>
           territoriesCollection.updateOne(
-              { _id: territory._id },
+              { _id: territory._id, game_id: ongoingGame._id },
               { $set: { owner_id: player2, last_attacked_from : 0, number_of_armies : 2 } }
           )
       ),
       ...neutralTerritories.map(territory =>
           territoriesCollection.updateOne(
-              { _id: territory._id },
+              { _id: territory._id, game_id: ongoingGame._id },
               { $set: { owner_id: 'neutral', last_attacked_from : 0, number_of_armies : 2 } }
           )
       ),
@@ -97,31 +118,38 @@ export const findConnectedTerritories = async (startingTerritoryId: ObjectId, pl
   const db = await connectToDb();
   const territoriesCollection = db?.collection('EssosTerritories');
   const playersCollection = db?.collection('Players');
+  const gamesCollection = db?.collection('Games');
 
-  if (!territoriesCollection || !playersCollection) {
+  if (!territoriesCollection || !playersCollection || !gamesCollection) {
     throw new Error("Collections not found");
   }
 
-  const player = await playersCollection.findOne<Player>({ _id: new ObjectId(playerId) });
+  const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
+
+  if (!ongoingGame) {
+    throw new Error("No ongoing game found");
+  }
+
+  const player = await playersCollection.findOne<Player>({ _id: new ObjectId(playerId), game_id: ongoingGame._id });
   if (!player) {
     throw new Error("Player not found");
   }
 
-  const startingTerritory = await territoriesCollection.findOne<Territory>({ _id: startingTerritoryId });
+  const startingTerritory = await territoriesCollection.findOne<Territory>({ _id: startingTerritoryId, game_id: ongoingGame._id });
 
   if (!startingTerritory || startingTerritory.owner_id !== player.house) {
     throw new Error("Invalid starting territory or you do not own it");
   }
 
   const visited = new Set<string>();
-  const queue = [startingTerritoryId];
+  const queue = [startingTerritory.name];
   const connectedTerritories = [];
 
-  visited.add(startingTerritoryId.toString());
+  visited.add(startingTerritory.name);
 
   while (queue.length > 0) {
     const currentTerritoryId = queue.shift()!;
-    const currentTerritory = await territoriesCollection.findOne<Territory>({ _id: currentTerritoryId });
+    const currentTerritory = await territoriesCollection.findOne<Territory>({ name: currentTerritoryId, game_id: ongoingGame._id });
 
     if (!currentTerritory) continue;
 
@@ -133,23 +161,23 @@ export const findConnectedTerritories = async (startingTerritoryId: ObjectId, pl
       const neighborIdStr = neighborId.toString();
 
       if (!visited.has(neighborIdStr)) {
-        const neighborTerritory = await territoriesCollection.findOne<Territory>({ _id: neighborId });
+        const neighborTerritory = await territoriesCollection.findOne<Territory>({ name: neighborId, game_id: ongoingGame._id });
         if (neighborTerritory?.owner_id === player.house) {
           visited.add(neighborIdStr);
-          queue.push(neighborId);
+          queue.push(neighborIdStr);
         }
       }
     }
 
     if (currentTerritory.port === 1) {
-      const portTerritories = await territoriesCollection.find<Territory>({ port: 1, owner_id: player.house }).toArray();
+      const portTerritories = await territoriesCollection.find<Territory>({ port: 1, owner_id: player.house, game_id: ongoingGame._id }).toArray();
 
       for (const portTerritory of portTerritories) {
         const portTerritoryIdStr = portTerritory._id.toString();
 
         if (!visited.has(portTerritoryIdStr) && portTerritoryIdStr !== currentTerritoryId.toString()) {
           visited.add(portTerritoryIdStr);
-          queue.push(portTerritory._id);
+          queue.push(portTerritory.name);
         }
       }
     }
@@ -162,17 +190,24 @@ export const findAttackableTerritories = async (startingTerritoryId: ObjectId, p
   const db = await connectToDb();
   const territoriesCollection = db?.collection('EssosTerritories');
   const playersCollection = db?.collection('Players');
+  const gamesCollection = db?.collection('Games');
 
-  if (!territoriesCollection || !playersCollection) {
+  if (!territoriesCollection || !playersCollection || !gamesCollection) {
     throw new Error("Collections not found");
   }
 
-  const player = await playersCollection.findOne<Player>({ _id: playerId });
+  const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
+
+  if (!ongoingGame) {
+    throw new Error("No ongoing game found");
+  }
+
+  const player = await playersCollection.findOne<Player>({ _id: playerId, game_id: ongoingGame._id });
   if (!player) {
     throw new Error("Player not found");
   }
 
-  const startingTerritory = await territoriesCollection.findOne<Territory>({ _id: startingTerritoryId });
+  const startingTerritory = await territoriesCollection.findOne<Territory>({ _id: startingTerritoryId, game_id: ongoingGame._id });
   if (!startingTerritory || startingTerritory.owner_id !== player.house) {
     throw new Error("Invalid starting territory or you do not own it");
   }
@@ -180,14 +215,14 @@ export const findAttackableTerritories = async (startingTerritoryId: ObjectId, p
   const attackableTerritories: Territory[] = [];
 
   for (const neighborId of startingTerritory.neighbors) {
-    const attackableTerritory = await territoriesCollection.findOne<Territory>({ _id: neighborId });
+    const attackableTerritory = await territoriesCollection.findOne<Territory>({ name: neighborId, game_id: ongoingGame._id });
     if (attackableTerritory && attackableTerritory.owner_id !== player.house) {
       attackableTerritories.push(attackableTerritory);
     }
   }
 
   if (startingTerritory.port === 1) {
-    const portTerritories = await territoriesCollection.find<Territory>({ port: 1, owner_id: { $ne: player.house } }).toArray();
+    const portTerritories = await territoriesCollection.find<Territory>({ port: 1, owner_id: { $ne: player.house }, game_id: ongoingGame._id }).toArray();
 
     for (const portTerritory of portTerritories) {
       const isAlreadyIncluded = attackableTerritories.some(t => t._id.equals(portTerritory._id));
@@ -216,12 +251,12 @@ export const reinforceTerritory = async (playerId: ObjectId, territoryId: Object
       throw new Error("No ongoing game found");
     }
 
-    const player = await playersCollection.findOne<Player>({ _id: new ObjectId(playerId) });
+    const player = await playersCollection.findOne<Player>({ _id: new ObjectId(playerId), game_id: ongoingGame._id });
     if (!player) {
       throw new Error("Player not found");
     }
 
-    const territory = await territoriesCollection.findOne<Territory>({ _id: new ObjectId(territoryId) });
+    const territory = await territoriesCollection.findOne<Territory>({ _id: new ObjectId(territoryId), game_id: ongoingGame._id });
     if (!territory) {
       throw new Error("Territory not found");
     }
@@ -230,7 +265,7 @@ export const reinforceTerritory = async (playerId: ObjectId, territoryId: Object
       throw new Error("You do not own this territory");
     }
 
-    if (ongoingGame.roundState !== "reinforcement") {
+    if (ongoingGame.round_state !== "reinforcement") {
       throw new Error("Reinforcement phase is not active");
     }
 
@@ -242,12 +277,12 @@ export const reinforceTerritory = async (playerId: ObjectId, territoryId: Object
     }
 
     await territoriesCollection.updateOne(
-      { _id: territory._id },
+      { _id: territory._id, game_id: ongoingGame._id },
       { $inc: { number_of_armies: armies } }
     );
 
     await playersCollection.updateOne(
-      { _id: player._id },
+      { _id: player._id, game_id: ongoingGame._id },
       { $inc: { plus_armies: -armies } }
     );
 

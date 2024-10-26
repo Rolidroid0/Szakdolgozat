@@ -16,8 +16,8 @@ interface BattleModalProps {
 }
 
 const BattleModal: React.FC<BattleModalProps> = ({ wsService, battle, playerId }) => {
-  const [attackerRolls, setAttackerRolls] = useState<number[]>(battle.attackerRolls || []);
-  const [defenderRolls, setDefenderRolls] = useState<number[]>(battle.defenderRolls || []);
+  const [attackerRolls, setAttackerRolls] = useState<number[]>(battle.attacker_rolls || []);
+  const [defenderRolls, setDefenderRolls] = useState<number[]>(battle.defender_rolls || []);
   const [canRoll, setCanRoll] = useState<boolean>(false);
   const [player, setPlayer] = useState<Player>();
   const [loadingPlayer, setLodaingPlayer] = useState<boolean>(true);
@@ -126,17 +126,20 @@ const BattleModal: React.FC<BattleModalProps> = ({ wsService, battle, playerId }
             <div className="battle-log">
               <h3>Battle Log</h3>
               <div className="log-entries">
-                {battleLog.map((entry : any, index) => (
+                {battleLog.map((entry : string, index) => {
+                  const parsedEntry = JSON.parse(entry);
+                  return (
                   <div key={index}>
-                    <p>Attacker Rolls: {entry.attackerRolls.join(', ')}</p>
-                    <p>Defender Rolls: {entry.defenderRolls.join(', ')}</p>
-                    <p>Attacker Losses: {entry.attackerLosses}</p>
-                    <p>Defender Losses: {entry.defenderLosses}</p>
-                    <p>Remaining Attacker Armies: {entry.remainingAttackerArmies}</p>
-                    <p>Remaining Defender Armies: {entry.remainingDefenderArmies}</p>
+                    <p>Attacker Rolls: {parsedEntry.attackerRolls.join(', ')}</p>
+                    <p>Defender Rolls: {parsedEntry.defenderRolls.join(', ')}</p>
+                    <p>Attacker Losses: {parsedEntry.attackerLosses}</p>
+                    <p>Defender Losses: {parsedEntry.defenderLosses}</p>
+                    <p>Remaining Attacker Armies: {parsedEntry.remainingAttackerArmies}</p>
+                    <p>Remaining Defender Armies: {parsedEntry.remainingDefenderArmies}</p>
                     <hr />
                 </div>
-                ))}
+                );
+                })}
               </div>
             </div>
 

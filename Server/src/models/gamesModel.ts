@@ -4,8 +4,8 @@ import { RoundState } from "./enums";
 export interface Game {
     _id: ObjectId;
     round: number;
-    currentPlayer: string;
+    current_player: string;
     players: string[];
     state: string;
-    roundState: RoundState;
+    round_state: RoundState;
 }

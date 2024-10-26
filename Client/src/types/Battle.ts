@@ -12,8 +12,8 @@ export interface Battle {
     current_defender_armies: number;
     battle_log: string[];
     round_number: number;
-    attackerRolls: number[];
-    defenderRolls: number[];
+    attacker_rolls: number[];
+    defender_rolls: number[];
     attacker_has_rolled: boolean;
     defender_has_rolled: boolean;
 }

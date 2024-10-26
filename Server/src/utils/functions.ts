@@ -7,6 +7,7 @@ import WebSocket from "ws";
 import { Player } from "../models/playersModel";
 import { Territory } from "../models/territoriesModel";
 import { Region } from "../models/regionsModel";
+import { Game } from "../models/gamesModel";
 
 function generateShuffledNumbers(n: number) {
     const numbers = Array.from({ length: n}, (_, i) => i);
@@ -21,13 +22,22 @@ export const handleDisconnect = async (playerId: string) => {
     try {
         const db = await connectToDb();
         const playersCollection = db?.collection('Players');
+        const gamesCollection = db?.collection('Games');
 
-        if (!playersCollection) {
-            throw new Error("Players collection not found");
+        if (!playersCollection || !gamesCollection) {
+            throw new Error("Collections not found");
+        }
+
+        const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
+
+        if (!ongoingGame) {
+            throw new Error("No ongoing game found");
         }
 
         await playersCollection.updateOne(
-            { _id: new ObjectId(playerId) },
+            { _id: new ObjectId(playerId),
+              game_id: ongoingGame._id
+            },
             { $set: { is_logged_in: false } }
         );
     } catch (error) {
@@ -40,18 +50,25 @@ export const calculatePlusArmies = async (playerId: ObjectId) => {
     const playersCollection = db?.collection('Players');
     const territoriesCollection = db?.collection('EssosTerritories');
     const regionsCollection = db?.collection('Regions');
+    const gamesCollection = db?.collection('Games');
 
-    if (!playersCollection || !territoriesCollection || !regionsCollection) {
+    if (!playersCollection || !territoriesCollection || !regionsCollection || !gamesCollection) {
         throw new Error("Collections not found");
     }
+
+    const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
+
+    if (!ongoingGame) {
+        throw new Error("No ongoing game found");
+    }
     
-    const player = await playersCollection.findOne<Player>({ _id: playerId });
+    const player = await playersCollection.findOne<Player>({ _id: playerId, game_id: ongoingGame._id });
 
     if (!player) {
         throw new Error("No player found");
     }
 
-    const territories = await territoriesCollection.find<Territory>({ owner_id: player.house }).toArray();
+    const territories = await territoriesCollection.find<Territory>({ owner_id: player.house, game_id: ongoingGame._id }).toArray();
 
     const territoryCount = territories.length;
     const fortressCount = territories.filter(territory => territory.fortress === 1).length;
@@ -111,24 +128,31 @@ export const assignTerritoryBonus = async (playerId: ObjectId, cardTerritories: 
     const db = await connectToDb();
     const territoriesCollection = db?.collection('EssosTerritories');
     const playersCollection = db?.collection('Players');
+    const gamesCollection = db?.collection('Games');
 
-    if (!territoriesCollection || !playersCollection) {
+    if (!territoriesCollection || !playersCollection || !gamesCollection) {
         throw new Error("Collections not found");
     }
 
-    const player = await playersCollection.findOne<Player>({ _id: playerId });
+    const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
+
+    if (!ongoingGame) {
+        throw new Error("No ongoing game found");
+    }
+
+    const player = await playersCollection.findOne<Player>({ _id: playerId, game_id: ongoingGame._id });
     if (!player) {
         throw new Error("Player not found");
     }
 
-    const ownedTerritories = await territoriesCollection.find<Territory>({ owner_id: player.house, name: { $in: cardTerritories } }).toArray();
+    const ownedTerritories = await territoriesCollection.find<Territory>({ owner_id: player.house, game_id: ongoingGame, name: { $in: cardTerritories } }).toArray();
 
     for (const territory of ownedTerritories) {
         await territoriesCollection.updateOne(
-            { _id: territory._id },
+            { _id: territory._id, game_id: ongoingGame._id },
             { $inc: { number_of_armies: 2 } }
         );
-        const updatedTerritory = await territoriesCollection.findOne<Territory>({ _id: territory._id });
+        const updatedTerritory = await territoriesCollection.findOne<Territory>({ _id: territory._id, game_id: ongoingGame._id });
         const wss = getWebSocketServer();
         wss.clients.forEach(client => {
             if (client.readyState === WebSocket.OPEN) {
@@ -152,11 +176,17 @@ export const calculateScores = async () => {
             throw new Error('Collections not found');
         }
 
-        const players = await playersCollection.find<Player>({}).toArray();
+        const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
+
+        if (!ongoingGame) {
+            throw new Error("No ongoing game found");
+        }
+
+        const players = await playersCollection.find<Player>({ game_id: ongoingGame._id }).toArray();
         const scores: any[] = [];
 
         for (const player of players) {
-            const territories = await territoriesCollection.find<Territory>({ owner_id: player.house }).toArray();
+            const territories = await territoriesCollection.find<Territory>({ owner_id: player.house, game_id: ongoingGame._id }).toArray();
             let score = 0;
 
             score += territories.length;

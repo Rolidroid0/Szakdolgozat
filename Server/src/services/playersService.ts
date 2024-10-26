@@ -6,12 +6,18 @@ import { Game } from "../models/gamesModel";
 export const getPlayers = async () => {
     const db = await connectToDb();
     const playersCollection = db?.collection('Players');
+    const gamesCollection = db?.collection('Games');
 
-    if (!playersCollection) {
-        throw new Error("Players collection not found");
+    if (!playersCollection || !gamesCollection) {
+        throw new Error("Collections not found");
     }
 
-    const players = await playersCollection.find<Player>({}).toArray();
+    const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
+    if (!ongoingGame) {
+      throw new Error("No ongoing game found");
+    }
+
+    const players = await playersCollection.find<Player>({ game_id: ongoingGame._id }).toArray();
     return players;
 };
 
@@ -19,12 +25,18 @@ export const getPlayerById = async (playerId: ObjectId) => {
     try {
         const db = await connectToDb();
         const playersCollection = db?.collection('Players');
+        const gamesCollection = db?.collection('Games');
 
-        if (!playersCollection) {
-            throw new Error("Players collection not found");
+        if (!playersCollection || !gamesCollection) {
+            throw new Error("Collections not found");
         }
 
-        const player = await playersCollection.findOne<Player>({ _id: new ObjectId(playerId) });
+        const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
+        if (!ongoingGame) {
+            throw new Error("No ongoing game found");
+        }
+
+        const player = await playersCollection.findOne<Player>({ _id: new ObjectId(playerId), game_id: ongoingGame._id });
         if (!player) {
             throw new Error("Player not found");
         }
@@ -40,16 +52,22 @@ export const generatePlayers = async (numberOfPlayers: number) => {
     try {
         const db = await connectToDb();
         const playersCollection = db?.collection('Players');
+        const gamesCollection = db?.collection('Games');
 
-        if (!playersCollection) {
-            throw new Error("Players collection not found");
+        if (!playersCollection || !gamesCollection) {
+            throw new Error("Collections not found");
         }
 
-        await playersCollection.deleteMany({});
+        const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
+        if (!ongoingGame) {
+            throw new Error("No ongoing game found");
+        }
+
+        //await playersCollection.deleteMany({});
 
         const defaultPlayers = [
-            { house: 'Targaryen', plus_armies: 0, conquered: false, is_logged_in: false},
-            { house: 'Ghiscari', plus_armies: 0, conquered: false, is_logged_in: false}
+            { house: 'Targaryen', plus_armies: 0, conquered: false, is_logged_in: false, game_id: ongoingGame._id},
+            { house: 'Ghiscari', plus_armies: 0, conquered: false, is_logged_in: false, game_id: ongoingGame._id}
         ]
 
         const players = defaultPlayers.slice(0, numberOfPlayers);
@@ -77,14 +95,14 @@ export const loginPlayer = async (playerId: ObjectId) => {
             return { success: false, message: 'No ongoing game found, start a new one' };
         }
 
-        const player = await playersCollection.findOne<Player>({ _id: playerId });
+        const player = await playersCollection.findOne<Player>({ _id: playerId, game_id: ongoingGame._id });
 
         if (player?.is_logged_in) {
             return { success: false, message: 'This house is already occupied' };
         }
 
         await playersCollection.updateOne(
-            { _id: playerId },
+            { _id: playerId, game_id: ongoingGame._id },
             { $set: { is_logged_in: true } }
         );
 
@@ -99,13 +117,19 @@ export const logoutPlayer = async (playerId: ObjectId) => {
     try {
         const db = await connectToDb();
         const playersCollection = db?.collection('Players');
+        const gamesCollection = db?.collection('Games');
 
-        if (!playersCollection) {
-            throw new Error('Collection not found');
+        if (!playersCollection || !gamesCollection) {
+            throw new Error('Collections not found');
+        }
+
+        const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
+        if (!ongoingGame) {
+            throw new Error("No ongoing game found");
         }
 
         await playersCollection.updateOne(
-            { _id: playerId },
+            { _id: playerId, game_id: ongoingGame._id },
             { $set: { is_logged_in: false } }
         );
     } catch (error) {

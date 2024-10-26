@@ -15,15 +15,20 @@ export const shuffle = async () => {
     try {
         const db = await connectToDb();
         const essosCards = db?.collection('EssosCards');
+        const gamesCollection = db?.collection('Games');
 
-        if (!essosCards) {
-            console.error('EssosCards collection not found');
-            return;
+        if (!essosCards || !gamesCollection) {
+            throw new Error('Collections not found');
         }
 
-        const cardsCursor = essosCards.find<Card>({});
+        const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
+        if (!ongoingGame) {
+            throw new Error('No ongoing game found');
+        }
 
-        const cardCount = await essosCards.countDocuments({});
+        const cardsCursor = await essosCards.find<Card>({ game_id: ongoingGame._id });
+
+        const cardCount = await essosCards.countDocuments({ game_id: ongoingGame._id });
         const shuffledNumbers = generateShuffledNumbers(cardCount);
 
         let index = 0;
@@ -31,20 +36,20 @@ export const shuffle = async () => {
             const card = await cardsCursor.next();
             if (card) {
                 await essosCards.updateOne(
-                    { _id: card._id },
+                    { _id: card._id, game_id: ongoingGame._id },
                     { $set: { sequence_number: shuffledNumbers[index] } }
                 );
                 index++;
             }
         }
 
-        const endCard = await essosCards.findOne<Card>({ symbol: Symbol.End });
+        const endCard = await essosCards.findOne<Card>({ symbol: Symbol.End, game_id: ongoingGame._id });
 
         const minPosition = Math.floor(cardCount / 2);
         const maxPosition = cardCount - 1;
         const newEndPosition = Math.floor(Math.random() * (maxPosition - minPosition + 1)) + minPosition;
 
-        const otherCard = await essosCards.findOne<Card>({ sequence_number: newEndPosition });
+        const otherCard = await essosCards.findOne<Card>({ sequence_number: newEndPosition, game_id: ongoingGame._id });
 
         if (!endCard || !otherCard) {
             console.error('Cards not found');
@@ -52,16 +57,16 @@ export const shuffle = async () => {
         }
 
         await essosCards.updateOne(
-            { _id: endCard._id },
+            { _id: endCard._id, game_id: ongoingGame._id },
             { $set: { sequence_number: newEndPosition } }
         );
 
         await essosCards.updateOne(
-            { _id: otherCard._id },
+            { _id: otherCard._id, game_id: ongoingGame._id },
             { $set: { sequence_number: endCard.sequence_number } }
         );
         
-        const shuffledCards = await essosCards.find<Card>({}).toArray();
+        const shuffledCards = await essosCards.find<Card>({ game_id: ongoingGame._id }).toArray();
 
         const wss = getWebSocketServer();
         wss.clients.forEach(client => {
@@ -80,17 +85,23 @@ export const getPlayerCardsService = async (playerId: string) => {
     const db = await connectToDb();
     const playersCollection = db?.collection('Players');
     const cardsCollection = db?.collection('EssosCards');
+    const gamesCollection = db?.collection('Games');
 
-    if (!playersCollection || !cardsCollection) {
+    if (!playersCollection || !cardsCollection || !gamesCollection) {
         throw new Error("Collections not found");
     }
 
-    const player = await playersCollection.findOne<Player>({ _id: new ObjectId(playerId) });
+    const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
+    if (!ongoingGame) {
+        throw new Error('No ongoing game found');
+    }
+
+    const player = await playersCollection.findOne<Player>({ _id: new ObjectId(playerId), game_id: ongoingGame._id });
     if (!player) {
         throw new Error("Player not found");
     }
 
-    const playerCards = await cardsCollection.find({ owner_id: player.house }).toArray();
+    const playerCards = await cardsCollection.find({ owner_id: player.house, game_id: ongoingGame._id }).toArray();
 
     return playerCards;
 }
@@ -105,17 +116,21 @@ export const tradeCardsForArmies = async (playerId: ObjectId, cardIds: ObjectId[
         throw new Error("Collections not found");
     }
 
-    const player = await playersCollection.findOne<Player>({ _id: playerId });
+    const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
+    if (!ongoingGame) {
+        throw new Error('No ongoing game found');
+    }
+
+    const player = await playersCollection.findOne<Player>({ _id: playerId, game_id: ongoingGame._id });
     if (!player) {
         throw new Error("Player not found");
     }
 
-    const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
-    if (!ongoingGame || ongoingGame.currentPlayer !== player.house || ongoingGame.roundState !== RoundState.Reinforcement) {
+    if (ongoingGame.current_player !== player.house || ongoingGame.round_state !== RoundState.Reinforcement) {
         throw new Error("You can only trade cards during your reinforcement phase");
     }
 
-    const selectedCards = await cardsCollection.find<Card>({ _id: { $in: cardIds }, owner_id: player.house }).toArray();
+    const selectedCards = await cardsCollection.find<Card>({ _id: { $in: cardIds }, owner_id: player.house, game_id: ongoingGame._id }).toArray();
     if (selectedCards.length !== 3) {
         throw new Error("You must trade exactly 3 cards");
     }
@@ -145,11 +160,11 @@ export const tradeCardsForArmies = async (playerId: ObjectId, cardIds: ObjectId[
     }
 
     await playersCollection.updateOne(
-        { _id: playerId },
+        { _id: playerId, game_id: ongoingGame._id },
         { $inc: { plus_armies: additionalArmies } }
     );
 
-    await cardsCollection.updateMany({ _id: { $in: cardIds } }, { $set: { owner_id: "usedThisGame" } });
+    await cardsCollection.updateMany({ _id: { $in: cardIds }, game_id: ongoingGame._id }, { $set: { owner_id: "usedThisGame" } });
 
     await assignTerritoryBonus(playerId, territories);
 
@@ -161,24 +176,30 @@ export const drawCard = async (playerId: ObjectId) => {
         const db = await connectToDb();
         const playersCollection = db?.collection('Players');
         const cardsCollection = db?.collection('EssosCards');
+        const gamesCollection = db?.collection('Games');
 
-        if (!playersCollection || !cardsCollection) {
+        if (!playersCollection || !cardsCollection || !gamesCollection) {
             throw new Error("Collections not found");
         }
 
-        const player = await playersCollection.findOne<Player>({ _id: playerId });
+        const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
+        if (!ongoingGame) {
+            throw new Error('No ongoing game found');
+        }
+
+        const player = await playersCollection.findOne<Player>({ _id: playerId, game_id: ongoingGame._id });
         if (!player) {
             throw new Error("Player not found");
         }
 
         if (player.conquered) {
-            const topCard = await cardsCollection.findOne<Card>({ owner_id: "in deck" }, { sort: { sequence_number: 1 } });
+            const topCard = await cardsCollection.findOne<Card>({ owner_id: "in deck", game_id: ongoingGame._id }, { sort: { sequence_number: 1 } });
 
             if (!topCard) {
                 throw new Error('No cards left in deck');
             }
 
-            await cardsCollection.updateOne({ _id: topCard._id }, { $set: { owner_id: player.house } });
+            await cardsCollection.updateOne({ _id: topCard._id, game_id: ongoingGame._id }, { $set: { owner_id: player.house } });
 
             return topCard;
         } else {

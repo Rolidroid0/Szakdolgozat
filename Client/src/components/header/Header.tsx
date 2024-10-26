@@ -91,8 +91,8 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn, ongoingBattl
             const data = await response.json();
 
             setRound(data.round);
-            setCurrentHouse(data.currentPlayer);
-            setRoundState(data.roundState);
+            setCurrentHouse(data.current_player);
+            setRoundState(data.round_state);
         } catch (error) {
             console.error('Error fetching current round: ', error);
         }
@@ -128,13 +128,13 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn, ongoingBattl
     useEffect(() => {
         const headerHandler = (message: any) => {
             if (message.action === 'round-updated') {
-                const { currentRound, currentHouse, roundState } = message.data;
-                setRound(currentRound);
+                const { current_round, currentHouse, round_state } = message.data;
+                setRound(current_round);
                 setCurrentHouse(currentHouse);
-                setRoundState(roundState);
+                setRoundState(round_state);
             } else if (message.action === 'round-state-updated') {
-                const { roundState } = message.data;
-                setRoundState(roundState);
+                const { round_state } = message.data;
+                setRoundState(round_state);
             } else if (message.action === 'start-game') {
                 if (isLoggedIn){
                     handleLogout();

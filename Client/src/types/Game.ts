@@ -4,5 +4,5 @@ export interface Game {
     current_player: string;
     players: string[];
     state: string;
-    roundState: string;
+    round_state: string;
 }

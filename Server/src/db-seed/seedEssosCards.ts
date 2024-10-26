@@ -40,11 +40,11 @@ export const seedEssosCards = async () => {
             })
             .on('end', async () => {
                 try {
-                    await essosCardsCollection.deleteMany({ game_id: ongoingGame._id });
+                    //await essosCardsCollection.deleteMany({ game_id: ongoingGame._id });
 
                     await essosCardsCollection.insertMany(essosCards);
                     console.log('Essos cards seeded successfully.');
-                    exit(0);
+                    //exit(0);
                 } catch (error) {
                     console.error('Error inserting Essos cards');
                 }

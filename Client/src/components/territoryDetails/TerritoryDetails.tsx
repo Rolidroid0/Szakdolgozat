@@ -45,10 +45,10 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
                 setGame(gameData);
 
                 if (territoryData.owner_id === playerData.house) {
-                    if (gameData.roundState === 'maneuver') {
+                    if (gameData.round_state === 'maneuver') {
                         await fetchManeuverableTerritories();
                     }
-                    else if (gameData.roundState === 'invasion') {
+                    else if (gameData.round_state === 'invasion') {
                         await fetchEnemyTerritories();
                     }
                 }
@@ -203,9 +203,10 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
         backgroundColor: houseColors[territory.owner_id] || '#8d8f8e',
     };
 
-    const isInvasionAllowed = game.roundState === 'invasion'
-        && game.current_player === player.house
-        && territory.owner_id === player.house
+    const isInvasionAllowed = 
+        game?.round_state === 'invasion'
+        && game.current_player === player?.house
+        && territory?.owner_id === player.house
         && territory.last_attacked_from !== game.round;
     
     return (
@@ -221,7 +222,7 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
                 {territory.port === 1 && <p>Port</p>}
                 <p>Region: {territory.region}</p>
                 <p>Armies: {territory.number_of_armies}</p>
-                {game.roundState === "reinforcement" 
+                {game.round_state === "reinforcement" 
                     && game.current_player === player.house
                     && territory.owner_id === player.house && (
                     <div className="reinforcement-controls">
@@ -239,7 +240,7 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
                     </div>
                 )}
 
-                {game.roundState === "maneuver"
+                {game.round_state === "maneuver"
                     && game.current_player === player.house
                     && territory.owner_id === player.house && (
                     <div className="maneuver-controls">
