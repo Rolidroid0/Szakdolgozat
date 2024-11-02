@@ -1,6 +1,6 @@
 Bevezetés
 
-Kutatásom fő célja egy megfelelő RL (megerősítéses tanulás) könyvtár megtalálása a játékomhoz. A társas rendelkezik egy beépített mesterséges intelligencia (továbbiakban MI) ellenféllel, ami a szerver oldalon helyezkedik el. {írni róla, hogy mi is az MI hogyan tanul stb.} A terveim szerint az MI megerősítéses tanulás (RL - reinforcement learning) által fejleszti önmagát {részletezni}. Ehhez próbálok a továbbiakban megfelelő ötleteket, könyvtárakat, segítséget találni. 
+Kutatásom fő célja egy megfelelő RL (megerősítéses tanulás) könyvtár megtalálása a játékomhoz. A társas rendelkezik egy beépített mesterséges intelligencia (továbbiakban MI) ellenféllel, ami a szerver oldalon helyezkedik el. {írni róla, hogy mi is az MI hogyan tanul stb. + magában a játékban miket kell ellátnia, tudnia az AI-nak} A terveim szerint az MI megerősítéses tanulás (RL - reinforcement learning) által fejleszti önmagát {részletezni}. Ehhez próbálok a továbbiakban megfelelő ötleteket, könyvtárakat, segítséget találni. 
 
 Tensorflow.js RL
 
@@ -12,11 +12,16 @@ https://www.tensorflow.org/js/tutorials#convert_pretained_models_to_tensorflowjs
 https://www.tensorflow.org/js/tutorials/conversion/import_keras
 https://www.tensorflow.org/js/tutorials/conversion/import_saved_model
 
-Egy megerősítéses tanulást alkalmazó keretrendszer olyan ügynököket használ, amelyek célja egy virtuális környezetben való optimalizált döntéshozás. A döntéshozatal mellett tanulnak az elvégzett akciók és a velük járó jutalmak közötti kapcsolatokból, ezáltal fejlesztve a jövőbeli optimális döntéshozatalukat. Az ügynök és a környezet folyamatosan interaktál egymással. Az ügynök hoz egy döntést a jelenlegi környezeti állapotban a saját policy-je (fordítás?) alapján, majd kap egy jutalmat és a következő állapotát a környezetnek. A cél a policy fejlesztése, hogy a jutalmak összege a lehető legmagasabb legyen. Ezek megvalósításához ideális megoldás lehet a TensorFlow, mivel támogatja a tf-agents csomag használatát.
-
-DQN Agent és Q-Learning
-
 Python RL
+
+Általánosan egy megerősítéses tanulást alkalmazó keretrendszer olyan ügynököket használ, amelyek célja egy virtuális környezetben való optimalizált döntéshozás. A döntéshozatal mellett tanulnak az elvégzett akciók és a velük járó jutalmak közötti kapcsolatokból, ezáltal fejlesztve a jövőbeli optimális döntéshozatalukat. Az ügynök és a környezet folyamatosan interaktál egymással. Az ügynök hoz egy döntést a jelenlegi környezeti állapotban a saját policy-je (fordítás?) alapján, majd kap egy jutalmat és a következő állapotát a környezetnek. A cél a policy fejlesztése, hogy a jutalmak összege a lehető legmagasabb legyen. Ezek megvalósításához ideális megoldást nyújt a TensorFlow, mivel a megerősítéses tanulás alkalmazására kínál egy Agents (Ügynökök) nevezetű könyvtárat, amely megkönnyíti az új megerősítéses tanulásos algoritmusok tervezését, implementálását és tesztelését. A könyvtár jól tesztelt, moduláris komponenseket biztosít, amelyeket kedvünk szerint módosíthatunk, bővíthetünk. 
+A könyvtár által kínált ügynökök például lehetnek: DQN, REINFORCE, DDPG, TD3, PPO, SAC.
+
+Mielőtt továbbmegyünk, vizsgáljunk meg egy fontos kérdést a megfelelő ügynök kiválasztása előtt. A gépi tanulásban fontos fogalmak a diszkrét, illetve folytonos akcióterek. Ezek nem mást, mint a döntési lehetőségek típusát jelzik. Egy diszkrét akciótérben (discrete action space) az ügynök egy véges, meghatározott számú akció közül választhat, például mozoghat jobbra, balra, fel vagy le egy rácson. Jól alkalmazható olyan játékoknál, ahol a lépések száma korlátozott, mint a sakknál. A folytonos akciótérben (continuous action space) az ügynök tetszőleges, folytonos értékeket választhat egy adott tartományban, például gyorsulási fokot vagy kormányzási szöget egy autós szimulációban. Az én játékomat tekintve az ügynök meghatározott lehetőséggel rendelkezik: kiválaszthatja, hogy melyik területre helyez seregeket, honnan támad és mennyi sereggel, stb. Míg a sereg mennyiségének kiválasztása közelíthet a folytonos akciótérhez, a lépések száma és jellege jól leírható diszkrét döntési lehetőségekkel, így feltehetőleg a diszkrét módszerek (például DQN vagy PPO) megfelelőek lesznek.
+
+Mind a DQN (Deep Q-Network - Mély Q-Hálózat), és a Q-tanulás a megerősítéses tanulás módszerei közé tartozik. A Q-tanulás egy algoritmus, ahol az ügynök rendel egy úgynevezett Q-értéket minden lehetséges állapot-akció pároshoz. Minden lépésnél az algoritmus frissíti ezeket az értékeket annak alapján, hogy az adott akcióért milyen jutalmat kapott. A cél az, hogy az ügynök a lehető legjobb, azaz a legnagyobb Q-értékkel rendelkező akciót válassza, ezáltal optimalizálva a hosszútávú döntéseit. A Q-tanulás segítségével az ügynök lépésről lépésre, iteratívan fejleszti a meghozott döntéseit, amíg el nem éri a maximális értékű (optimális) stratégiájának kifejlesztését. Ezen gondolatot kiegészítve, a DQN továbbfejleszti a hagyományos Q-tanulást mély neurális hálózatok alkalmazásával. Míg egy Q-tanulást alkalmazó ügynök táblázatot használ az egyes állapot-akció párok Q-értékeinek tárolására, a DQN egy mély neurális hálózatot használ a Q-függvény megközelítésére. Ezáltal az ügynöknek lehetősége nyílik olyan komplexebb környezetekben is hatékonyan tanulni, ahol egyébként a lehetséges állapotok száma túl nagy lenne egy hagyományos Q-tanulás táblázatos megoldásának. A DQN tanulási folyamata során az ügynök folyamatosan frissíti a neurális hálózatának súlyait annak érdekében, hogy minél pontosabban megjósolja az egyes akciók hosszú távú jutalmát. Kijelenthetjük, hogy mindkét módszer célja az ügynöknek egy optimális döntéshozó képesség kifejlesztése, azonban a DQN ideálisabb megoldást nyújt egy komplex, sok állapottal rendelkező környezetben. Mivel a DQN mély neurális hálózatot használ a Q-értékek kiszámításához, azaz nem kell minden egyes állapot-akció párról egyedi adatot tárolni, ezért egy hatékonyabb, skálázhatóbb megoldást jelent a projektem számára, ezért ezen a szálon haladok tovább a kutatásomban. 
+
+A többi ügynököt vizsgálva még a PPO (Proximal Policy Optimization) eshet számításba, ugyanis a többi a folytonos akcióterekben nyújt megoldást. A PPO Policy-alapú tanulást alkalmaz, úgynevezett policy-kat (döntési szabályokat) fejleszt. Ezek a policy-k megmondják az ügynöknek, hogy milyen lépést válasszon az adott helyzetben. Célja, hogy egy stabil, könnyen beállítható módszert biztosítson a tanuláshoz, korlátozva a policy változásának mértékét, így megelőzve a gyakori, instabil lépésváltozásokat. Eme korlátozás eléréséhez az úgynevezett "clipping" mechanizmust alkalmazza, amely biztosítja, hogy a policy frissítése ne legyen túl nagy egy adott irányban. Ha a változás mértéke meghalad egy bizonyos küszöböt, a klip hatására a policy frissítés elutasítja az optimális szintet meghaladó változásokat így megakadályozva a túltanulást, instabilitást. 
 
 Interfacing
 
@@ -25,4 +30,7 @@ Konklúzió
 Források:
 https://www.tensorflow.org/js
 https://www.tensorflow.org/js/models
+https://www.tensorflow.org/agents
 https://www.tensorflow.org/agents/tutorials/0_intro_rl
+https://medium.com/@corinacataraug/hybrid-action-spaces-in-rl-a-short-overview-5314ac0d62d6
+https://www.mathworks.com/help/reinforcement-learning/ug/proximal-policy-optimization-agents.html
