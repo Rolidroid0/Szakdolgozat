@@ -1,6 +1,6 @@
 Bevezetés
 
-Kutatásom fő célja egy megfelelő RL (megerősítéses tanulás) könyvtár megtalálása a játékomhoz. A társas rendelkezik egy beépített mesterséges intelligencia (továbbiakban MI) ellenféllel, ami a szerver oldalon helyezkedik el. {írni róla, hogy mi is az MI hogyan tanul stb. + magában a játékban miket kell ellátnia, tudnia az AI-nak} A terveim szerint az MI megerősítéses tanulás (RL - reinforcement learning) által fejleszti önmagát {részletezni}. Ehhez próbálok a továbbiakban megfelelő ötleteket, könyvtárakat, segítséget találni. 
+Kutatásom fő célja egy megfelelő RL (megerősítéses tanulás) könyvtár megtalálása a játékomhoz. A társas rendelkezik egy beépített mesterséges intelligencia (továbbiakban MI) ellenféllel, ami a szerver oldalon helyezkedik el. {írni róla, hogy mi is az MI hogyan tanul stb. + magában a játékban miket kell ellátnia, tudnia az AI-nak} A terveim szerint az MI megerősítéses tanulás (RL - reinforcement learning) által fejleszti önmagát. Ehhez próbálok a továbbiakban megfelelő ötleteket, könyvtárakat, segítséget találni. 
 
 Tensorflow.js RL
 
@@ -14,7 +14,7 @@ https://www.tensorflow.org/js/tutorials/conversion/import_saved_model
 
 Python RL
 
-Általánosan egy megerősítéses tanulást alkalmazó keretrendszer olyan ügynököket használ, amelyek célja egy virtuális környezetben való optimalizált döntéshozás. A döntéshozatal mellett tanulnak az elvégzett akciók és a velük járó jutalmak közötti kapcsolatokból, ezáltal fejlesztve a jövőbeli optimális döntéshozatalukat. Az ügynök és a környezet folyamatosan interaktál egymással. Az ügynök hoz egy döntést a jelenlegi környezeti állapotban a saját policy-je (fordítás?) alapján, majd kap egy jutalmat és a következő állapotát a környezetnek. A cél a policy fejlesztése, hogy a jutalmak összege a lehető legmagasabb legyen. Ezek megvalósításához ideális megoldást nyújt a TensorFlow, mivel a megerősítéses tanulás alkalmazására kínál egy Agents (Ügynökök) nevezetű könyvtárat, amely megkönnyíti az új megerősítéses tanulásos algoritmusok tervezését, implementálását és tesztelését. A könyvtár jól tesztelt, moduláris komponenseket biztosít, amelyeket kedvünk szerint módosíthatunk, bővíthetünk. 
+Általánosan egy megerősítéses tanulást alkalmazó keretrendszer olyan ügynököket használ, amelyek célja egy virtuális környezetben való optimalizált döntéshozás. A döntéshozatal mellett tanulnak az elvégzett akciók és a velük járó jutalmak közötti kapcsolatokból, ezáltal fejlesztve a jövőbeli optimális döntéshozatalukat. Az ügynök és a környezet folyamatosan interaktál egymással. Az ügynök hoz egy döntést a jelenlegi környezeti állapotban a saját policy-je (döntési stratégiája) alapján, majd kap egy jutalmat és a következő állapotát a környezetnek. A cél a policy fejlesztése, hogy a jutalmak összege a lehető legmagasabb legyen. Ezek megvalósításához ideális megoldást nyújt a TensorFlow, mivel a megerősítéses tanulás alkalmazására kínál egy Agents (Ügynökök) nevezetű könyvtárat, amely megkönnyíti az új megerősítéses tanulásos algoritmusok tervezését, implementálását és tesztelését. A könyvtár jól tesztelt, moduláris komponenseket biztosít, amelyeket kedvünk szerint módosíthatunk, bővíthetünk. 
 A könyvtár által kínált ügynökök például lehetnek: DQN, REINFORCE, DDPG, TD3, PPO, SAC.
 
 Mielőtt továbbmegyünk, vizsgáljunk meg egy fontos kérdést a megfelelő ügynök kiválasztása előtt. A gépi tanulásban fontos fogalmak a diszkrét, illetve folytonos akcióterek. Ezek nem mást, mint a döntési lehetőségek típusát jelzik. Egy diszkrét akciótérben (discrete action space) az ügynök egy véges, meghatározott számú akció közül választhat, például mozoghat jobbra, balra, fel vagy le egy rácson. Jól alkalmazható olyan játékoknál, ahol a lépések száma korlátozott, mint a sakknál. A folytonos akciótérben (continuous action space) az ügynök tetszőleges, folytonos értékeket választhat egy adott tartományban, például gyorsulási fokot vagy kormányzási szöget egy autós szimulációban. Az én játékomat tekintve az ügynök meghatározott lehetőséggel rendelkezik: kiválaszthatja, hogy melyik területre helyez seregeket, honnan támad és mennyi sereggel, stb. Míg a sereg mennyiségének kiválasztása közelíthet a folytonos akciótérhez, a lépések száma és jellege jól leírható diszkrét döntési lehetőségekkel, így feltehetőleg a diszkrét módszerek (például DQN vagy PPO) megfelelőek lesznek.
@@ -25,7 +25,11 @@ A többi ügynököt vizsgálva még a PPO (Proximal Policy Optimization) eshet 
 
 Interfacing
 
+Mivel a szerverem JavaScript nyelven íródott, illetve az MI Python nyelven kerül megvalósításra, valahogyan meg kell oldanom, hogy a kettő tudjon kommunikálni egymással. Az egyik megoldás a Python alkalmazáson belül egy REST API létrehozása (például Flask keretrendszerrel), ahol a Node.js szerver HTTP-kéréseket küldene, és a Python API pedig visszaadná az eredményeket. Ezzel a megoldással az a probléma, hogy nem valós idejű kommunikációra optimalizált. Ezzel szemben egy hatékonyabb megoldást nyújthat egy WesSocket kapcsolat. A Python és a Node.js között egy kétirányú, valós idejű kommunikációt biztosíthatunk a segítségével. Ez egy aszinkron adatcserét eredményez, ami hosszabb adatok küldésére és fogadására a legoptimálisabb. Egy harmadik megoldás lehet a JSPyBridge könyvtár használata. A segítségével egy közvetlen kapcsolatot teremthetünk Node.js és Python között, lehetővé téve a Python kódfuttatást Node.js-ből és fordítva. A játékom esetében főként döntési adatok küldése és nem tömeges adatcsere zajlik, ezért a JSPyBridge bizonyul gyorsabb megoldásnak, mivel szinkron módon hívja a Python függvényeket. 
+
 Konklúzió
+
+A továbbiakban a Python alapú TensorFlow Agents könyvtárán belüli DQN ügynök segítségével kezdem el fejleszteni a projektemhez tartozó mesterséges intelligenciát. Az MI a JSPyBridge segítségével fog kommunikálni a szerverrel. 
 
 Források:
 https://www.tensorflow.org/js
@@ -34,3 +38,5 @@ https://www.tensorflow.org/agents
 https://www.tensorflow.org/agents/tutorials/0_intro_rl
 https://medium.com/@corinacataraug/hybrid-action-spaces-in-rl-a-short-overview-5314ac0d62d6
 https://www.mathworks.com/help/reinforcement-learning/ug/proximal-policy-optimization-agents.html
+https://github.com/extremeheat/JSPyBridge
+https://blog.logrocket.com/exploring-jspybridge-library-python-javascript/
