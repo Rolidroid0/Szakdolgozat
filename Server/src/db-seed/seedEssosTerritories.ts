@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs from 'fs/promises';
 import path from "path";
 import csvParser from 'csv-parser';
 import { connectToDb } from "../config/db";
@@ -24,9 +24,46 @@ export const seedEssosTerritories = async () => {
         }
 
         const filePath = path.join(__dirname, 'EssosTerritories.csv');
-        const essosTerritories: any[] = [];
+        const fileContent = await fs.readFile(filePath, 'utf-8');
 
-        fs.createReadStream(filePath)
+        const essosTerritories: any[] = fileContent
+            .split('\n')
+            .slice(1)
+            .filter(line => line.trim())
+            .map(line => {
+                const [name, fortress, port, region, neighbors, owner_id, last_attacked_from] = line.split(',');
+
+                return {
+                    game_id: ongoingGame._id,
+                    table: Table.Essos,
+                    name: name.trim(),
+                    fortress: parseInt(fortress.trim()),
+                    port: parseInt(port.trim()),
+                    region: region.trim(),
+                    neighbors: neighbors ? neighbors.split(';').map(n => n.trim()) : [],
+                    owner_id: owner_id.trim(),
+                    number_of_armies: 2,
+                    last_attacked_from: parseInt(last_attacked_from.trim()),
+                };
+            });
+
+        await essosTerritoriesCollection.insertMany(essosTerritories);
+
+        for (const territory of essosTerritories) {
+            const neighborTerritories = await essosTerritoriesCollection.find<Territory>({
+                name: { $in: territory.neighbors }
+            }).toArray();
+
+            await essosTerritoriesCollection.updateOne(
+                { name: territory.name },
+                { $set: { neighbors: neighborTerritories.map(t => t._id) } }
+            );
+        }
+
+        console.log('Essos territories seeded successfully.');
+
+        //const essosTerritories: any[] = [];
+        /*fs.createReadStream(filePath)
             .pipe(csvParser())
             .on('data', (row) => {
                 essosTerritories.push({
@@ -64,12 +101,12 @@ export const seedEssosTerritories = async () => {
                 } catch (error) {
                     console.error('Error inserting Essos territories');
                 }
-            });
+            });*/
     } catch (error) {
         console.log('Error during seeding Essos territories: ', error);
         throw error;
     }
 };
 
-seedEssosTerritories();
+//seedEssosTerritories();
 //npx ts-node .\src\db-seed\seedEssosTerritories.ts

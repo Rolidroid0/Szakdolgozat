@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs from 'fs/promises';
 import path from "path";
 import csvParser from 'csv-parser';
 import { connectToDb } from "../config/db";
@@ -24,9 +24,27 @@ export const seedEssosCards = async () => {
         }
 
         const filePath = path.join(__dirname, 'EssosCards.csv');
+        const fileContent = await fs.readFile(filePath, 'utf-8');
+
         const essosCards: any[] = [];
 
-        fs.createReadStream(filePath)
+        fileContent.split('\n').forEach((line, index) => {
+            if (index === 0) return;
+            const [name, symbol] = line.split(',');
+            essosCards.push({
+                game_id: ongoingGame._id,
+                table: Table.Essos,
+                name: name.trim(),
+                symbol: symbol.trim(),
+                sequence_number: null,
+                owner_id: "in deck",
+            });
+        });
+
+        await essosCardsCollection.insertMany(essosCards);
+        console.log('Essos cards seeded successfully.');
+
+        /*fs.createReadStream(filePath)
             .pipe(csvParser())
             .on('data', (row) => {
                 essosCards.push({
@@ -48,12 +66,12 @@ export const seedEssosCards = async () => {
                 } catch (error) {
                     console.error('Error inserting Essos cards');
                 }
-            });
+            });*/
     } catch (error) {
         console.log('Error during seeding Essos cards: ', error);
         throw error;
     }
 };
 
-seedEssosCards();
+//seedEssosCards();
 //npx ts-node .\src\db-seed\seedEssosCards.ts

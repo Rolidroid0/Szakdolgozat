@@ -20,7 +20,7 @@ const Map: React.FC<MapProps> = ({ playerId }) => {
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/territories`)
       .then(response => response.json())
-      .then(data => {console.log('Fetched: ', data);setTerritories(data);})
+      .then(data => setTerritories(data))
       .catch(error => console.error('Error fetching territories:', error));
 
     const wsService = WebSocketService.getInstance();
@@ -49,7 +49,6 @@ const Map: React.FC<MapProps> = ({ playerId }) => {
     const territoryName = target.getAttribute('id');
 
     if (territoryName) {
-      console.log(territories);
       const territory = territories.find(t => t.name === territoryName);
       if (territory) {
         setSelectedTerritory(territory);
