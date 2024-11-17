@@ -6,6 +6,7 @@ import { Territory } from '../../types/Territory';
 import { API_BASE_URL } from '../../config/config';
 import { WebSocketService } from '../../services/WebSocketService';
 import TerritoryDetails from '../territoryDetails/TerritoryDetails';
+import { houseColors } from '../../types/House';
 
 interface MapProps {
   playerId: string;
@@ -19,7 +20,7 @@ const Map: React.FC<MapProps> = ({ playerId }) => {
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/territories`)
       .then(response => response.json())
-      .then(data => setTerritories(data))
+      .then(data => {console.log('Fetched: ', data);setTerritories(data);})
       .catch(error => console.error('Error fetching territories:', error));
 
     const wsService = WebSocketService.getInstance();
@@ -48,6 +49,7 @@ const Map: React.FC<MapProps> = ({ playerId }) => {
     const territoryName = target.getAttribute('id');
 
     if (territoryName) {
+      console.log(territories);
       const territory = territories.find(t => t.name === territoryName);
       if (territory) {
         setSelectedTerritory(territory);
@@ -76,6 +78,33 @@ const Map: React.FC<MapProps> = ({ playerId }) => {
           src={essosSvg}
           beforeInjection={(svg) => {
             svg.querySelectorAll('[id]').forEach((element) => {
+              const territoryId = element.getAttribute('id');
+              const territoryData = territories.find(t => t.name === territoryId);
+              
+              if (territoryData){
+                const x = parseFloat(element.getAttribute('x') || '0');
+                const y = parseFloat(element.getAttribute('y') || '0');
+                const width = parseFloat(element.getAttribute('width') || '0');
+                const height = parseFloat(element.getAttribute('height') || '0');
+
+                const centerX = x + width / 2;
+                const centerY = y + height / 2;
+
+                const textElement = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                textElement.setAttribute('x', centerX.toString());
+                textElement.setAttribute('y', centerY.toString());
+                textElement.setAttribute('font-size', '12');
+                textElement.setAttribute('text-anchor', 'middle');
+                textElement.setAttribute('dominant-baseline', 'middle');
+
+                const ownerColor = houseColors[territoryData.owner_id] || 'black';
+                textElement.setAttribute('fill', ownerColor);
+
+                textElement.textContent = territoryData.number_of_armies.toString();
+
+                element.parentNode?.appendChild(textElement);
+              }
+
               element.addEventListener('click', (event) => handleTerritoryClick(event as MouseEvent));
             });
           }}

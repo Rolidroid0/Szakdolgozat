@@ -55,7 +55,7 @@ A Node.js szerver kapcsolódik a MongoDB-hez, és onnan olvas vagy ír adatokat.
 
 1. Error Popup: Jelenjen meg minden hibánál. EZ MÉG NINCS KÉSZ!
 2. Csata lebonyolítása
-3. Területeken lévő seregek megjelenítése (térkép javítása)
+3. Területeken lévő seregek megjelenítése (térkép javítása), ha frissül egy terület frissüljön a seregek száma is.. + valamiért kártyából és területből is 408 van az adatbázisban egy bizonyos game-id-hez rendelve.. ez miért van? {game_id: ObjectId('671d52e104f4e60dc1894444')}
 4. Kártyák beváltásának szépítése
 5. Refaktorálás
 6. Csatához: Ha a csatának vége, akkor az ablak bezárul, legyen egy előzmények megnyitható fül majd, ahol az eddigi csaták lesznek majd láthatóak.
