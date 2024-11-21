@@ -123,13 +123,14 @@ export const logoutPlayer = async (playerId: ObjectId) => {
             throw new Error('Collections not found');
         }
 
-        const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
+        //Nem kell megnézni, a playerId egyedi, nem lesz több játékosnak is ez, viszont így játék végénél fixen kilépteti a klienst
+        /*const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
         if (!ongoingGame) {
             throw new Error("No ongoing game found");
-        }
+        }*/
 
         await playersCollection.updateOne(
-            { _id: playerId, game_id: ongoingGame._id },
+            { _id: playerId }, //, game_id: ongoingGame._id },
             { $set: { is_logged_in: false } }
         );
     } catch (error) {

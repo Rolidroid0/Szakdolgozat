@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import StartGameButton from "../StartGameButton";
 import EndTurnButton from "../EndTurnButton";
 import { Battle } from "../../types/Battle";
+import ErrorPopup from "../errorPopup/ErrorPopup";
 
 interface HeaderProps {
     wsService: WebSocketService;
@@ -22,16 +23,28 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn, ongoingBattl
     const [currentHouse, setCurrentHouse] = useState('');
     const [roundState, setRoundState] = useState<string>('');
     const navigate = useNavigate();
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const ws = wsService.getWebSocket();
 
     const fetchPlayers = async () => {
         try {
+            setPlayers([]);
             const response = await fetch(`${API_BASE_URL}/api/players`);
-            const data: Player[] = await response.json();
-            setPlayers(data);
-        } catch (error) {
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Unexpected error occurred');
+            }
+            if (response.ok) {
+                const data: Player[] = await response.json();
+                setPlayers(data);
+            }
+        } catch (error: any) {
             console.error('Error fetching players: ', error);
+            if (error instanceof Error) {
+                setErrorMessage(error.message);
+            }
         }
     };
 
@@ -125,6 +138,10 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn, ongoingBattl
         }
     };
 
+    const handleClosePopup = () => {
+        setErrorMessage(null);
+      };
+
     useEffect(() => {
         const headerHandler = (message: any) => {
             if (message.action === 'round-updated') {
@@ -182,6 +199,7 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn, ongoingBattl
     }, [ws, isLoggedIn, selectedPlayer, round, currentHouse, roundState]);
 
     return (
+        <div>
         <header className="header">
             {!isLoggedIn ? (
                 <>
@@ -224,6 +242,8 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn, ongoingBattl
                 </div>
             )}
         </header>
+        {errorMessage && <ErrorPopup message={errorMessage} onClose={handleClosePopup} />}
+        </div>
     );
 };
 
