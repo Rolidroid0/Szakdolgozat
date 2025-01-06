@@ -40,3 +40,12 @@ https://medium.com/@corinacataraug/hybrid-action-spaces-in-rl-a-short-overview-5
 https://www.mathworks.com/help/reinforcement-learning/ug/proximal-policy-optimization-agents.html
 https://github.com/extremeheat/JSPyBridge
 https://blog.logrocket.com/exploring-jspybridge-library-python-javascript/
+
+Note a python-hoz:
+https://www.python.org/downloads/
+cd az ML mappába
+python -m venv venv
+.\venv\Scripts\activate
+pip install --upgrade pip
+pip install numpy pandas scikit-learn tensorflow keras
+pip list

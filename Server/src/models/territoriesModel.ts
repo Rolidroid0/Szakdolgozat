@@ -9,7 +9,7 @@ export interface Territory {
     fortress: number;
     port: number;
     region: string;
-    neighbors: ObjectId[];
+    neighbors: string[];
     owner_id: string;
     number_of_armies: number;
     last_attacked_from: number;

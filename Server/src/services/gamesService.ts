@@ -320,3 +320,42 @@ export const checkGameEnd = async () => {
         console.error('Error checking game end: ', error);
     }
 };
+
+// FOR THE AI
+
+export const getOngoingGameState = async () => {
+    try {
+        const db = await connectToDb();
+        const gamesCollection = db?.collection('Games');
+        const territoriesCollection = db?.collection('EssosTerritories');
+        const playersCollection = db?.collection('Players');
+
+        if (!gamesCollection || !territoriesCollection || !playersCollection) {
+            throw new Error("Collections not found");
+        }
+
+        const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
+        if (!ongoingGame) {
+            throw new Error("No ongoing game found");
+        }
+
+        const current_player = await playersCollection.findOne<Player>({ game_id: ongoingGame._id, house: ongoingGame.current_player });
+        if (!current_player) {
+            throw new Error("Player not found");
+        }
+
+        const territories = await territoriesCollection.find<Territory>({ game_id: ongoingGame._id }).toArray();
+        return {
+            _id: ongoingGame._id,
+            current_player: ongoingGame.current_player,
+            current_player_id: current_player._id,
+            players: ongoingGame.players,
+            state: ongoingGame.state,
+            round_state: ongoingGame.round_state,
+            territories: territories
+        }
+    } catch (error) {
+        console.error('Error getting game state: ', error);
+        throw error;
+    }
+};
