@@ -43,6 +43,8 @@ https://blog.logrocket.com/exploring-jspybridge-library-python-javascript/
 
 Note a python-hoz:
 https://www.python.org/downloads/
+3.11-es verziót!
+letöltésnél pipa a path és a másikhoz is
 cd az ML mappába
 python -m venv venv
 .\venv\Scripts\activate
