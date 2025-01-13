@@ -51,3 +51,126 @@ python -m venv venv
 pip install --upgrade pip
 pip install numpy pandas scikit-learn tensorflow keras
 pip list
+
+Környezet:
+https://medium.com/@paulswenson2/an-introduction-to-building-custom-reinforcement-learning-environment-using-openai-gym-d8a5e7cf07ea
+kérdések hozzá:
+    - kétszemélyes a játék, mikor adjunk át új állapotot? támadás után egyből, vagy ha a másik játékos is végzett a támadásaival?
+    - a lehetséges állapotok folyton változnak? hogyan kell megoldani?
+    - ha a másik játékos körében van vége a játéknak, akkor arról hogyan értesítjük? pláne ha nyert az ai..
+    - a környezet specifikus egy ügynökhöz? azaz ha később lesz egy második ügynök is, akkor ő ugyan ezt fogja haszálni?
+
+A támadási környezetnek tehát a következőket kell tudnia:
+Kezelni a dinamikusan változó állapotokat és akcióteret.
+Biztosítani a kommunikációt a szerverrel.
+Visszajelzést adni az AI-nak a döntései következményeiről (jutalmak és állapotfrissítések formájában).
+class BasicEnv(Env):
+    __init__(self):
+        pass
+    
+    step(self, action):
+        pass
+    reset(self):
+        pass
+    render(self):
+        pass
+
+import gym
+from gym import spaces
+import numpy as np
+
+class AttackEnvironment(gym.Env):
+    """
+    Custom OpenAI Gym environment for the attack phase in the game.
+    """
+
+    def __init__(self):
+        super(AttackEnvironment, self).__init__()
+
+        # State space: Initializing placeholders, these will be updated dynamically.
+        # Example: [territory_1_armies, territory_2_armies, ..., opponent_territory_armies]
+        self.state = []  # This will be filled dynamically from JSgetState()
+
+        # Action space: Tuple (from_territory, to_territory, num_armies)
+        # Note: Discrete space here is an upper bound; real actions will be dynamically filtered.
+        self.action_space = spaces.Discrete(1000)  # Placeholder for maximum possible actions.
+
+        # Observation space: Numpy array to represent the current state.
+        # Each entry is the number of armies on each territory.
+        self.observation_space = spaces.Box(low=0, high=np.inf, shape=(100,), dtype=np.int32)
+
+        # Additional metadata
+        self.current_turn = True  # Tracks if it's the AI's turn
+        self.done = False
+
+    def reset(self):
+        """
+        Resets the environment to an initial state and returns the initial observation.
+        """
+        # Fetch initial state from the server
+        self.state = self.JSgetState()
+        self.done = False
+        self.current_turn = True
+
+        # Adjust observation space size dynamically based on the state
+        state_length = len(self.state)
+        self.observation_space = spaces.Box(low=0, high=np.inf, shape=(state_length,), dtype=np.int32)
+
+        return np.array(self.state, dtype=np.int32)
+
+    def step(self, action):
+        """
+        Executes the given action and returns the next state, reward, done flag, and info.
+        :param action: Tuple (from_territory, to_territory, num_armies)
+        :return: next_state, reward, done, info
+        """
+        if not self.current_turn:
+            raise Exception("Not the AI's turn to play.")
+
+        # Unpack action
+        from_territory, to_territory, num_armies = action
+
+        # Send action to the server and receive the result
+        action_result = self.JSsendAction(from_territory, to_territory, num_armies)
+
+        # Update state based on the server's response
+        self.state = action_result["new_state"]
+        self.current_turn = action_result["is_ai_turn"]
+        self.done = action_result["game_over"]
+
+        # Calculate reward
+        reward = self.calculate_reward(action_result)
+
+        # Return the updated observation, reward, done flag, and info
+        return np.array(self.state, dtype=np.int32), reward, self.done, {}
+
+    def render(self, mode='human'):
+        """
+        Render the environment (optional, for debugging or visualization purposes).
+        """
+        print(f"Current State: {self.state}")
+
+    def calculate_reward(self, action_result):
+        """
+        Calculates the reward based on the action result received from the server.
+        :param action_result: Result of the action from the server.
+        :return: Reward value.
+        """
+        if action_result["territory_captured"]:
+            return 1.0  # Positive reward for capturing a territory
+        elif action_result["lost_armies"]:
+            return -0.1 * action_result["lost_armies"]  # Penalty for losing armies
+        else:
+            return 0.0  # Neutral reward for other actions
+
+    def JSgetState(self):
+        """
+        Placeholder for fetching the state from the server.
+        """
+        raise NotImplementedError("JSgetState() must be implemented to fetch game state.")
+
+    def JSsendAction(self, from_territory, to_territory, num_armies):
+        """
+        Placeholder for sending actions to the server and receiving the result.
+        """
+        raise NotImplementedError("JSsendAction() must be implemented to send actions.")
