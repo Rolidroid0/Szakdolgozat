@@ -7,6 +7,7 @@ export interface GameState {
     current_player_id: ObjectId;
     players: string[];
     state: string;
+    round: number;
     round_state: string;
     territories: Territory[];
 }

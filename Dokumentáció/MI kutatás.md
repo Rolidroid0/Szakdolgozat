@@ -75,102 +75,60 @@ class BasicEnv(Env):
     render(self):
         pass
 
-import gym
-from gym import spaces
-import numpy as np
+GameState numerikus formában:
+    -területek birtoklása: 
+        ° 1: AI birtokolja
+        ° 0: nem AI birtokolja
+    -seregek száma (0 és 1 közé essen):
+        ° seregek száma osztva egy max értékkel (pl.: 100, lehet kevesebb is, akkor szerver oldalon ezt maximalizálni kell)
+    -szomszédok (mártix):
+        ° 1: szomszédos
+        ° 0: nem szomszédos
+    -támadhatunk-e a területről:
+        ° 1: támadhatunk
+        ° 0: nem támadhatunk (már támadtunk, nincs szomszédos ellenség vagy nincs elég sereg)
+    -két állapot:
+        ° is_my_turn: Az AI player van-e soron
+        ° round_state: kör melyik része van (1: támadás, 0: bármi más)
 
-class AttackEnvironment(gym.Env):
-    """
-    Custom OpenAI Gym environment for the attack phase in the game.
-    """
-
-    def __init__(self):
-        super(AttackEnvironment, self).__init__()
-
-        # State space: Initializing placeholders, these will be updated dynamically.
-        # Example: [territory_1_armies, territory_2_armies, ..., opponent_territory_armies]
-        self.state = []  # This will be filled dynamically from JSgetState()
-
-        # Action space: Tuple (from_territory, to_territory, num_armies)
-        # Note: Discrete space here is an upper bound; real actions will be dynamically filtered.
-        self.action_space = spaces.Discrete(1000)  # Placeholder for maximum possible actions.
-
-        # Observation space: Numpy array to represent the current state.
-        # Each entry is the number of armies on each territory.
-        self.observation_space = spaces.Box(low=0, high=np.inf, shape=(100,), dtype=np.int32)
-
-        # Additional metadata
-        self.current_turn = True  # Tracks if it's the AI's turn
-        self.done = False
-
-    def reset(self):
+Megj.:
+Első megközelítésben legyen az AI a Ghiscari ház!
+Az AI egyelőre csak szomszédos területekre tud támadni, nem tudja, hogy a kikötőkbe is lehet!
+A biztonság kedvéért szerver oldalon rendezzük majd a területek sorrendjét mindig, hogy ne legyen baj belőle, hogy valamikor más a sorrend!
+Esetleg a szerver kezelje jobban az adatokat? pl az AttackEnv.py process_state metódusában már úgy kerüljön be a raw_state, hogy megadjuk honnan és hová lehet támadni, azaz a szerveren számítjuk ki az attackable részt, azaz a territories tömböt már úgy adjuk át, hogy ott minden terület neve mellett csak a seregek száma van, és két flag, egyik szerint, hogy az AI birtokolja-e, másik szerint pedig, hogy támadhat-e onnan, és ha igen, akkor hogy hová (tömb, ha nem támadhat, akkor üres..)??
+def _is_valid_action(self, attacker_index, defender_index, army_count):
         """
-        Resets the environment to an initial state and returns the initial observation.
+        Ellenőrzi, hogy az akció érvényes-e.
         """
-        # Fetch initial state from the server
-        self.state = self.JSgetState()
-        self.done = False
-        self.current_turn = True
+        # Csak támadható területről lehet támadni
+        if self.state["attackable"][attacker_index] == 0:
+            return False
+        
+        # A kiválasztott célpontnak ellenségesnek kell lennie
+        ownership = self.state["ownership"]
+        if ownership[defender_index] == 1:
+            return False
+        
+        # Az akció során megfelelő seregszámot kell választani
+        army_counts = self.state["army_counts"]
+        if army_counts[attacker_index] * 20 < army_count:
+            return False
+        
+        # Ellenőrizzük, hogy szomszédos-e a két terület
+        adjacency_matrix = self.state["adjacency_matrix"]
+        if adjacency_matrix[attacker_index][defender_index] == 0:
+            return False
+        
+        return True
 
-        # Adjust observation space size dynamically based on the state
-        state_length = len(self.state)
-        self.observation_space = spaces.Box(low=0, high=np.inf, shape=(state_length,), dtype=np.int32)
-
-        return np.array(self.state, dtype=np.int32)
-
-    def step(self, action):
+        def _calculate_reward(self, success):
         """
-        Executes the given action and returns the next state, reward, done flag, and info.
-        :param action: Tuple (from_territory, to_territory, num_armies)
-        :return: next_state, reward, done, info
+        Jutalom kiszámítása a támadás eredménye alapján.
         """
-        if not self.current_turn:
-            raise Exception("Not the AI's turn to play.")
-
-        # Unpack action
-        from_territory, to_territory, num_armies = action
-
-        # Send action to the server and receive the result
-        action_result = self.JSsendAction(from_territory, to_territory, num_armies)
-
-        # Update state based on the server's response
-        self.state = action_result["new_state"]
-        self.current_turn = action_result["is_ai_turn"]
-        self.done = action_result["game_over"]
-
-        # Calculate reward
-        reward = self.calculate_reward(action_result)
-
-        # Return the updated observation, reward, done flag, and info
-        return np.array(self.state, dtype=np.int32), reward, self.done, {}
-
-    def render(self, mode='human'):
+        return 1 if success else -1
+    
+    def _is_game_over(self, raw_state):
         """
-        Render the environment (optional, for debugging or visualization purposes).
+        Ellenőrzi, hogy véget ért-e a játék.
         """
-        print(f"Current State: {self.state}")
-
-    def calculate_reward(self, action_result):
-        """
-        Calculates the reward based on the action result received from the server.
-        :param action_result: Result of the action from the server.
-        :return: Reward value.
-        """
-        if action_result["territory_captured"]:
-            return 1.0  # Positive reward for capturing a territory
-        elif action_result["lost_armies"]:
-            return -0.1 * action_result["lost_armies"]  # Penalty for losing armies
-        else:
-            return 0.0  # Neutral reward for other actions
-
-    def JSgetState(self):
-        """
-        Placeholder for fetching the state from the server.
-        """
-        raise NotImplementedError("JSgetState() must be implemented to fetch game state.")
-
-    def JSsendAction(self, from_territory, to_territory, num_armies):
-        """
-        Placeholder for sending actions to the server and receiving the result.
-        """
-        raise NotImplementedError("JSsendAction() must be implemented to send actions.")
+        return raw_state["state"] in ["completed", "game_over"]

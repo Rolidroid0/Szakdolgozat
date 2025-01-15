@@ -351,6 +351,7 @@ export const getOngoingGameState = async () => {
             current_player_id: current_player._id,
             players: ongoingGame.players,
             state: ongoingGame.state,
+            round: ongoingGame.round,
             round_state: ongoingGame.round_state,
             territories: territories
         }
