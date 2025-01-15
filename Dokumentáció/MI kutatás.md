@@ -96,39 +96,22 @@ Első megközelítésben legyen az AI a Ghiscari ház!
 Az AI egyelőre csak szomszédos területekre tud támadni, nem tudja, hogy a kikötőkbe is lehet!
 A biztonság kedvéért szerver oldalon rendezzük majd a területek sorrendjét mindig, hogy ne legyen baj belőle, hogy valamikor más a sorrend!
 Esetleg a szerver kezelje jobban az adatokat? pl az AttackEnv.py process_state metódusában már úgy kerüljön be a raw_state, hogy megadjuk honnan és hová lehet támadni, azaz a szerveren számítjuk ki az attackable részt, azaz a territories tömböt már úgy adjuk át, hogy ott minden terület neve mellett csak a seregek száma van, és két flag, egyik szerint, hogy az AI birtokolja-e, másik szerint pedig, hogy támadhat-e onnan, és ha igen, akkor hogy hová (tömb, ha nem támadhat, akkor üres..)??
-def _is_valid_action(self, attacker_index, defender_index, army_count):
-        """
-        Ellenőrzi, hogy az akció érvényes-e.
-        """
-        # Csak támadható területről lehet támadni
-        if self.state["attackable"][attacker_index] == 0:
-            return False
-        
-        # A kiválasztott célpontnak ellenségesnek kell lennie
-        ownership = self.state["ownership"]
-        if ownership[defender_index] == 1:
-            return False
-        
-        # Az akció során megfelelő seregszámot kell választani
-        army_counts = self.state["army_counts"]
-        if army_counts[attacker_index] * 20 < army_count:
-            return False
-        
-        # Ellenőrizzük, hogy szomszédos-e a két terület
-        adjacency_matrix = self.state["adjacency_matrix"]
-        if adjacency_matrix[attacker_index][defender_index] == 0:
-            return False
-        
-        return True
+A jutalom számításának menete.. lehetne úgy, hogy amikor a JSsendAction-t hívjuk, akkor ha ő sikeresen létrehozza, akkor már a rewardot is adja vissza, és akkor nem kell külön számolni itt. példa hozzá:
+def calculate_reward(self, action_result):
+        base_reward = 0.0
 
-        def _calculate_reward(self, success):
-        """
-        Jutalom kiszámítása a támadás eredménye alapján.
-        """
-        return 1 if success else -1
-    
-    def _is_game_over(self, raw_state):
-        """
-        Ellenőrzi, hogy véget ért-e a játék.
-        """
-        return raw_state["state"] in ["completed", "game_over"]
+        if action_result["territory_captured"]:
+            base_reward += 1.0
+            if action_result.get("captured_port", False):
+                base_reward += 0.5  # Extra jutalom kikötőért
+                print("Captured a port! Extra reward: 0.5") 
+            if action_result.get("captured_fortress", False):
+                base_reward += 0.75  # Extra jutalom várért
+                print("Captured a fortress! Extra reward: 0.75") 
+
+        if action_result["lost_armies"]:
+            base_reward -= 0.1 * action_result["lost_armies"]
+            print(f"Lost armies: {action_result['lost_armies']}. Penalty applied.")
+
+        print(f"Calculated Reward: {base_reward}")
+        return base_reward

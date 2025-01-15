@@ -17,10 +17,12 @@ class AttackEnvironment(gym.Env):
             spaces.Discrete(MAX_ARMIES + 1) # Number of armies
         ))
         self.observation_space = spaces.Dict({
-            "ownership": spaces.Box(0, 1, shape=(self.max_territories,), dtype=np.float32),
-            "army_counts": spaces.Box(0, 1, shape=(self.max_territories,), dtype=np.float32),
-            "adjacency_matrix": spaces.Box(0, 1, shape=(self.max_territories, self.max_territories), dtype=np.float32),
-            "attackable": spaces.Box(0, 1, shape=(self.max_territories,), dtype=np.float32),
+            "ownership": spaces.Box(0, 1, shape=(MAX_TERRITORIES,), dtype=np.float32),
+            "army_counts": spaces.Box(0, 1, shape=(MAX_TERRITORIES,), dtype=np.float32),
+            "adjacency_matrix": spaces.Box(0, 1, shape=(MAX_TERRITORIES, MAX_TERRITORIES), dtype=np.float32),
+            "attackable": spaces.Box(0, 1, shape=(MAX_TERRITORIES,), dtype=np.float32),
+            "ports": spaces.Box(0, 1, shape=(MAX_TERRITORIES,), dtype=np.float32),
+            "fortresses": spaces.Box(0, 1, shape=(MAX_TERRITORIES,), dtype=np.float32),
             "is_my_turn": spaces.Discrete(2),
             "round_state": spaces.Discrete(2)
             })
@@ -40,24 +42,23 @@ class AttackEnvironment(gym.Env):
         :param action: Tuple (from_territory, to_territory, num_armies)
         :return: next_state, reward, done, info
         """
-        #if not self.current_turn:
-        #    raise Exception("Not the AI's turn to play.")
+        if self.state["round_state"] == 0:
+            raise Exception("Not the AI's turn to play.")
         
-        from_territory, to_territory, num_armies = action
+        attacker_index, defender_index, army_count = action
 
-        if not self._is_valid_action(from_territory, to_territory, num_armies):
-            return self.state, -1, True, {"info": "Invalid action"}
-
-        action_result = self.JSsendAction(from_territory, to_territory, num_armies)
+        success = self.JSattack(attacker_index, defender_index, army_count)
+        if not success:
+            return self.state, -1, True, {"info": "Attack failed"}
 
         raw_state = self.JSgetState()
         self.state = self.process_state(raw_state)
         self.current_round = raw_state["round"]
 
-        reward = self.calculate_reward(action_result)
+        reward = self._calculate_reward(success)
         done = self._is_game_over(raw_state)
 
-        return self.state, reward, self.done, {}
+        return self.state, reward, done, {}
     
     def render(self, mode='human'):
         print(f"Current State: {self.state}")
@@ -86,6 +87,9 @@ class AttackEnvironment(gym.Env):
         ownership = [1 if t["owner_id"] == AI_HOUSE else 0 for t in territories]
         army_counts = [t["number_of_armies"] / MAX_ARMIES for t in territories]
         adjacency_matrix = self.create_adjacency_matrix(territories)
+        ports = [1 if t["port"] else 0 for t in territories]
+        fortresses = [1 if t["fortress"] else 0 for t in territories]
+
         attackable = []
         for i, t in enumerate(territories):
             is_owned = t["owner_id"] == AI_HOUSE
@@ -99,9 +103,13 @@ class AttackEnvironment(gym.Env):
                 attackable.append(1)
             else:
                 attackable.append(0)
+
         is_my_turn = 1 if raw_state["current_player"] == AI_HOUSE else 0
         round_state = 1 if raw_state["round_state"] == "invasion" else 0
-        return ownership, army_counts, adjacency_matrix, attackable, is_my_turn, round_state
+
+        debug_msg = f"Processed State: Territories={territories}, Ownership={ownership}, Ports={ports}, Fortresses={fortresses}, Army Counts={army_counts}"
+        print(debug_msg)
+        return ownership, army_counts, adjacency_matrix, attackable, ports, fortresses, is_my_turn, round_state
     
     def create_adjacency_matrix(territories):
         territory_names = [t["name"] for t in territories]
@@ -115,3 +123,15 @@ class AttackEnvironment(gym.Env):
                     adjacency_matrix[i][j] = 1
         
         return adjacency_matrix
+
+    def _calculate_reward(self, success):
+        """
+        Jutalom kiszámítása a támadás eredménye alapján.
+        """
+        return 1 if success else -1
+    
+    def _is_game_over(self, raw_state):
+        """
+        Ellenőrzi, hogy véget ért-e a játék.
+        """
+        return raw_state["state"] in ["completed", "game_over"] #vagy ami az adatbázisban lehet a final state
