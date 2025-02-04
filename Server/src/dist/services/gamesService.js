@@ -36,7 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getOngoingGameState = exports.checkGameEnd = exports.applyManeuver = exports.endPhase = exports.endTurn = exports.applyAdditionalArmies = exports.getCurrentRound = exports.getOngoingGame = void 0;
+exports.automataBattle = exports.getOngoingGameState = exports.checkGameEnd = exports.applyManeuver = exports.endPhase = exports.endTurn = exports.applyAdditionalArmies = exports.getCurrentRound = exports.getOngoingGame = void 0;
 var db_1 = require("../config/db");
 var functions_1 = require("../utils/functions");
 var mongodb_1 = require("mongodb");
@@ -44,6 +44,7 @@ var ws_1 = require("ws");
 var websocket_1 = require("../config/websocket");
 var cardsService_1 = require("./cardsService");
 var enums_1 = require("../models/enums");
+var battlesService_1 = require("./battlesService");
 var getOngoingGame = function () { return __awaiter(void 0, void 0, void 0, function () {
     var db, gamesCollection, game, error_1;
     return __generator(this, function (_a) {
@@ -452,3 +453,62 @@ var getOngoingGameState = function () { return __awaiter(void 0, void 0, void 0,
     });
 }); };
 exports.getOngoingGameState = getOngoingGameState;
+var automataBattle = function () { return __awaiter(void 0, void 0, void 0, function () {
+    var db, playersCollection, battlesCollection, territoriesCollection, gamesCollection, battle, attacker, defender, error_5;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 11, , 12]);
+                return [4 /*yield*/, (0, db_1.connectToDb)()];
+            case 1:
+                db = _a.sent();
+                playersCollection = db === null || db === void 0 ? void 0 : db.collection('Players');
+                battlesCollection = db === null || db === void 0 ? void 0 : db.collection('Battles');
+                territoriesCollection = db === null || db === void 0 ? void 0 : db.collection('EssosTerritories');
+                gamesCollection = db === null || db === void 0 ? void 0 : db.collection('Games');
+                if (!playersCollection || !battlesCollection || !territoriesCollection || !gamesCollection) {
+                    throw new Error("Collections not found");
+                }
+                return [4 /*yield*/, (0, battlesService_1.getOngoingBattle)()];
+            case 2:
+                battle = _a.sent();
+                if (!battle) {
+                    throw new Error("No ongoing battle to automate");
+                }
+                _a.label = 3;
+            case 3:
+                if (!battle) return [3 /*break*/, 10];
+                return [4 /*yield*/, playersCollection.findOne({ game_id: battle.game_id, house: battle.attacker_id })];
+            case 4:
+                attacker = _a.sent();
+                if (!attacker) {
+                    throw new Error("Attacker not found");
+                }
+                return [4 /*yield*/, (0, battlesService_1.rollDiceService)(attacker._id)];
+            case 5:
+                _a.sent();
+                if (!(battle.defender_id !== "neutral")) return [3 /*break*/, 8];
+                return [4 /*yield*/, playersCollection.findOne({ game_id: battle.game_id, house: battle.attacker_id })];
+            case 6:
+                defender = _a.sent();
+                if (!defender) {
+                    throw new Error("Defender not found");
+                }
+                return [4 /*yield*/, (0, battlesService_1.rollDiceService)(defender._id)];
+            case 7:
+                _a.sent();
+                _a.label = 8;
+            case 8: return [4 /*yield*/, (0, battlesService_1.getOngoingBattle)()];
+            case 9:
+                battle = _a.sent();
+                return [3 /*break*/, 3];
+            case 10: return [2 /*return*/, "Battle finished."];
+            case 11:
+                error_5 = _a.sent();
+                console.error("Error in automataBattle: ", error_5);
+                throw error_5;
+            case 12: return [2 /*return*/];
+        }
+    });
+}); };
+exports.automataBattle = automataBattle;

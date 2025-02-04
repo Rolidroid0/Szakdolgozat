@@ -10,6 +10,7 @@ import { RoundState, Symbol } from "../models/enums";
 import { Player } from "../models/playersModel";
 import { Territory } from "../models/territoriesModel";
 import { Card } from "../models/cardsModel";
+import { getOngoingBattle, rollDiceService } from "./battlesService";
 
 export const getOngoingGame = async () => {
     try {
@@ -357,6 +358,53 @@ export const getOngoingGameState = async () => {
         }
     } catch (error) {
         console.error('Error getting game state: ', error);
+        throw error;
+    }
+};
+
+export const automataBattle = async () => {
+    try {
+        const db = await connectToDb();
+        const playersCollection = db?.collection('Players');
+        const battlesCollection = db?.collection('Battles');
+        const territoriesCollection = db?.collection('EssosTerritories');
+        const gamesCollection = db?.collection('Games');
+
+        if (!playersCollection || !battlesCollection || !territoriesCollection || !gamesCollection) {
+            throw new Error("Collections not found");
+        }
+
+        let battle = await getOngoingBattle();
+        if (!battle) {
+            throw new Error("No ongoing battle to automate");
+        }
+
+        while (battle) {
+            const attacker = await playersCollection.findOne<Player>({ game_id: battle.game_id, house: battle.attacker_id });
+            if (!attacker) {
+                throw new Error("Attacker not found");
+            }
+            if (!battle.attacker_has_rolled) {
+                await rollDiceService(attacker._id);
+            }
+            
+
+            if (battle.defender_id !== "neutral") {
+                const defender = await playersCollection.findOne<Player>({ game_id: battle.game_id, house: battle.defender_id });
+                if (!defender) {
+                    throw new Error("Defender not found");
+                }
+                if (!battle.defender_has_rolled) {
+                    await rollDiceService(defender._id);
+                }
+            }
+
+            battle = await getOngoingBattle();
+        }
+
+        return "Battle finished.";
+    } catch (error) {
+        console.error("Error in automataBattle: ", error);
         throw error;
     }
 };

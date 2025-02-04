@@ -9,6 +9,7 @@ MAX_ARMIES = 100
 MAX_TERRITORIES = 35
 
 gameService = require("../../../dist/services/gamesService.js")
+battleService = require("../../../dist/services/battlesService.js")
 
 class AttackEnvironment(gym.Env):
 
@@ -81,6 +82,8 @@ class AttackEnvironment(gym.Env):
             success = self.JSattack(attacker_index, defender_index, army_count)
             if not success:
                 return self.state, -1, True, {"info": "Attack failed"}
+            else:
+                await self.JSautomataBattle()
 
         await self.JSgetState()
 
@@ -111,8 +114,20 @@ class AttackEnvironment(gym.Env):
         self.territories = raw_state["territories"]
         self.process_state(raw_state)
     
-    def JSattack(self, from_territory, to_territory, num_armies):
-        raise NotImplementedError()
+    async def JSattack(self, from_territory, to_territory, num_armies):
+        try:
+            await battleService.startBattle(self.current_player_id, from_territory, to_territory, num_armies)
+            return True
+        except Exception as e:
+            print(f"JSattack error: {e}")
+            return False
+        
+    async def JSautomataBattle(self):
+        try:
+            text = await gameService.automataBattle()
+            print(text)
+        except Exception as e:
+            print(f"JSautomataBattle error: {e}")
     
     def JSpass(self):
         raise NotImplementedError()
@@ -124,6 +139,7 @@ class AttackEnvironment(gym.Env):
     
     def process_state(self, raw_state):
         self.current_round = raw_state["round"]
+        self.current_player_id = raw_state["current_player_id"]
         self.state = {
             "ownership": np.array([1 if t["owner_id"] == AI_HOUSE else 0 for t in self.territories], dtype=np.float32),
             "army_counts": np.array([t["number_of_armies"] / MAX_ARMIES for t in self.territories], dtype=np.float32),
@@ -211,7 +227,7 @@ class AttackEnvironment(gym.Env):
         """
         Ellenőrzi, hogy véget ért-e a játék.
         """
-        return raw_state["state"] in ["completed", "game_over"] #vagy ami az adatbázisban lehet a final state
+        return "won" in raw_state["state"].lower()
     
 #raw_state = gameService.getOngoingGameState()
 #print(raw_state)
