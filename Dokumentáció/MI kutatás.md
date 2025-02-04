@@ -115,3 +115,12 @@ def calculate_reward(self, action_result):
 
         print(f"Calculated Reward: {base_reward}")
         return base_reward
+
+
+JSPyBridge:
+
+from javascript import require
+gameService = require("../../../services/dist/gamesService")
+
+de előtte src mappában:
+tsc services/gamesService.ts --outDir dist

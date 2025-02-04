@@ -31,9 +31,10 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn, ongoingBattl
         try {
             setPlayers([]);
             const response = await fetch(`${API_BASE_URL}/api/players`);
-            const data = await response.json();
+            //const data = await response.json();
 
             if (!response.ok) {
+                const data = await response.json();
                 throw new Error(data.message || 'Unexpected error occurred');
             }
             if (response.ok) {

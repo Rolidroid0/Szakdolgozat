@@ -1,10 +1,14 @@
 import gym
 from gym import spaces
 import numpy as np
+from javascript import require
+import asyncio
 
 AI_HOUSE = "Ghiscari"
 MAX_ARMIES = 100
 MAX_TERRITORIES = 35
+
+gameService = require("../../../dist/services/gamesService.js")
 
 class AttackEnvironment(gym.Env):
 
@@ -48,18 +52,18 @@ class AttackEnvironment(gym.Env):
         self.ports = None
         self.fortresses = None
     
-    def reset(self):
+    async def reset(self):
         """
         raw_state = self.JSgetState()
         self.state = self.process_state(raw_state)
         self.current_round = raw_state["round"]
         self.update_action_space()
         """
-        self.JSgetState()
+        await self.JSgetState()
         self._initialize_static_data()
         return self.state
     
-    def step(self, action):
+    async def step(self, action):
         """
         Executes the given action and returns the next state, reward, done flag, and info.
         :param action: Tuple (from_territory, to_territory, num_armies)
@@ -78,7 +82,7 @@ class AttackEnvironment(gym.Env):
             if not success:
                 return self.state, -1, True, {"info": "Attack failed"}
 
-        self.JSgetState()
+        await self.JSgetState()
 
         reward = self._calculate_reward(success)
         done = self._is_game_over()
@@ -102,11 +106,10 @@ class AttackEnvironment(gym.Env):
         else: 
             return 0.0
         
-    def JSgetState(self):
-        raise NotImplementedError()
-        raw_state = valami
+    async def JSgetState(self):
+        raw_state = await gameService.getOngoingGameState()
         self.territories = raw_state["territories"]
-        process_state(raw_state)
+        self.process_state(raw_state)
     
     def JSattack(self, from_territory, to_territory, num_armies):
         raise NotImplementedError()
@@ -209,3 +212,6 @@ class AttackEnvironment(gym.Env):
         Ellenőrzi, hogy véget ért-e a játék.
         """
         return raw_state["state"] in ["completed", "game_over"] #vagy ami az adatbázisban lehet a final state
+    
+#raw_state = gameService.getOngoingGameState()
+#print(raw_state)

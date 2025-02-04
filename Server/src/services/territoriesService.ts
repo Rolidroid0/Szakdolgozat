@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { connectToDb } from "../config/db"
 import { getWebSocketServer } from "../config/websocket";
-import WebSocket from "ws";
+import * as WebSocket from 'ws';
 import { endPhase } from "./gamesService";
 import { Territory } from "../models/territoriesModel";
 import { Player } from "../models/playersModel";

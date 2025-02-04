@@ -1,6 +1,6 @@
 import { connectToDb } from '../config/db';
-import csv from 'csv-parser';
-import fs from 'fs';
+import * as csvParser from 'csv-parser';
+import { promises as fs } from 'fs';
 import { WebSocketServer, WebSocket } from 'ws';
 import generateShuffledNumbers, { assignTerritoryBonus } from '../utils/functions';
 import { ObjectId } from 'mongodb';

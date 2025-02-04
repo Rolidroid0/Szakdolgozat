@@ -3,7 +3,7 @@ import { connectToDb } from "../config/db";
 import { findConnectedTerritories } from "../services/territoriesService";
 import { Role } from "../models/enums";
 import { getWebSocketServer } from "../config/websocket";
-import WebSocket from "ws";
+import * as WebSocket from 'ws';
 import { Player } from "../models/playersModel";
 import { Territory } from "../models/territoriesModel";
 import { Region } from "../models/regionsModel";

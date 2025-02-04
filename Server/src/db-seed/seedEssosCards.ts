@@ -1,6 +1,6 @@
-import fs from 'fs/promises';
-import path from "path";
-import csvParser from 'csv-parser';
+import { promises as fs } from 'fs';
+import * as path from 'path';
+import * as csvParser from 'csv-parser';
 import { connectToDb } from "../config/db";
 import { Card } from '../models/cardsModel';
 import { Table } from '../models/enums';
