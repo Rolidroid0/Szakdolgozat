@@ -137,4 +137,31 @@ export const logoutPlayer = async (playerId: ObjectId) => {
         console.error('Error during player logout: ', error);
         throw error;
     }
+};
+
+export const getCurrentPlayer = async () => {
+    try {
+        const db = await connectToDb();
+        const playersCollection = db?.collection('Players');
+        const gamesCollection = db?.collection('Games');
+
+        if (!playersCollection || !gamesCollection) {
+            throw new Error("Collections not found");
+        }
+
+        const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
+        if (!ongoingGame) {
+            throw new Error("No ongoing game found");
+        }
+
+        const current_player = await playersCollection.findOne<Player>({ game_id: ongoingGame._id, house: ongoingGame.current_player });
+        if (!current_player) {
+            throw new Error("Player not found");
+        }
+
+        return current_player;
+    } catch (error) {
+        console.error('Error getting current player: ', error);
+        throw error;
+    }
 }

@@ -11,6 +11,8 @@ import { Player } from "../models/playersModel";
 import { Territory } from "../models/territoriesModel";
 import { Card } from "../models/cardsModel";
 import { getOngoingBattle, rollDiceService } from "./battlesService";
+import { getCurrentPlayer } from "./playersService";
+import { reinforceTerritory } from "./territoriesService";
 
 export const getOngoingGame = async () => {
     try {
@@ -405,6 +407,85 @@ export const automataBattle = async () => {
         return "Battle finished.";
     } catch (error) {
         console.error("Error in automataBattle: ", error);
+        throw error;
+    }
+};
+
+export const automataTurn = async () => {
+    try {
+        const db = await connectToDb();
+        const playersCollection = db?.collection('Players');
+
+        if (!playersCollection) {
+            throw new Error("Collections not found");
+        }
+
+        const currentPlayer = await getCurrentPlayer();
+        if (!currentPlayer) {
+            throw new Error("No active player found");
+        }
+        await endTurn(currentPlayer._id);
+
+        const nextPlayer = await getCurrentPlayer();
+        if (!nextPlayer) {
+            throw new Error("No next player found");
+        }
+
+        await automataAllocateTerritories();
+
+        //TODO: random támadjon 1-2-t a bot (await startBattle és await automataBattle)
+
+        await endTurn(nextPlayer._id);
+
+        await automataAllocateTerritories();
+
+        console.log("fin");
+        return "Automata turn finished successfully."; //Itt adja majd vissza a jutalom számításához szükséges adatokat.
+    } catch (error) {
+        console.error("Error in automataTurn: ", error);
+        throw error;
+    }
+};
+
+export const automataAllocateTerritories = async () => {
+    try {
+        const db = await connectToDb();
+        const playersCollection = db?.collection('Players');
+        const territoriesCollection = db?.collection('EssosTerritories');
+        const gamesCollection = db?.collection('Games');
+
+        if (!playersCollection || !territoriesCollection || !gamesCollection) {
+            throw new Error("Collections not found");
+        }
+
+        const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
+        if (!ongoingGame) {
+            throw new Error("No ongoing game found");
+        }
+
+        const player = await getCurrentPlayer();
+        if (!player) {
+            throw new Error("No next player found");
+        }
+
+        if (player.plus_armies > 0) {
+            const territories = await territoriesCollection.find<Territory>({ game_id: ongoingGame._id, owner_id: player.house }).toArray();
+            if (territories.length === 0) {
+                throw new Error("No owned territores found for reinforcement");
+            }
+
+            let remainingArmies = player.plus_armies;
+            while (remainingArmies > 0) {
+                territories.sort((a, b) => a.number_of_armies - b.number_of_armies);
+                const territory = territories[0];
+                await reinforceTerritory(player._id, territory._id, 1);
+                territories[0].number_of_armies++;
+                remainingArmies--;
+            }
+        }
+
+    } catch (error) {
+        console.error("Error in automataAllocateTerritories: ", error);
         throw error;
     }
 };
