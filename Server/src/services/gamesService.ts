@@ -10,7 +10,7 @@ import { RoundState, Symbol } from "../models/enums";
 import { Player } from "../models/playersModel";
 import { Territory } from "../models/territoriesModel";
 import { Card } from "../models/cardsModel";
-import { getOngoingBattle, rollDiceService } from "./battlesService";
+import { getOngoingBattle, rollDiceService, startBattle } from "./battlesService";
 import { getCurrentPlayer } from "./playersService";
 import { reinforceTerritory } from "./territoriesService";
 
@@ -433,7 +433,10 @@ export const automataTurn = async () => {
 
         await automataAllocateTerritories();
 
-        //TODO: random támadjon 1-2-t a bot (await startBattle és await automataBattle)
+        const botAttacked = await botAttack();
+        if (botAttacked) {
+            await automataBattle();
+        }
 
         await endTurn(nextPlayer._id);
 
@@ -486,6 +489,61 @@ export const automataAllocateTerritories = async () => {
 
     } catch (error) {
         console.error("Error in automataAllocateTerritories: ", error);
+        throw error;
+    }
+};
+
+export const botAttack = async () => {
+    try {
+        const db = await connectToDb();
+        const playersCollection = db?.collection('Players');
+        const territoriesCollection = db?.collection('EssosTerritories');
+        const gamesCollection = db?.collection('Games');
+
+        if (!playersCollection || !territoriesCollection || !gamesCollection) {
+            throw new Error("Collections not found");
+        }
+
+        const ongoingGame = await gamesCollection.findOne<Game>({ state: "ongoing" });
+        if (!ongoingGame) {
+            throw new Error("No ongoing game found");
+        }
+
+        const player = await getCurrentPlayer();
+        if (!player) {
+            throw new Error("No next player found");
+        }
+
+        const territores = await territoriesCollection.find<Territory>({ game_id: ongoingGame._id, owner_id: player.house }).toArray();
+
+        for (const territory of territores) {
+            const enemyNeighbors = await territoriesCollection.find<Territory>({
+                name: { $in: territory.neighbors },
+                owner_id: { $ne: player.house }
+            }).toArray();
+
+            for (const enemy of enemyNeighbors) {
+                const attackerArmies = territory.number_of_armies;
+                const defenderArmies = enemy.number_of_armies;
+
+                if (attackerArmies >= 3 && attackerArmies >= 2 * defenderArmies) {
+                    const maxSafeAttackers = Math.floor(attackerArmies / 2);
+                    const armiesToAttack = Math.max(2, Math.min(maxSafeAttackers, attackerArmies - 1));
+
+                    if (armiesToAttack > defenderArmies) {
+                        console.log(`Bot attacking from ${territory.name} to ${enemy.name} with ${armiesToAttack} armies.`);
+                        await startBattle(player._id, territory._id, enemy._id, armiesToAttack);
+                        return true;
+                    }
+                }
+            }
+        }
+
+        console.log("Bot did not find a safe attack.");
+        return false;
+
+    } catch (error) {
+        console.error("Error in botAttack: ", error);
         throw error;
     }
 };
