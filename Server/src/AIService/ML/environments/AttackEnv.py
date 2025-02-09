@@ -76,38 +76,27 @@ class AttackEnvironment(gym.Env):
         chosen_action = self.actions[action]
         
         if chosen_action == ("pass",):
-            success = self.JSpass()
+            reward = self.JSpass()
         else:
             attacker_index, defender_index, army_count = chosen_action
-            success = self.JSattack(attacker_index, defender_index, army_count)
-            if not success:
-                return self.state, -1, True, {"info": "Attack failed"}
-            else:
-                await self.JSautomataBattle()
+            reward = self.JSattack(attacker_index, defender_index, army_count)
 
-        await self.JSgetState()
+        done = abs(reward) > 40
 
-        reward = self._calculate_reward(success)
-        done = self._is_game_over()
+        if done:
+            await self.JSgetLastState()
+        else:
+            await self.JSgetState()
+
+        #await self.JSgetState()
+
+        #done = self._is_game_over()
         self._update_action_space()
 
         return self.state, reward, done, {}
     
     def render(self, mode='human'):
         print(f"Current State: {self.state}")
-
-    def calculate_reward(self, action_result):
-        """
-        Calculates the reward based on the action result received from the server.
-        :param action_result: Result of the action from the server.
-        :return: Reward value.
-        """
-        if action_result["territory_captured"]:
-            return 1.0
-        elif action_result["lost_armies"]:
-            return -0.1 * action_result["lost_armies"]
-        else: 
-            return 0.0
         
     async def JSgetState(self):
         raw_state = await gameService.getOngoingGameState()
@@ -117,20 +106,21 @@ class AttackEnvironment(gym.Env):
     async def JSattack(self, from_territory, to_territory, num_armies):
         try:
             await battleService.startBattle(self.current_player_id, from_territory, to_territory, num_armies)
-            return True
+            reward = await gameService.automataBattle()
+            return reward
         except Exception as e:
             print(f"JSattack error: {e}")
             return False
-        
-    async def JSautomataBattle(self):
-        try:
-            text = await gameService.automataBattle()
-            print(text)
-        except Exception as e:
-            print(f"JSautomataBattle error: {e}")
     
-    def JSpass(self):
-        raise NotImplementedError()
+    async def JSpass(self):
+        try:
+            reward = await gameService.automataTurn()
+            return reward
+        except Exception as e:
+            print(f"JSpass error: {e}")
+
+    async def JSgetLastState(self):
+        return NotImplementedError()
     
     def _initialize_static_data(self):
         self.adjacency_matrix = self.create_adjacency_matrix()
@@ -140,6 +130,7 @@ class AttackEnvironment(gym.Env):
     def process_state(self, raw_state):
         self.current_round = raw_state["round"]
         self.current_player_id = raw_state["current_player_id"]
+        self.game_state = raw_state["state"]
         self.state = {
             "ownership": np.array([1 if t["owner_id"] == AI_HOUSE else 0 for t in self.territories], dtype=np.float32),
             "army_counts": np.array([t["number_of_armies"] / MAX_ARMIES for t in self.territories], dtype=np.float32),
@@ -216,18 +207,12 @@ class AttackEnvironment(gym.Env):
     def get_max_attack_armies(self, territory):
         total_armies = int(self.state["army_counts"][territory] * MAX_ARMIES)
         return max(0, total_armies - 1)
-
-    def _calculate_reward(self, success):
-        """
-        Jutalom kiszámítása a támadás eredménye alapján.
-        """
-        return 1 if success else -1
     
-    def _is_game_over(self, raw_state):
+    def _is_game_over(self):
         """
         Ellenőrzi, hogy véget ért-e a játék.
         """
-        return "won" in raw_state["state"].lower()
+        return "won" in self.game_state.lower()
     
 #raw_state = gameService.getOngoingGameState()
 #print(raw_state)
