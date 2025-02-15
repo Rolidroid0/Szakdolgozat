@@ -8,6 +8,7 @@ import { Player } from "../models/playersModel";
 import { Territory } from "../models/territoriesModel";
 import { Region } from "../models/regionsModel";
 import { Game } from "../models/gamesModel";
+import { Battle } from "../models/battlesModel";
 
 function generateShuffledNumbers(n: number) {
     const numbers = Array.from({ length: n}, (_, i) => i);
@@ -222,6 +223,45 @@ export const calculateScores = async () => {
         return true;
     } catch (error) {
         console.error('Error calculating scores: ', error);
+    }
+};
+
+export const calculateReward = async (battleId: ObjectId) => {
+    try {
+        const db = await connectToDb();
+        const battlesCollection = db?.collection('Battles');
+        const territoriesCollection = db?.collection('EssosTerritories');
+
+        if (!battlesCollection || !territoriesCollection) {
+            throw new Error("Collections not found");
+        }
+
+        const battle = await battlesCollection.findOne<Battle>({ _id: battleId });
+        if (!battle) {
+            throw new Error("Battle not found");
+        }
+
+        let attackerPoints = 0;
+        let defenderPoints = 0;
+
+        if (battle.state === "attacker-won") {
+            attackerPoints = 5 - (battle.attacker_armies - battle.current_attacker_armies) * 0.5;
+            defenderPoints = -5 - (battle.defender_armies - battle.current_defender_armies) * 0.5;
+
+            const conqueredTerritory = await territoriesCollection.findOne<Territory>({ _id: battle.defender_territory_id });
+            if (conqueredTerritory) {
+                if (conqueredTerritory.fortress === 1) attackerPoints += 2;
+                if (conqueredTerritory.port === 1) attackerPoints += 1;
+            }
+        } else if (battle.state === "defender-won") {
+            attackerPoints = -3 - (battle.attacker_armies - battle.current_attacker_armies) * 0.5;
+            defenderPoints = 5 - (battle.defender_armies - battle.current_defender_armies) * 0.5;
+        }
+
+        return { attackerPoints, defenderPoints };
+    } catch (error) {
+        console.error("Error in calculateReward: ", error);
+        throw error;
     }
 };
 

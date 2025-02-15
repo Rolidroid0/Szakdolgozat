@@ -81,7 +81,7 @@ class AttackEnvironment(gym.Env):
             attacker_index, defender_index, army_count = chosen_action
             reward = self.JSattack(attacker_index, defender_index, army_count)
 
-        done = abs(reward) > 40
+        done = abs(reward) > 30
 
         if done:
             await self.JSgetLastState()
@@ -107,7 +107,7 @@ class AttackEnvironment(gym.Env):
         try:
             await battleService.startBattle(self.current_player_id, from_territory, to_territory, num_armies)
             reward = await gameService.automataBattle()
-            return reward
+            return reward["attackerPoints"]
         except Exception as e:
             print(f"JSattack error: {e}")
             return False

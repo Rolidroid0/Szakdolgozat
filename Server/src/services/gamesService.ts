@@ -1,6 +1,6 @@
 import { WebSocketServer } from "ws";
 import { connectToDb } from "../config/db";
-import { calculatePlusArmies, calculateScores, validateManeuver } from "../utils/functions";
+import { calculatePlusArmies, calculateReward, calculateScores, validateManeuver } from "../utils/functions";
 import { ObjectId } from "mongodb";
 import { WebSocket } from 'ws';
 import { getWebSocketServer } from "../config/websocket";
@@ -13,6 +13,7 @@ import { Card } from "../models/cardsModel";
 import { getOngoingBattle, rollDiceService, startBattle } from "./battlesService";
 import { getCurrentPlayer } from "./playersService";
 import { reinforceTerritory } from "./territoriesService";
+import { Battle } from "../models/battlesModel";
 
 export const getOngoingGame = async () => {
     try {
@@ -123,7 +124,7 @@ export const endTurn = async (playerId: ObjectId) => {
 
     const gameEnded = await checkGameEnd();
     if (gameEnded) {
-        return;
+        return ongoingGame._id;
     }
 
     const players = await playersCollection.find<Player>({ game_id: ongoingGame._id }).toArray();
@@ -380,6 +381,7 @@ export const automataBattle = async () => {
         if (!battle) {
             throw new Error("No ongoing battle to automate");
         }
+        const battleId = battle._id;
 
         while (battle) {
             const attacker = await playersCollection.findOne<Player>({ game_id: battle.game_id, house: battle.attacker_id });
@@ -404,7 +406,7 @@ export const automataBattle = async () => {
             battle = await getOngoingBattle();
         }
 
-        return "Battle finished.";
+        return await calculateReward(battleId);
     } catch (error) {
         console.error("Error in automataBattle: ", error);
         throw error;
@@ -415,8 +417,9 @@ export const automataTurn = async () => {
     try {
         const db = await connectToDb();
         const playersCollection = db?.collection('Players');
+        const gamesCollection = db?.collection('Games');
 
-        if (!playersCollection) {
+        if (!playersCollection || !gamesCollection) {
             throw new Error("Collections not found");
         }
 
@@ -424,7 +427,16 @@ export const automataTurn = async () => {
         if (!currentPlayer) {
             throw new Error("No active player found");
         }
-        await endTurn(currentPlayer._id);
+        const gameEnded = await endTurn(currentPlayer._id);
+        if (gameEnded) {
+            const game = await gamesCollection.findOne<Game>({ _id: gameEnded });
+            if (!game) {
+                throw new Error("No game found");
+            }
+            return game.state.includes("Ghiscari") ? 50 : -50; // FELTÉTELEZVE, HOGY GHISCARI AZ AI! 
+        }
+
+        let reward = { attackerPoints: 0, defenderPoints: 0 };
 
         const nextPlayer = await getCurrentPlayer();
         if (!nextPlayer) {
@@ -435,15 +447,22 @@ export const automataTurn = async () => {
 
         const botAttacked = await botAttack();
         if (botAttacked) {
-            await automataBattle();
+            reward = await automataBattle();
         }
 
-        await endTurn(nextPlayer._id);
+        const gameEnded2 = await endTurn(nextPlayer._id);
+        if (gameEnded2) {
+            const game = await gamesCollection.findOne<Game>({ _id: gameEnded2 });
+            if (!game) {
+                throw new Error("No game found");
+            }
+            return game.state.includes("Ghiscari") ? reward.defenderPoints + 50 : reward.defenderPoints - 50; // FELTÉTELEZVE, HOGY GHISCARI AZ AI!
+        }
 
         await automataAllocateTerritories();
 
-        console.log("fin");
-        return "Automata turn finished successfully."; //Itt adja majd vissza a jutalom számításához szükséges adatokat.
+        console.log("Automata turn finished successfully.");
+        return reward.defenderPoints;
     } catch (error) {
         console.error("Error in automataTurn: ", error);
         throw error;
