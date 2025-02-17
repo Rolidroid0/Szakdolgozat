@@ -60,6 +60,7 @@ class AttackEnvironment(gym.Env):
         self.current_round = raw_state["round"]
         self.update_action_space()
         """
+        await self.JSstartNewGame()
         await self.JSgetState()
         self._initialize_static_data()
         return self.state
@@ -120,7 +121,12 @@ class AttackEnvironment(gym.Env):
             print(f"JSpass error: {e}")
 
     async def JSgetLastState(self):
-        return NotImplementedError()
+        raw_state = await gameService.getGameStateById(self.game_id)
+        self.territories = raw_state["territories"]
+        self.process_state(raw_state)
+
+    async def JSstartNewGame(self):
+        await gameService.startNewGame()
     
     def _initialize_static_data(self):
         self.adjacency_matrix = self.create_adjacency_matrix()
@@ -128,6 +134,7 @@ class AttackEnvironment(gym.Env):
         self.fortresses = [1 if t["fortress"] else 0 for t in self.territories]
     
     def process_state(self, raw_state):
+        self.game_id = raw_state["_id"]
         self.current_round = raw_state["round"]
         self.current_player_id = raw_state["current_player_id"]
         self.game_state = raw_state["state"]

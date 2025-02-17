@@ -14,6 +14,7 @@ import { getOngoingBattle, rollDiceService, startBattle } from "./battlesService
 import { getCurrentPlayer } from "./playersService";
 import { reinforceTerritory } from "./territoriesService";
 import { Battle } from "../models/battlesModel";
+import { startGameService } from "./startGameService";
 
 export const getOngoingGame = async () => {
     try {
@@ -563,6 +564,62 @@ export const botAttack = async () => {
 
     } catch (error) {
         console.error("Error in botAttack: ", error);
+        throw error;
+    }
+};
+
+export const getGameStateById = async (game_id: ObjectId) => {
+    try {
+        const db = await connectToDb();
+        const gamesCollection = db?.collection('Games');
+        const territoriesCollection = db?.collection('EssosTerritories');
+        const playersCollection = db?.collection('Players');
+
+        if (!gamesCollection || !territoriesCollection || !playersCollection) {
+            throw new Error("Collections not found");
+        }
+
+        const game = await gamesCollection.findOne<Game>({ _id: game_id });
+        if (!game) {
+            throw new Error("Game not found");
+        }
+
+        const current_player = await playersCollection.findOne<Player>({ game_id: game._id, house: game.current_player });
+        if (!current_player) {
+            throw new Error("Player not found");
+        }
+
+        const territories = await territoriesCollection.find<Territory>({ game_id: game._id }).toArray();
+        return {
+            _id: game._id,
+            current_player: game.current_player,
+            current_player_id: current_player._id,
+            players: game.players,
+            state: game.state,
+            round: game.round,
+            round_state: game.round_state,
+            territories: territories
+        }
+    } catch (error) {
+        console.error('Error getting game state: ', error);
+        throw error;
+    }
+};
+
+export const startNewGame = async () => {
+    try {
+        await startGameService();
+        await automataAllocateTerritories();
+
+        const currentPlayer = await getCurrentPlayer();
+        if (!currentPlayer) {
+            throw new Error("No active player found");
+        }
+        await endTurn(currentPlayer._id);
+
+        await automataAllocateTerritories();
+    } catch (error) {
+        console.error('Error starting new game: ', error);
         throw error;
     }
 };
