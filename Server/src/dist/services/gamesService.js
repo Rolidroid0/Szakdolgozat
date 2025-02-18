@@ -800,7 +800,7 @@ var startNewGame = function () { return __awaiter(void 0, void 0, void 0, functi
                 return [4 /*yield*/, (0, exports.automataAllocateTerritories)()];
             case 5:
                 _a.sent();
-                return [3 /*break*/, 7];
+                return [2 /*return*/];
             case 6:
                 error_10 = _a.sent();
                 console.error('Error starting new game: ', error_10);

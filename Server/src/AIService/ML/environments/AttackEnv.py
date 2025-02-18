@@ -61,8 +61,9 @@ class AttackEnvironment(gym.Env):
         self.update_action_space()
         """
         await self.JSstartNewGame()
-        await self.JSgetState()
-        self._initialize_static_data()
+        await self.JSgetFirstState()
+        #await self.JSgetState()
+        #self._initialize_static_data()
         return self.state
     
     async def step(self, action):
@@ -77,10 +78,14 @@ class AttackEnvironment(gym.Env):
         chosen_action = self.actions[action]
         
         if chosen_action == ("pass",):
-            reward = self.JSpass()
+            reward = await self.JSpass()
         else:
             attacker_index, defender_index, army_count = chosen_action
-            reward = self.JSattack(attacker_index, defender_index, army_count)
+            attacker_territory = self.territories[attacker_index]
+            defender_territory = self.territories[defender_index]
+
+            reward = await self.JSattack(attacker_territory._id, defender_territory._id, army_count)
+            #reward = await self.JSattack(attacker_index, defender_index, army_count)
 
         done = abs(reward) > 30
 
@@ -100,7 +105,7 @@ class AttackEnvironment(gym.Env):
         print(f"Current State: {self.state}")
         
     async def JSgetState(self):
-        raw_state = await gameService.getOngoingGameState()
+        raw_state = gameService.getOngoingGameState()
         self.territories = raw_state["territories"]
         self.process_state(raw_state)
     
@@ -120,13 +125,24 @@ class AttackEnvironment(gym.Env):
         except Exception as e:
             print(f"JSpass error: {e}")
 
+    async def JSgetFirstState(self):
+        raw_state = gameService.getOngoingGameState()
+        if isinstance(raw_state, dict):
+            raw_state = {key: value for key, value in raw_state.items()}
+        elif isinstance(raw_state, list):
+            raw_state = list(raw_state)
+        #self.territories = raw_state["territories"]
+        self.territories = list(raw_state["territories"])
+        self._initialize_static_data()
+        self.process_state(raw_state)
+
     async def JSgetLastState(self):
         raw_state = await gameService.getGameStateById(self.game_id)
         self.territories = raw_state["territories"]
         self.process_state(raw_state)
 
     async def JSstartNewGame(self):
-        await gameService.startNewGame()
+        gameService.startNewGame()
     
     def _initialize_static_data(self):
         self.adjacency_matrix = self.create_adjacency_matrix()
@@ -209,7 +225,7 @@ class AttackEnvironment(gym.Env):
         return [i for i, owner in enumerate(self.state["ownership"]) if owner == 1 and self.get_max_attack_armies(i) > 0]
     
     def get_attackable_neighbors(self, territory):
-        return [j for j in range(MAX_TERRITORIES) if self.adjacency_matrix[territory, j] == 1 and self.state["ownership"][j] == 0]
+        return [j for j in range(MAX_TERRITORIES-1) if self.adjacency_matrix[territory, j] == 1 and self.state["ownership"][j] == 0]
     
     def get_max_attack_armies(self, territory):
         total_armies = int(self.state["army_counts"][territory] * MAX_ARMIES)

@@ -5,6 +5,11 @@ from models.deep_q_network import DeepQNetwork
 from agents.deep_q_agent import DQNAgent
 from environments.AttackEnv import AttackEnvironment
 
+from javascript import require
+
+db = require("../../dist/config/db.js")
+websocket = require("../../dist/config/websocket.js")
+
 EPISODES = 1
 BATCH_SIZE = 64
 
@@ -16,6 +21,7 @@ class DQNTrainer:
         self.max_episodes = EPISODES
 
     async def train(self):
+        websocket.initializeWebSocket(db.connectToDb())
         for episode in range(self.max_episodes):
             state = await self.env.reset()
             total_reward = 0
@@ -44,7 +50,6 @@ class DQNTrainer:
         ])
 
 if __name__ == "__main__":
-    """
     env = AttackEnvironment()
     state_dim = sum([
         env.observation_space["ownership"].shape[0],
@@ -58,7 +63,6 @@ if __name__ == "__main__":
     trainer = DQNTrainer(env, state_dim, action_dim)
     asyncio.run(trainer.train())
     print("Training completed!")
-    """
 
 
     #if (episode + 1) % 50 == 0:

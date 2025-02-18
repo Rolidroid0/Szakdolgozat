@@ -606,7 +606,7 @@ export const getGameStateById = async (game_id: ObjectId) => {
     }
 };
 
-export const startNewGame = async () => {
+export const startNewGame = async (): Promise<void> => {
     try {
         await startGameService();
         await automataAllocateTerritories();
@@ -618,6 +618,8 @@ export const startNewGame = async () => {
         await endTurn(currentPlayer._id);
 
         await automataAllocateTerritories();
+
+        return;
     } catch (error) {
         console.error('Error starting new game: ', error);
         throw error;
