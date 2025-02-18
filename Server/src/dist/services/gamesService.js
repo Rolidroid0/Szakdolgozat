@@ -36,7 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.automataBattle = exports.getOngoingGameState = exports.checkGameEnd = exports.applyManeuver = exports.endPhase = exports.endTurn = exports.applyAdditionalArmies = exports.getCurrentRound = exports.getOngoingGame = void 0;
+exports.startNewGame = exports.getGameStateById = exports.botAttack = exports.automataAllocateTerritories = exports.automataTurn = exports.automataBattle = exports.getOngoingGameState = exports.checkGameEnd = exports.applyManeuver = exports.endPhase = exports.endTurn = exports.applyAdditionalArmies = exports.getCurrentRound = exports.getOngoingGame = void 0;
 var db_1 = require("../config/db");
 var functions_1 = require("../utils/functions");
 var mongodb_1 = require("mongodb");
@@ -45,6 +45,9 @@ var websocket_1 = require("../config/websocket");
 var cardsService_1 = require("./cardsService");
 var enums_1 = require("../models/enums");
 var battlesService_1 = require("./battlesService");
+var playersService_1 = require("./playersService");
+var territoriesService_1 = require("./territoriesService");
+var startGameService_1 = require("./startGameService");
 var getOngoingGame = function () { return __awaiter(void 0, void 0, void 0, function () {
     var db, gamesCollection, game, error_1;
     return __generator(this, function (_a) {
@@ -176,7 +179,7 @@ var endTurn = function (playerId) { return __awaiter(void 0, void 0, void 0, fun
             case 7:
                 gameEnded = _a.sent();
                 if (gameEnded) {
-                    return [2 /*return*/];
+                    return [2 /*return*/, ongoingGame._id];
                 }
                 return [4 /*yield*/, playersCollection.find({ game_id: ongoingGame._id }).toArray()];
             case 8:
@@ -454,11 +457,11 @@ var getOngoingGameState = function () { return __awaiter(void 0, void 0, void 0,
 }); };
 exports.getOngoingGameState = getOngoingGameState;
 var automataBattle = function () { return __awaiter(void 0, void 0, void 0, function () {
-    var db, playersCollection, battlesCollection, territoriesCollection, gamesCollection, battle, attacker, defender, error_5;
+    var db, playersCollection, battlesCollection, territoriesCollection, gamesCollection, battle, battleId, attacker, defender, error_5;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                _a.trys.push([0, 11, , 12]);
+                _a.trys.push([0, 13, , 14]);
                 return [4 /*yield*/, (0, db_1.connectToDb)()];
             case 1:
                 db = _a.sent();
@@ -475,40 +478,335 @@ var automataBattle = function () { return __awaiter(void 0, void 0, void 0, func
                 if (!battle) {
                     throw new Error("No ongoing battle to automate");
                 }
+                battleId = battle._id;
                 _a.label = 3;
             case 3:
-                if (!battle) return [3 /*break*/, 10];
+                if (!battle) return [3 /*break*/, 11];
                 return [4 /*yield*/, playersCollection.findOne({ game_id: battle.game_id, house: battle.attacker_id })];
             case 4:
                 attacker = _a.sent();
                 if (!attacker) {
                     throw new Error("Attacker not found");
                 }
+                if (!!battle.attacker_has_rolled) return [3 /*break*/, 6];
                 return [4 /*yield*/, (0, battlesService_1.rollDiceService)(attacker._id)];
             case 5:
                 _a.sent();
-                if (!(battle.defender_id !== "neutral")) return [3 /*break*/, 8];
-                return [4 /*yield*/, playersCollection.findOne({ game_id: battle.game_id, house: battle.attacker_id })];
+                _a.label = 6;
             case 6:
+                if (!(battle.defender_id !== "neutral")) return [3 /*break*/, 9];
+                return [4 /*yield*/, playersCollection.findOne({ game_id: battle.game_id, house: battle.defender_id })];
+            case 7:
                 defender = _a.sent();
                 if (!defender) {
                     throw new Error("Defender not found");
                 }
+                if (!!battle.defender_has_rolled) return [3 /*break*/, 9];
                 return [4 /*yield*/, (0, battlesService_1.rollDiceService)(defender._id)];
-            case 7:
+            case 8:
                 _a.sent();
-                _a.label = 8;
-            case 8: return [4 /*yield*/, (0, battlesService_1.getOngoingBattle)()];
-            case 9:
+                _a.label = 9;
+            case 9: return [4 /*yield*/, (0, battlesService_1.getOngoingBattle)()];
+            case 10:
                 battle = _a.sent();
                 return [3 /*break*/, 3];
-            case 10: return [2 /*return*/, "Battle finished."];
-            case 11:
+            case 11: return [4 /*yield*/, (0, functions_1.calculateReward)(battleId)];
+            case 12: return [2 /*return*/, _a.sent()];
+            case 13:
                 error_5 = _a.sent();
                 console.error("Error in automataBattle: ", error_5);
                 throw error_5;
-            case 12: return [2 /*return*/];
+            case 14: return [2 /*return*/];
         }
     });
 }); };
 exports.automataBattle = automataBattle;
+var automataTurn = function () { return __awaiter(void 0, void 0, void 0, function () {
+    var db, playersCollection, gamesCollection, currentPlayer, gameEnded, game, reward, nextPlayer, botAttacked, gameEnded2, game, error_6;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 15, , 16]);
+                return [4 /*yield*/, (0, db_1.connectToDb)()];
+            case 1:
+                db = _a.sent();
+                playersCollection = db === null || db === void 0 ? void 0 : db.collection('Players');
+                gamesCollection = db === null || db === void 0 ? void 0 : db.collection('Games');
+                if (!playersCollection || !gamesCollection) {
+                    throw new Error("Collections not found");
+                }
+                return [4 /*yield*/, (0, playersService_1.getCurrentPlayer)()];
+            case 2:
+                currentPlayer = _a.sent();
+                if (!currentPlayer) {
+                    throw new Error("No active player found");
+                }
+                return [4 /*yield*/, (0, exports.endTurn)(currentPlayer._id)];
+            case 3:
+                gameEnded = _a.sent();
+                if (!gameEnded) return [3 /*break*/, 5];
+                return [4 /*yield*/, gamesCollection.findOne({ _id: gameEnded })];
+            case 4:
+                game = _a.sent();
+                if (!game) {
+                    throw new Error("No game found");
+                }
+                return [2 /*return*/, game.state.includes("Ghiscari") ? 50 : -50]; // FELTÉTELEZVE, HOGY GHISCARI AZ AI! 
+            case 5:
+                reward = { attackerPoints: 0, defenderPoints: 0 };
+                return [4 /*yield*/, (0, playersService_1.getCurrentPlayer)()];
+            case 6:
+                nextPlayer = _a.sent();
+                if (!nextPlayer) {
+                    throw new Error("No next player found");
+                }
+                return [4 /*yield*/, (0, exports.automataAllocateTerritories)()];
+            case 7:
+                _a.sent();
+                return [4 /*yield*/, (0, exports.botAttack)()];
+            case 8:
+                botAttacked = _a.sent();
+                if (!botAttacked) return [3 /*break*/, 10];
+                return [4 /*yield*/, (0, exports.automataBattle)()];
+            case 9:
+                reward = _a.sent();
+                _a.label = 10;
+            case 10: return [4 /*yield*/, (0, exports.endTurn)(nextPlayer._id)];
+            case 11:
+                gameEnded2 = _a.sent();
+                if (!gameEnded2) return [3 /*break*/, 13];
+                return [4 /*yield*/, gamesCollection.findOne({ _id: gameEnded2 })];
+            case 12:
+                game = _a.sent();
+                if (!game) {
+                    throw new Error("No game found");
+                }
+                return [2 /*return*/, game.state.includes("Ghiscari") ? reward.defenderPoints + 50 : reward.defenderPoints - 50]; // FELTÉTELEZVE, HOGY GHISCARI AZ AI!
+            case 13: return [4 /*yield*/, (0, exports.automataAllocateTerritories)()];
+            case 14:
+                _a.sent();
+                console.log("Automata turn finished successfully.");
+                return [2 /*return*/, reward.defenderPoints];
+            case 15:
+                error_6 = _a.sent();
+                console.error("Error in automataTurn: ", error_6);
+                throw error_6;
+            case 16: return [2 /*return*/];
+        }
+    });
+}); };
+exports.automataTurn = automataTurn;
+var automataAllocateTerritories = function () { return __awaiter(void 0, void 0, void 0, function () {
+    var db, playersCollection, territoriesCollection, gamesCollection, ongoingGame, player, territories, remainingArmies, territory, error_7;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 8, , 9]);
+                return [4 /*yield*/, (0, db_1.connectToDb)()];
+            case 1:
+                db = _a.sent();
+                playersCollection = db === null || db === void 0 ? void 0 : db.collection('Players');
+                territoriesCollection = db === null || db === void 0 ? void 0 : db.collection('EssosTerritories');
+                gamesCollection = db === null || db === void 0 ? void 0 : db.collection('Games');
+                if (!playersCollection || !territoriesCollection || !gamesCollection) {
+                    throw new Error("Collections not found");
+                }
+                return [4 /*yield*/, gamesCollection.findOne({ state: "ongoing" })];
+            case 2:
+                ongoingGame = _a.sent();
+                if (!ongoingGame) {
+                    throw new Error("No ongoing game found");
+                }
+                return [4 /*yield*/, (0, playersService_1.getCurrentPlayer)()];
+            case 3:
+                player = _a.sent();
+                if (!player) {
+                    throw new Error("No next player found");
+                }
+                if (!(player.plus_armies > 0)) return [3 /*break*/, 7];
+                return [4 /*yield*/, territoriesCollection.find({ game_id: ongoingGame._id, owner_id: player.house }).toArray()];
+            case 4:
+                territories = _a.sent();
+                if (territories.length === 0) {
+                    throw new Error("No owned territores found for reinforcement");
+                }
+                remainingArmies = player.plus_armies;
+                _a.label = 5;
+            case 5:
+                if (!(remainingArmies > 0)) return [3 /*break*/, 7];
+                territories.sort(function (a, b) { return a.number_of_armies - b.number_of_armies; });
+                territory = territories[0];
+                return [4 /*yield*/, (0, territoriesService_1.reinforceTerritory)(player._id, territory._id, 1)];
+            case 6:
+                _a.sent();
+                territories[0].number_of_armies++;
+                remainingArmies--;
+                return [3 /*break*/, 5];
+            case 7: return [3 /*break*/, 9];
+            case 8:
+                error_7 = _a.sent();
+                console.error("Error in automataAllocateTerritories: ", error_7);
+                throw error_7;
+            case 9: return [2 /*return*/];
+        }
+    });
+}); };
+exports.automataAllocateTerritories = automataAllocateTerritories;
+var botAttack = function () { return __awaiter(void 0, void 0, void 0, function () {
+    var db, playersCollection, territoriesCollection, gamesCollection, ongoingGame, player, territores, _i, territores_1, territory, enemyNeighbors, _a, enemyNeighbors_1, enemy, attackerArmies, defenderArmies, maxSafeAttackers, armiesToAttack, error_8;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
+            case 0:
+                _b.trys.push([0, 12, , 13]);
+                return [4 /*yield*/, (0, db_1.connectToDb)()];
+            case 1:
+                db = _b.sent();
+                playersCollection = db === null || db === void 0 ? void 0 : db.collection('Players');
+                territoriesCollection = db === null || db === void 0 ? void 0 : db.collection('EssosTerritories');
+                gamesCollection = db === null || db === void 0 ? void 0 : db.collection('Games');
+                if (!playersCollection || !territoriesCollection || !gamesCollection) {
+                    throw new Error("Collections not found");
+                }
+                return [4 /*yield*/, gamesCollection.findOne({ state: "ongoing" })];
+            case 2:
+                ongoingGame = _b.sent();
+                if (!ongoingGame) {
+                    throw new Error("No ongoing game found");
+                }
+                return [4 /*yield*/, (0, playersService_1.getCurrentPlayer)()];
+            case 3:
+                player = _b.sent();
+                if (!player) {
+                    throw new Error("No next player found");
+                }
+                return [4 /*yield*/, territoriesCollection.find({ game_id: ongoingGame._id, owner_id: player.house }).toArray()];
+            case 4:
+                territores = _b.sent();
+                _i = 0, territores_1 = territores;
+                _b.label = 5;
+            case 5:
+                if (!(_i < territores_1.length)) return [3 /*break*/, 11];
+                territory = territores_1[_i];
+                return [4 /*yield*/, territoriesCollection.find({
+                        name: { $in: territory.neighbors },
+                        owner_id: { $ne: player.house }
+                    }).toArray()];
+            case 6:
+                enemyNeighbors = _b.sent();
+                _a = 0, enemyNeighbors_1 = enemyNeighbors;
+                _b.label = 7;
+            case 7:
+                if (!(_a < enemyNeighbors_1.length)) return [3 /*break*/, 10];
+                enemy = enemyNeighbors_1[_a];
+                attackerArmies = territory.number_of_armies;
+                defenderArmies = enemy.number_of_armies;
+                if (!(attackerArmies >= 3 && attackerArmies >= 2 * defenderArmies)) return [3 /*break*/, 9];
+                maxSafeAttackers = Math.floor(attackerArmies / 2);
+                armiesToAttack = Math.max(2, Math.min(maxSafeAttackers, attackerArmies - 1));
+                if (!(armiesToAttack > defenderArmies)) return [3 /*break*/, 9];
+                console.log("Bot attacking from ".concat(territory.name, " to ").concat(enemy.name, " with ").concat(armiesToAttack, " armies."));
+                return [4 /*yield*/, (0, battlesService_1.startBattle)(player._id, territory._id, enemy._id, armiesToAttack)];
+            case 8:
+                _b.sent();
+                return [2 /*return*/, true];
+            case 9:
+                _a++;
+                return [3 /*break*/, 7];
+            case 10:
+                _i++;
+                return [3 /*break*/, 5];
+            case 11:
+                console.log("Bot did not find a safe attack.");
+                return [2 /*return*/, false];
+            case 12:
+                error_8 = _b.sent();
+                console.error("Error in botAttack: ", error_8);
+                throw error_8;
+            case 13: return [2 /*return*/];
+        }
+    });
+}); };
+exports.botAttack = botAttack;
+var getGameStateById = function (game_id) { return __awaiter(void 0, void 0, void 0, function () {
+    var db, gamesCollection, territoriesCollection, playersCollection, game, current_player, territories, error_9;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 5, , 6]);
+                return [4 /*yield*/, (0, db_1.connectToDb)()];
+            case 1:
+                db = _a.sent();
+                gamesCollection = db === null || db === void 0 ? void 0 : db.collection('Games');
+                territoriesCollection = db === null || db === void 0 ? void 0 : db.collection('EssosTerritories');
+                playersCollection = db === null || db === void 0 ? void 0 : db.collection('Players');
+                if (!gamesCollection || !territoriesCollection || !playersCollection) {
+                    throw new Error("Collections not found");
+                }
+                return [4 /*yield*/, gamesCollection.findOne({ _id: game_id })];
+            case 2:
+                game = _a.sent();
+                if (!game) {
+                    throw new Error("Game not found");
+                }
+                return [4 /*yield*/, playersCollection.findOne({ game_id: game._id, house: game.current_player })];
+            case 3:
+                current_player = _a.sent();
+                if (!current_player) {
+                    throw new Error("Player not found");
+                }
+                return [4 /*yield*/, territoriesCollection.find({ game_id: game._id }).toArray()];
+            case 4:
+                territories = _a.sent();
+                return [2 /*return*/, {
+                        _id: game._id,
+                        current_player: game.current_player,
+                        current_player_id: current_player._id,
+                        players: game.players,
+                        state: game.state,
+                        round: game.round,
+                        round_state: game.round_state,
+                        territories: territories
+                    }];
+            case 5:
+                error_9 = _a.sent();
+                console.error('Error getting game state: ', error_9);
+                throw error_9;
+            case 6: return [2 /*return*/];
+        }
+    });
+}); };
+exports.getGameStateById = getGameStateById;
+var startNewGame = function () { return __awaiter(void 0, void 0, void 0, function () {
+    var currentPlayer, error_10;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 6, , 7]);
+                return [4 /*yield*/, (0, startGameService_1.startGameService)()];
+            case 1:
+                _a.sent();
+                return [4 /*yield*/, (0, exports.automataAllocateTerritories)()];
+            case 2:
+                _a.sent();
+                return [4 /*yield*/, (0, playersService_1.getCurrentPlayer)()];
+            case 3:
+                currentPlayer = _a.sent();
+                if (!currentPlayer) {
+                    throw new Error("No active player found");
+                }
+                return [4 /*yield*/, (0, exports.endTurn)(currentPlayer._id)];
+            case 4:
+                _a.sent();
+                return [4 /*yield*/, (0, exports.automataAllocateTerritories)()];
+            case 5:
+                _a.sent();
+                return [3 /*break*/, 7];
+            case 6:
+                error_10 = _a.sent();
+                console.error('Error starting new game: ', error_10);
+                throw error_10;
+            case 7: return [2 /*return*/];
+        }
+    });
+}); };
+exports.startNewGame = startNewGame;

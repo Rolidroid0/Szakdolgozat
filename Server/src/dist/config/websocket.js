@@ -7,6 +7,7 @@ var functions_1 = require("../utils/functions");
 var wss;
 var initializeWebSocket = function (server) {
     wss = new ws_1.WebSocketServer({ server: server });
+    console.log("WebSocket server initialized");
     wss.on('connection', function (ws) {
         console.log('New client connected');
         ws.on('message', function (message) {

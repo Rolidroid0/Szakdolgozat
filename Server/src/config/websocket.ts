@@ -11,6 +11,7 @@ let wss: WebSocketServer;
 
 export const initializeWebSocket = (server: Server) => {
     wss = new WebSocketServer({ server });
+    console.log("WebSocket server initialized");
 
     wss.on('connection', (ws: CustomWebSocket) => {
         console.log('New client connected');

@@ -36,7 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.calculateScores = exports.assignTerritoryBonus = exports.compareRolls = exports.rollDice = exports.validateManeuver = exports.calculatePlusArmies = exports.handleDisconnect = void 0;
+exports.calculateReward = exports.calculateScores = exports.assignTerritoryBonus = exports.compareRolls = exports.rollDice = exports.validateManeuver = exports.calculatePlusArmies = exports.handleDisconnect = void 0;
 var mongodb_1 = require("mongodb");
 var db_1 = require("../config/db");
 var territoriesService_1 = require("../services/territoriesService");
@@ -338,4 +338,55 @@ var calculateScores = function () { return __awaiter(void 0, void 0, void 0, fun
     });
 }); };
 exports.calculateScores = calculateScores;
+var calculateReward = function (battleId) { return __awaiter(void 0, void 0, void 0, function () {
+    var db, battlesCollection, territoriesCollection, battle, attackerPoints, defenderPoints, conqueredTerritory, error_3;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 6, , 7]);
+                return [4 /*yield*/, (0, db_1.connectToDb)()];
+            case 1:
+                db = _a.sent();
+                battlesCollection = db === null || db === void 0 ? void 0 : db.collection('Battles');
+                territoriesCollection = db === null || db === void 0 ? void 0 : db.collection('EssosTerritories');
+                if (!battlesCollection || !territoriesCollection) {
+                    throw new Error("Collections not found");
+                }
+                return [4 /*yield*/, battlesCollection.findOne({ _id: battleId })];
+            case 2:
+                battle = _a.sent();
+                if (!battle) {
+                    throw new Error("Battle not found");
+                }
+                attackerPoints = 0;
+                defenderPoints = 0;
+                if (!(battle.state === "attacker-won")) return [3 /*break*/, 4];
+                attackerPoints = 5 - (battle.attacker_armies - battle.current_attacker_armies) * 0.5;
+                defenderPoints = -5 - (battle.defender_armies - battle.current_defender_armies) * 0.5;
+                return [4 /*yield*/, territoriesCollection.findOne({ _id: battle.defender_territory_id })];
+            case 3:
+                conqueredTerritory = _a.sent();
+                if (conqueredTerritory) {
+                    if (conqueredTerritory.fortress === 1)
+                        attackerPoints += 2;
+                    if (conqueredTerritory.port === 1)
+                        attackerPoints += 1;
+                }
+                return [3 /*break*/, 5];
+            case 4:
+                if (battle.state === "defender-won") {
+                    attackerPoints = -3 - (battle.attacker_armies - battle.current_attacker_armies) * 0.5;
+                    defenderPoints = 5 - (battle.defender_armies - battle.current_defender_armies) * 0.5;
+                }
+                _a.label = 5;
+            case 5: return [2 /*return*/, { attackerPoints: attackerPoints, defenderPoints: defenderPoints }];
+            case 6:
+                error_3 = _a.sent();
+                console.error("Error in calculateReward: ", error_3);
+                throw error_3;
+            case 7: return [2 /*return*/];
+        }
+    });
+}); };
+exports.calculateReward = calculateReward;
 exports.default = generateShuffledNumbers;

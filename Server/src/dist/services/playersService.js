@@ -36,7 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.logoutPlayer = exports.loginPlayer = exports.generatePlayers = exports.getPlayerById = exports.getPlayers = void 0;
+exports.getCurrentPlayer = exports.logoutPlayer = exports.loginPlayer = exports.generatePlayers = exports.getPlayerById = exports.getPlayers = void 0;
 var db_1 = require("../config/db");
 var mongodb_1 = require("mongodb");
 var getPlayers = function () { return __awaiter(void 0, void 0, void 0, function () {
@@ -216,3 +216,39 @@ var logoutPlayer = function (playerId) { return __awaiter(void 0, void 0, void 0
     });
 }); };
 exports.logoutPlayer = logoutPlayer;
+var getCurrentPlayer = function () { return __awaiter(void 0, void 0, void 0, function () {
+    var db, playersCollection, gamesCollection, ongoingGame, current_player, error_5;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 4, , 5]);
+                return [4 /*yield*/, (0, db_1.connectToDb)()];
+            case 1:
+                db = _a.sent();
+                playersCollection = db === null || db === void 0 ? void 0 : db.collection('Players');
+                gamesCollection = db === null || db === void 0 ? void 0 : db.collection('Games');
+                if (!playersCollection || !gamesCollection) {
+                    throw new Error("Collections not found");
+                }
+                return [4 /*yield*/, gamesCollection.findOne({ state: "ongoing" })];
+            case 2:
+                ongoingGame = _a.sent();
+                if (!ongoingGame) {
+                    throw new Error("No ongoing game found");
+                }
+                return [4 /*yield*/, playersCollection.findOne({ game_id: ongoingGame._id, house: ongoingGame.current_player })];
+            case 3:
+                current_player = _a.sent();
+                if (!current_player) {
+                    throw new Error("Player not found");
+                }
+                return [2 /*return*/, current_player];
+            case 4:
+                error_5 = _a.sent();
+                console.error('Error getting current player: ', error_5);
+                throw error_5;
+            case 5: return [2 /*return*/];
+        }
+    });
+}); };
+exports.getCurrentPlayer = getCurrentPlayer;
