@@ -1,15 +1,11 @@
 import gym
 from gym import spaces
 import numpy as np
-from javascript import require
 import asyncio
 
 AI_HOUSE = "Ghiscari"
 MAX_ARMIES = 100
 MAX_TERRITORIES = 35
-
-gameService = require("../../../dist/services/gamesService.js")
-battleService = require("../../../dist/services/battlesService.js")
 
 class AttackEnvironment(gym.Env):
 
@@ -52,7 +48,9 @@ class AttackEnvironment(gym.Env):
         self.adjacency_matrix = None
         self.ports = None
         self.fortresses = None
-    
+
+        self.websocket = None
+
     async def reset(self):
         """
         raw_state = self.JSgetState()
@@ -60,7 +58,8 @@ class AttackEnvironment(gym.Env):
         self.current_round = raw_state["round"]
         self.update_action_space()
         """
-        await self.JSstartNewGame()
+        #await self.JSstartNewGame()
+        await self.send_action("start-new-game")
         await self.JSgetFirstState()
         #await self.JSgetState()
         #self._initialize_static_data()
@@ -84,7 +83,7 @@ class AttackEnvironment(gym.Env):
             attacker_territory = self.territories[attacker_index]
             defender_territory = self.territories[defender_index]
 
-            reward = await self.JSattack(attacker_territory._id, defender_territory._id, army_count)
+            reward = await self.JSattack(attacker_territory['_id'], defender_territory['_id'], army_count)
             #reward = await self.JSattack(attacker_index, defender_index, army_count)
 
         done = abs(reward) > 30
@@ -105,14 +104,20 @@ class AttackEnvironment(gym.Env):
         print(f"Current State: {self.state}")
         
     async def JSgetState(self):
-        raw_state = gameService.getOngoingGameState()
+        raw_state = await self.send_action("get-game-state", extract_key="raw_state")
         self.territories = raw_state["territories"]
         self.process_state(raw_state)
     
     async def JSattack(self, from_territory, to_territory, num_armies):
         try:
-            await battleService.startBattle(self.current_player_id, from_territory, to_territory, num_armies)
-            reward = await gameService.automataBattle()
+            data = { "playerId": self.current_player_id,
+                    "fromTerritoryId": from_territory,
+                    "toTerritoryId": to_territory,
+                    "armies": num_armies }
+            await self.send_action('start-battle', data)
+            #await battleService.startBattle(self.current_player_id, from_territory, to_territory, num_armies)
+            #reward = await gameService.automataBattle()
+            reward = await self.send_action('automata-battle', extract_key="reward")
             return reward["attackerPoints"]
         except Exception as e:
             print(f"JSattack error: {e}")
@@ -120,13 +125,15 @@ class AttackEnvironment(gym.Env):
     
     async def JSpass(self):
         try:
-            reward = await gameService.automataTurn()
+            #reward = await gameService.automataTurn()
+            reward = await self.send_action('automata-turn', extract_key=reward)
             return reward
         except Exception as e:
             print(f"JSpass error: {e}")
 
     async def JSgetFirstState(self):
-        raw_state = gameService.getOngoingGameState()
+        raw_state = await self.send_action("get-game-state", extract_key="raw_state")
+
         if isinstance(raw_state, dict):
             raw_state = {key: value for key, value in raw_state.items()}
         elif isinstance(raw_state, list):
@@ -137,12 +144,14 @@ class AttackEnvironment(gym.Env):
         self.process_state(raw_state)
 
     async def JSgetLastState(self):
-        raw_state = await gameService.getGameStateById(self.game_id)
+        data = { "gameId": self.game_id }
+        raw_state = await self.send_action('get-game-state-by-id', data, "raw_state")
+        #raw_state = await gameService.getGameStateById(self.game_id)
         self.territories = raw_state["territories"]
         self.process_state(raw_state)
 
-    async def JSstartNewGame(self):
-        gameService.startNewGame()
+    #async def JSstartNewGame(self):
+    #    gameService.startNewGame()
     
     def _initialize_static_data(self):
         self.adjacency_matrix = self.create_adjacency_matrix()
@@ -230,6 +239,25 @@ class AttackEnvironment(gym.Env):
     def get_max_attack_armies(self, territory):
         total_armies = int(self.state["army_counts"][territory] * MAX_ARMIES)
         return max(0, total_armies - 1)
+    
+    def set_websocket(self, websocket):
+        self.websocket = websocket
+
+    async def send_action(self, action, data=None, extract_key=None):
+        if not self.websocket:
+            raise Exception("WebSocket connection not established.")
+            
+        response = await self.websocket.send_message(action, data)
+
+        if not response:
+            print("az baj")
+            return
+
+        if not response.get("success", False):
+            error_message = response.get("message", "Unknown error occurred.")
+            raise Exception(f"Action failed: {error_message}")
+
+        return response.get(extract_key) if extract_key else response
     
     def _is_game_over(self):
         """

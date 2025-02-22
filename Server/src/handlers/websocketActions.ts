@@ -2,7 +2,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { shuffle, tradeCardsForArmies } from '../services/cardsService';
 import { startGameService } from '../services/startGameService';
 import { CustomWebSocket } from '../config/websocket';
-import { applyManeuver, endTurn } from '../services/gamesService';
+import { applyManeuver, automataBattle, automataTurn, endTurn, getGameStateById, getOngoingGameState, startNewGame } from '../services/gamesService';
 import { ObjectId } from 'mongodb';
 import { reinforceTerritory } from '../services/territoriesService';
 import { startBattle } from '../services/battlesService';
@@ -73,12 +73,63 @@ const actions: Record<string, (ws: CustomWebSocket, data: any) => void> = {
     },
     'start-battle': async (ws, data) => {
         try {
-            const { playerId, fromTerritoryId, toTerritoryId, armies } = data;
+            const { playerId, fromTerritoryId, toTerritoryId, armies, requestId } = data;
             await startBattle(new ObjectId(playerId), new ObjectId(fromTerritoryId), new ObjectId(toTerritoryId), armies);
-            ws.send(JSON.stringify({ action: 'attack-started', data: { success: true } }));
+            ws.send(JSON.stringify({ action: 'attack-started', data: { success: true }, request_id: requestId }));
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            ws.send(JSON.stringify({ action: 'attack-failed', data: { success: false, message: errorMessage } }));
+            ws.send(JSON.stringify({ action: 'attack-failed', data: { success: false, message: errorMessage }, request_id: data.requestId }));
+        }
+    },
+    //Python actions
+    'start-new-game': async (ws, data) => {
+        try {
+            const { requestId } = data;
+            await startNewGame();
+            ws.send(JSON.stringify({ action: 'new-game-started', data: { success: true }, request_id: requestId }));
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            ws.send(JSON.stringify({ action: 'new-game-failed-to-start', data: { success: false, message: errorMessage }, request_id: data.requestId }));
+        }
+    },
+    'get-game-state': async (ws, data) => {
+        try {
+            const { requestId } = data;
+            const response = await getOngoingGameState();
+            ws.send(JSON.stringify({ action: 'received-game-state', data: { success: true, raw_state: response }, request_id: requestId }));
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            ws.send(JSON.stringify({ action: 'failed-to-receice-game-state', data: { success: false, message: errorMessage }, request_id: data.requestId }));
+        }
+    },
+    'automata-battle': async (ws, data) => {
+        try {
+            const { requestId } = data;
+            const response = await automataBattle();
+            ws.send(JSON.stringify({ action: 'done-automata-battle', data: { success: true, reward: response }, request_id: requestId }));
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            ws.send(JSON.stringify({ action: 'failed-to-do-automata-battle', data: { success: false, message: errorMessage }, request_id: data.requestId }));
+        }
+    },
+    'automata-turn': async (ws, data) => {
+        try {
+            const { requestId } = data;
+            const response = await automataTurn();
+            ws.send(JSON.stringify({ action: 'done-automata-turn', data: { success: true, reward: response }, request_id: requestId }));
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            ws.send(JSON.stringify({ action: 'failed-to-do-automata-turn', data: { success: false, message: errorMessage }, request_id: data.requestId }));
+        }
+    },
+    'get-game-state-by-id': async (ws, data) => {
+        try {
+            const { gameId, requestId } = data;
+            const response = await getGameStateById(new ObjectId(gameId));
+            ws.send(JSON.stringify({ action: 'received-game-state-by-id', data: { success: true, raw_state: response }, request_id: requestId }));
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            ws.send(JSON.stringify({ action: 'failed-to-receice-game-state-by-id', data: { success: false, message: errorMessage }, request_id: data.requestId }));
         }
     },
 };
