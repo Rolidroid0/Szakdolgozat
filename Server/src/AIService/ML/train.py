@@ -6,7 +6,7 @@ from agents.deep_q_agent import DQNAgent
 from environments.AttackEnv import AttackEnvironment
 from websocket_client import WebSocketClient
 
-EPISODES = 1
+EPISODES = 10
 BATCH_SIZE = 64
 
 class DQNTrainer:
@@ -20,6 +20,7 @@ class DQNTrainer:
     async def train(self):
         try:
             await self.websocket.connect()
+            episode_rewards = []
 
             for episode in range(self.max_episodes):
                 state = await self.env.reset()
@@ -35,7 +36,12 @@ class DQNTrainer:
                     state = next_state
                     total_reward += reward
 
+                episode_rewards.append(total_reward)
                 print(f"Episode {episode + 1}/{self.max_episodes}, Total Reward: {total_reward}")
+
+            print("\nAll episodes rewards:")
+            for idx, reward in enumerate(episode_rewards):
+                print(f"Episode {idx + 1}: {reward} points")
         finally:
             await self.websocket.close()
         
