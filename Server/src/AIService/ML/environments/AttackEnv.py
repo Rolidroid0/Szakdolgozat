@@ -49,6 +49,8 @@ class AttackEnvironment(gym.Env):
         self.ports = None
         self.fortresses = None
 
+        self.max_actions = MAX_TERRITORIES * (MAX_TERRITORIES - 1) * MAX_ARMIES + 1
+
         self.websocket = None
 
     async def reset(self):
@@ -126,7 +128,7 @@ class AttackEnvironment(gym.Env):
     async def JSpass(self):
         try:
             #reward = await gameService.automataTurn()
-            reward = await self.send_action('automata-turn', extract_key=reward)
+            reward = await self.send_action('automata-turn', extract_key="reward")
             return reward
         except Exception as e:
             print(f"JSpass error: {e}")
@@ -231,7 +233,9 @@ class AttackEnvironment(gym.Env):
         return valid_attacks
     
     def get_ai_owned_territories(self):
-        return [i for i, owner in enumerate(self.state["ownership"]) if owner == 1 and self.get_max_attack_armies(i) > 0]
+        return [i for i, owner in enumerate(self.state["ownership"]) if owner == 1 
+                and self.get_max_attack_armies(i) > 0
+                and self.territories[i]["last_attacked_from"] != self.current_round]
     
     def get_attackable_neighbors(self, territory):
         return [j for j in range(MAX_TERRITORIES-1) if self.adjacency_matrix[territory, j] == 1 and self.state["ownership"][j] == 0]

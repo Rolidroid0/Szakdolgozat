@@ -22,15 +22,16 @@ class DQNTrainer:
             await self.websocket.connect()
 
             for episode in range(self.max_episodes):
-                state = await self.env.reset() #ITT NEM EZT KÉNE VISSZA ADNI? HANEM A LEHETSÉGES ACTIONOKET?
+                state = await self.env.reset()
                 total_reward = 0
                 done = False
 
                 while not done:
-                    action = self.agent.choose_action(self._flatten_state(state))
+                    valid_actions = self.env.actions
+                    action = self.agent.choose_action(self._flatten_state(state), len(valid_actions))
                     next_state, reward, done, _ = await self.env.step(action)
                     self.agent.store_transition(self._flatten_state(state), action, reward, self._flatten_state(state), done)
-                    self.agent.learn(self.batch_size)
+                    self.agent.learn(self.batch_size, len(valid_actions))
                     state = next_state
                     total_reward += reward
 
@@ -61,12 +62,13 @@ if __name__ == "__main__":
         env.observation_space["ownership"].shape[0],
             env.observation_space["army_counts"].shape[0],
             env.observation_space["attackable"].shape[0],
-            1,  # is_my_turn
-            1   # round_state
+            #1,  # is_my_turn
+            #1   # round_state
         ])
     action_dim = env.action_space.n
 
-    trainer = DQNTrainer(env, state_dim, action_dim, websocket)
+    #trainer = DQNTrainer(env, state_dim, action_dim, websocket)
+    trainer = DQNTrainer(env, state_dim, env.max_actions, websocket)
     asyncio.run(trainer.train())
     print("Training completed!")
 

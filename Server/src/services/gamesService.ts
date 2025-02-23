@@ -125,6 +125,9 @@ export const endTurn = async (playerId: ObjectId) => {
 
     const gameEnded = await checkGameEnd();
     if (gameEnded) {
+        console.log("------------------------------------------")
+        console.log(`Game (${ongoingGame._id}) ended!`)
+        console.log("------------------------------------------")
         return ongoingGame._id;
     }
 
@@ -539,7 +542,8 @@ export const botAttack = async () => {
         for (const territory of territores) {
             const enemyNeighbors = await territoriesCollection.find<Territory>({
                 name: { $in: territory.neighbors },
-                owner_id: { $ne: player.house }
+                owner_id: { $ne: player.house },
+                game_id: ongoingGame._id
             }).toArray();
 
             for (const enemy of enemyNeighbors) {

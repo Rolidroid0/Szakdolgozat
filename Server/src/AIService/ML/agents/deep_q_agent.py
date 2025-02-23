@@ -39,35 +39,37 @@ class DQNAgent:
         self.optimizer = optim.Adam(self.q_network.parameters(), lr=lr)
         self.replay_buffer = ReplayBuffer(max_size=10000)
 
-    def choose_action(self, state):
+    def choose_action(self, state, num_valid_actions):
         if np.random.rand() < self.epsilon:
-            return random.randint(0, self.action_dim - 1)
+            return random.randint(0, num_valid_actions - 1)
         else:
             state_tensor = torch.FloatTensor(state).unsqueeze(0)
             with torch.no_grad():
-                q_values = self.q_network(state_tensor)
-            return torch.argmax(q_values).item()
+                q_values = self.q_network(state_tensor, num_valid_actions) #q_values = self.q_network(state_tensor)
+            valid_q_values = q_values[:, :num_valid_actions]
+            return torch.argmax(valid_q_values).item()
 
     def store_transition(self, state, action, reward, next_state, done):
         self.replay_buffer.store((state, action, reward, next_state, done))
 
-    def learn(self, batch_size):
+    def learn(self, batch_size, next_num_valid_actions):
         if self.replay_buffer.size() < batch_size:
             return
 
         transitions = self.replay_buffer.sample(batch_size)
         states, actions, rewards, next_states, dones = zip(*transitions)
 
-        states = torch.FloatTensor(states)
+        states = torch.FloatTensor(np.array(states)) #states = torch.FloatTensor(states)
         actions = torch.LongTensor(actions).unsqueeze(1)
+        actions = torch.clamp(actions, min=0, max=next_num_valid_actions - 1)
         rewards = torch.FloatTensor(rewards).unsqueeze(1)
-        next_states = torch.FloatTensor(next_states)
+        next_states = torch.FloatTensor(np.array(next_states)) #next_states = torch.FloatTensor(next_states)
         dones = torch.FloatTensor(dones).unsqueeze(1)
 
-        q_values = self.q_network(states).gather(1, actions)
+        q_values = self.q_network(states, next_num_valid_actions).gather(1, actions)
         
         with torch.no_grad():
-            next_q_values = self.target_network(next_states).max(1)[0].unsqueeze(1)
+            next_q_values = self.target_network(next_states, next_num_valid_actions).max(1)[0].unsqueeze(1) #next_q_values = self.target_network(next_states).max(1)[0].unsqueeze(1)
             target_q_values = rewards + self.gamma * next_q_values * (1 - dones)
 
         loss = nn.MSELoss()(q_values, target_q_values)
