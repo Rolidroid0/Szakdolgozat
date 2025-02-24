@@ -437,7 +437,7 @@ export const automataTurn = async () => {
             if (!game) {
                 throw new Error("No game found");
             }
-            return game.state.includes("Ghiscari") ? 50 : -50; // FELTÉTELEZVE, HOGY GHISCARI AZ AI! 
+            return game.state.includes("Ghiscari") ? 500 : -50; // FELTÉTELEZVE, HOGY GHISCARI AZ AI! 
         }
 
         let reward = { attackerPoints: 0, defenderPoints: 0 };
@@ -460,7 +460,7 @@ export const automataTurn = async () => {
             if (!game) {
                 throw new Error("No game found");
             }
-            return game.state.includes("Ghiscari") ? reward.defenderPoints + 50 : reward.defenderPoints - 50; // FELTÉTELEZVE, HOGY GHISCARI AZ AI!
+            return game.state.includes("Ghiscari") ? reward.defenderPoints + 500 : reward.defenderPoints - 50; // FELTÉTELEZVE, HOGY GHISCARI AZ AI!
         }
 
         await automataAllocateTerritories();

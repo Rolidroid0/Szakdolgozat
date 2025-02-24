@@ -6,7 +6,7 @@ from agents.deep_q_agent import DQNAgent
 from environments.AttackEnv import AttackEnvironment
 from websocket_client import WebSocketClient
 
-EPISODES = 10
+EPISODES = 30
 BATCH_SIZE = 64
 
 class DQNTrainer:
@@ -21,6 +21,11 @@ class DQNTrainer:
         try:
             await self.websocket.connect()
             episode_rewards = []
+
+            try:
+                self.agent.load_model()
+            except FileNotFoundError:
+                print("No checkpoint found, starting from scratch")
 
             for episode in range(self.max_episodes):
                 state = await self.env.reset()
@@ -38,6 +43,9 @@ class DQNTrainer:
 
                 episode_rewards.append(total_reward)
                 print(f"Episode {episode + 1}/{self.max_episodes}, Total Reward: {total_reward}")
+
+                if (episode + 1) % 10 == 0:
+                    self.agent.save_model()
 
             print("\nAll episodes rewards:")
             for idx, reward in enumerate(episode_rewards):

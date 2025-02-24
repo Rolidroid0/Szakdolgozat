@@ -84,3 +84,12 @@ class DQNAgent:
     def update_target_network(self):
         for target_param, param in zip(self.target_network.parameters(), self.q_network.parameters()):
             target_param.data.copy_(self.target_update_tau * param.data + (1 - self.target_update_tau) * target_param.data)
+
+    def save_model(self, filepath="dqn_model_checkpoint.pth"):
+        torch.save(self.q_network.state_dict(), filepath)
+        print(f"Model saved to {filepath}")
+
+    def load_model(self, filepath="dqn_model_checkpoint.pth"):
+        self.q_network.load_state_dict(torch.load(filepath))
+        self.target_network.load_state_dict(self.q_network.state_dict())
+        print(f"Model loaded from {filepath}")
