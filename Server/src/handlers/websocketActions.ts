@@ -2,7 +2,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { shuffle, tradeCardsForArmies } from '../services/cardsService';
 import { startGameService } from '../services/startGameService';
 import { CustomWebSocket } from '../config/websocket';
-import { applyManeuver, automataBattle, automataTurn, endTurn, getGameStateById, getOngoingGameState, startNewGame } from '../services/gamesService';
+import { applyManeuver, automataBattle, automataTurn, endTurn, getGameStateById, getOngoingGameState, letAIDecideAttack, startNewGame } from '../services/gamesService';
 import { ObjectId } from 'mongodb';
 import { reinforceTerritory } from '../services/territoriesService';
 import { startBattle } from '../services/battlesService';

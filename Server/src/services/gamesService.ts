@@ -15,6 +15,7 @@ import { getCurrentPlayer } from "./playersService";
 import { reinforceTerritory } from "./territoriesService";
 import { Battle } from "../models/battlesModel";
 import { startGameService } from "./startGameService";
+import axios from 'axios';
 
 export const getOngoingGame = async () => {
     try {
@@ -626,6 +627,100 @@ export const startNewGame = async (): Promise<void> => {
         return;
     } catch (error) {
         console.error('Error starting new game: ', error);
+        throw error;
+    }
+};
+
+export const letAIDecideAttack = async () => {
+    try {
+        const db = await connectToDb();
+        const territoriesCollection = db?.collection('EssosTerritories');
+
+        if (!territoriesCollection) {
+            throw new Error('Collections not found');
+        }
+
+        const ongoingGame = await getOngoingGame();
+        const territories = await territoriesCollection.find<Territory>({ game_id: ongoingGame._id }).toArray();
+        if (!territories.length) {
+            throw new Error("No territories found for the game");
+        }
+
+        const valid_attacks: any[] = [];
+        const ownedTerritories = territories.filter(territory =>
+            territory.owner_id === ongoingGame.current_player &&
+            territory.number_of_armies > 1 &&
+            territory.last_attacked_from !== ongoingGame.round
+        );
+
+        ownedTerritories.forEach(fromTerritory => {
+            const attackableNeighbors = territories.filter(toTerritory =>
+                fromTerritory.neighbors.includes(toTerritory.name) &&
+                toTerritory.owner_id !== ongoingGame.current_player
+            );
+
+            attackableNeighbors.forEach(toTerritory => {
+                for (let armies = 1; armies < fromTerritory.number_of_armies; armies++) {
+                    valid_attacks.push({ from: fromTerritory._id, to: toTerritory._id, armies });
+                }
+            });
+        });
+
+        const valid_actions = [...valid_attacks, { action: "pass" }];
+
+        const size = territories.length;
+        const adjacencyMatrix: number[][] = Array.from({ length: size }, () => Array(size).fill(0));
+        const territoryNames: Record<string, number> = territories.reduce((acc, t, i) => {
+            acc[t.name] = i;
+            return acc;
+        }, {} as Record<string, number>);
+
+        territories.forEach((territory, i) => {
+            territory.neighbors.forEach((neighbor: string) => {
+                if (territoryNames.hasOwnProperty(neighbor)) {
+                    const j = territoryNames[neighbor];
+                    adjacencyMatrix[i][j] = 1;
+                }
+            });
+        });
+
+        const attackable = new Array(territories.length).fill(0);
+
+        territories.forEach((t, i) => {
+            if (t.owner_id === ongoingGame.current_player && t.last_attacked_from !== ongoingGame.round) {
+                adjacencyMatrix[i].forEach((isNeighbor, j) => {
+                    if (isNeighbor && territories[j].owner_id !== ongoingGame.current_player) {
+                        attackable[i] = 1;
+                    }
+                });
+            }
+        });
+
+        const state = {
+            ownership: territories.map(t => t.owner_id === ongoingGame.current_player ? 1 : 0),
+            army_counts: territories.map(t => t.number_of_armies / 100),
+            attackable: attackable,
+            is_my_turn: 1,
+            round_state: ongoingGame.round_state === "invasion" ? 1 : 0
+        }
+
+        const response = await axios.post('http://localhost:8000/predict/', {
+            state: state,
+            valid_actions: valid_actions
+        });
+
+        const chosenAction = valid_actions[response.data.action]
+        const player = await getCurrentPlayer();
+        const { action } = chosenAction;
+        if (action === "pass") {
+            await endPhase(player._id);
+        } else {
+            const {from, to, armies} = chosenAction;
+
+            await startBattle(player._id, from, to, armies);
+        }
+    } catch (error) {
+        console.error('Error deciding attack: ', error);
         throw error;
     }
 };

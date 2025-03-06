@@ -143,6 +143,15 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn, ongoingBattl
         setErrorMessage(null);
       };
 
+    const letAIDecide = async () => {
+        await fetch(`${API_BASE_URL}/api/let-ai-decide`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+    };
+
     useEffect(() => {
         const headerHandler = (message: any) => {
             if (message.action === 'round-updated') {
@@ -234,6 +243,11 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn, ongoingBattl
                     <h2>Current Phase: {roundState}</h2>
                     {players.find(p => p._id === selectedPlayer)?.house === currentHouse && !ongoingBattle &&
                     <>
+                        {roundState === "invasion" &&
+                        <>
+                            <button onClick={letAIDecide} className="header-button">Let AI decide</button>
+                        </>
+                        }
                         <EndTurnButton wsService={wsService} selectedPlayer={selectedPlayer}></EndTurnButton>
                         <button onClick={handleEndPhase} className="header-button">
                             End {roundState} Phase

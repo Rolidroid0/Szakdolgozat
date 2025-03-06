@@ -1,5 +1,8 @@
 from fastapi import FastAPI
 from agents.deep_q_agent import DQNAgent
+from pydantic import BaseModel
+from typing import List
+import numpy as np
 
 app = FastAPI()
 
@@ -22,8 +25,28 @@ state = [0.12, 0.85, 0.43, 0.67, 0.29, 0.91, 0.34, 0.76, 0.58, 0.14,
 agent = DQNAgent(input_dim, output_dim)
 agent.load_model()
 
-@app.get("/predict/")
-async def predict():
-    action = agent.choose_action(state, len(valid_actions))
-    print(f"Agent: {action}")
-    return {"action": action}
+def _flatten_state(state):
+        return np.concatenate([
+            state["ownership"],
+            state["army_counts"],
+            state["attackable"],
+            [state["is_my_turn"]],
+            [state["round_state"]]
+        ])
+
+class PredictionRequest(BaseModel):
+    state: dict
+    valid_actions: List[dict]
+
+@app.post("/predict/")
+async def predict(request: PredictionRequest):
+    try:
+        if not request.state or not request.valid_actions:
+            return {"error": "State and valid actions cannot be empty."}
+
+        action = agent.choose_action(_flatten_state(request.state), len(request.valid_actions))
+        print(f"Agent chose action: {action}")
+
+        return {"action": action}
+    except Exception as e:
+         print(f"Error parsing request: {e}")

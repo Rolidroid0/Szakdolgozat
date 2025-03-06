@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { endPhase, getCurrentRound, getOngoingGame } from "../services/gamesService";
+import { endPhase, getCurrentRound, getOngoingGame, letAIDecideAttack } from "../services/gamesService";
 import { ObjectId } from "mongodb";
 
 export const getOngoingGameController = async (req: Request, res: Response) => {
@@ -36,5 +36,14 @@ export const endPhaseController = async (req: Request, res: Response) => {
         }
     } catch (error) {
         res.status(500).json({ message: 'Error ending phase', error });
+    }
+};
+
+export const letAIDecideAttackController = async (req: Request, res: Response) => {
+    try {
+        await letAIDecideAttack();
+        res.status(200).json({ message: "AI decided" });
+    } catch (error) {
+        res.status(500).json({ message: 'Error deciding move: ', error });
     }
 };
