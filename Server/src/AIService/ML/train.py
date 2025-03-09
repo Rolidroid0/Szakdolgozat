@@ -6,7 +6,7 @@ from agents.deep_q_agent import DQNAgent
 from environments.AttackEnv import AttackEnvironment
 from websocket_client import WebSocketClient
 
-EPISODES = 50
+EPISODES = 100
 BATCH_SIZE = 64
 
 class DQNTrainer:
