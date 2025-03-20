@@ -1,0 +1,76 @@
+Table Battles {
+  _id ObjectId
+  game_id ObjectId
+  state varchar
+  attacker_id varchar
+  defender_id varchar
+  attacker_territory_id ObjectId
+  defender_territory_id ObjectId
+  attacker_armies integer
+  defender_armies integer
+  current_attacker_armies integer
+  current_defender_armies integer
+  battle_log varchar[]
+  round_number integer
+  attacker_rolls integer[]
+  defender_rolls integer[]
+  attacker_has_rolled boolean
+  defender_has_rolled boolean
+}
+
+Table EssosCards {
+  _id ObjectId
+  game_id ObjectId
+  table varchar
+  name varchar
+  symbol varchar
+  sequence_number integer
+  owner_id varchar
+}
+
+Table EssosTerritories {
+  _id ObjectId
+  game_id ObjectId
+  table varchar
+  name varchar
+  fortress integer
+  port integer
+  region varchar
+  neighbors varchar[]
+  owner_id varchar
+  number_of_armies integer
+  last_attacked_from integer
+}
+
+Table Games {
+  _id ObjectId
+  round integer
+  current_player varchar
+  players varchar[]
+  state varchar
+  round_state varchar
+}
+
+Table Players {
+  _id ObjectId
+  house varchar
+  plus_armies integer
+  conquered boolean
+  is_logged_in boolean
+  game_id ObjectId
+}
+
+Table Regions {
+  _id ObjectId
+  table varchar
+  name varchar
+  region_bonus integer
+  territory_count integer
+}
+
+Ref: EssosTerritories.region > Regions.name
+Ref: EssosCards.game_id > Games._id
+Ref: EssosCards.owner_id > Players.house
+Ref: Players.game_id > Games._id
+Ref: EssosTerritories.game_id > Games._id
+Ref: Battles.game_id > Games._id

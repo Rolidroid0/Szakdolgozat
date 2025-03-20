@@ -1,0 +1,19 @@
+\select@language {magyar} \contentsline {chapter}{Bevezetés}{3}{chapter*.2}%
+\select@language {magyar} \contentsline {chapter}{\numberline {1}Fejezet címe}{4}{chapter.1}%
+\select@language {magyar} \contentsline {section}{\numberline {1.1}Szakasz címe}{4}{section.1.1}%
+\select@language {magyar} \contentsline {subsection}{\numberline {1.1.1}Alszakasz címe}{4}{subsection.1.1.1}%
+\select@language {magyar} \contentsline {chapter}{\numberline {2}Játékmechanika}{5}{chapter.2}%
+\select@language {magyar} \contentsline {section}{\numberline {2.1}A játék szabályrendszere és célja}{5}{section.2.1}%
+\select@language {magyar} \contentsline {section}{\numberline {2.2}Játékosok interakciói és fázisai}{5}{section.2.2}%
+\select@language {magyar} \contentsline {chapter}{\numberline {3}Implementáció}{6}{chapter.3}%
+\select@language {magyar} \contentsline {section}{\numberline {3.1}Fejlesztési környezet és eszközök}{6}{section.3.1}%
+\select@language {magyar} \contentsline {subsection}{\numberline {3.1.1}Backend}{6}{subsection.3.1.1}%
+\select@language {magyar} \contentsline {subsection}{\numberline {3.1.2}Frontend}{6}{subsection.3.1.2}%
+\select@language {magyar} \contentsline {section}{\numberline {3.2}Adatkezelés és játékállapot tárolása}{6}{section.3.2}%
+\select@language {magyar} \contentsline {chapter}{\numberline {4}Mesterséges intelligencia tervezése}{11}{chapter.4}%
+\select@language {magyar} \contentsline {section}{\numberline {4.1}Megerősítéses tanulás elméleti alapjai}{11}{section.4.1}%
+\select@language {magyar} \contentsline {section}{\numberline {4.2}Kommunikáció a szerverrel}{11}{section.4.2}%
+\select@language {magyar} \contentsline {section}{\numberline {4.3}Környezet tervezése}{11}{section.4.3}%
+\select@language {magyar} \contentsline {section}{\numberline {4.4}Tanítás és fejlesztés}{11}{section.4.4}%
+\select@language {magyar} \contentsline {chapter}{Összegzés}{12}{chapter*.3}%
+\select@language {magyar} \contentsline {chapter}{Irodalomjegyz\'ek}{13}{chapter*.4}%
