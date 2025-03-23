@@ -67,19 +67,22 @@ A szakdolgozatom témája egy stratégiai társasjáték implementálása beép�
 További érdekessége a szakdolgozatnak a mesterséges intelligencia (MI) fejlesztése, használata. A mesterséges intelligencia és a gépi tanulás területei egyre nagyobb szerepet játszanak a modern játékfejlesztésben, ezért ez a projekt nemcsak szakmai kihívást jelentett számomra, hanem egyben kiváló lehetőséget is arra, hogy mélyebben megismerkedjek az MI alkalmazásával, fejlesztésével a játékok világában. Az MI implementálásával lehetőségem nyílt egy olyan ellenfél létrehozására, amely képes tanulni és folyamatosan fejlődni a játékok során. 
 
 A mesterséges intelligencia fejlődése az elmúlt években jelentősen befolyásolta a játékfejlesztés folyamatát, lehetővé téve, hogy az MI-alapú ellenfelek egyre intelligensebb döntéseket hozzanak és alkalmazkodjanak a játékosok stratégiájához. Stratégiai döntések meghozatalához különösen a projektemben is használt megerősítéses tanulás (reinforcement learning, RL) vált népszerűvé, amely az MI folyamatos fejlődését, tanulását teszi lehetővé.
-\cite{Fazekas}
 
-\chapter{Fejezet címe}
+\chapter{MI és technológia}
 
-\section{Szakasz címe}
+\section{Megerősítéses tanulás elméleti alapjai}
 
-\subsection{Alszakasz címe}
+%TODO: gépi tanulás, neurális hálózat, ügynök, környzet fogalmak
 
-Lórum ipse olyan borzasztóan cogális patás, ami fogás nélkül nem varkál megfelelően. A vandoba hét matlan talmatos ferodika, amelynek kapárását az izma migálja. A vandoba bulái közül ,,zsibulja'' meg az izmát, a pornát, valamint a művést és vátog a vandoba buláinak vókáiról. Vókája a raktil prozása két emen között. Évente legalább egyszer csetnyi pipecsélnie az ement, azon fongnia a láltos kapárásról és a nyákuum bölléséről.
-\cite[102.~oldal]{Fazekas}
+A megerősítéses tanulás (Reinforcement Learning, RL) olyan gépi tanulási módszer, amelyben az ügynök egy környezetben interakciók során tanul optimális stratégiákat kialakítani. Az RL egyik legfőbb célja a döntéshozatal optimalizálása egy adott probléma keretein belül. \cite{RL} A megerősítéses tanulás egyik alapvető fogalma az állapot (state, $S$), amely a környezet aktuális reprezentációja, amely leírja az ügynök és a környezet közötti pillanatnyi helyzetet. A cselekvés (action, $A$) az ügynök által végrehajtható lépések halmaza. A jutalom (reward, $R$) a környezet visszacsatolása egy adott cselekvés végrehajtása után. Az ügynök célja ezen jutalom hosszú távon való maximalizálása. Az ügynök által használt politika (policy, $\pi$) egy szabályrendszer, amely meghatározza, hogy egy adott állapotban milyen cselekvést hajtson végre az ügynök. A hosszú távú jutalom várható értékének számításához egy adott állapot és cselekvés kombinációját használja, ez az úgynevezett Q-érték (Q-value, $Q(s,a)$).
 
-A vandoba ninti és az emen elé redőzi a szamlan radalmakan érvést. Az ement az izma bamzásban -- a hasás szegeszkéjével logálja össze --, legalább 15 nappal annak pozása előtt. Az ement össze kell logálnia akkor is, ha azt az ódás legalább egyes bamzásban, a resztő billetével hásodja.
-\cite{Fazekas,Tomacs}
+Az RL során az ügynök kísérlet és hiba (trial and error) folyamat révén tanulja meg a várhatóan legjobb kimenetelű döntéseket. Számtalan algoritmust használhatunk a tanításhoz, ezek közül a legismertebbek közé tartozik a Q-learning és a Deep Q Nerwork (DQN), amelyek az állapot-cselekvés értékek (Q-értékek) becslésén alapulnak.
+
+Egy stratégiai játékban az RL lehetőséget ad arra, hogy a mesterséges intelligencia adaptálódjon a játékos döntéseihez, és folyamatosan fejlessze saját taktikáját. Az ilyen típusú modellek egyik legfontosabb előnye, hogy nem előre megírt szabályok szerint működnek, hanem a tapasztalatokból tanulnak és fejlődnek.
+
+\section{Felhasznált technológiák}
+
+A projekt megvalósítása során több különböző technológiát alkalmaztam, amelyek lehetővé tették a játék és a mesterséges intelligencia hatékony implementálását. Az MI fejlesztésének alapját a Python nyelv képezte, mivel számos hatékony könyvtár áll rendelkezésre a gépi tanulás számára. A neurális hálózat betanításához és optimalizálásához a PyTorch keretrendszer nyújtott megoldást. A játék backendjének fejlesztéséhez JavaScript-et alkalmaztam, amely lehetővé tette a szerveroldali logikák és az adatkezelés megvalósítását. Az adatokat a dokumentumorientált MongoDB adatbázisban tároltam. A React szolgált egy dinamikus és interaktív frontend fejlesztésére. A szerver és a különböző kliensek közötti kommunikációt kétféleképpen oldottam meg. Az alapvető adatok lekérdezésére REST API-n keresztüli kommunikációt biztosítottam, a valós idejű játékélmény és gyors adatcsere érdekében pedig WebSocket kapcsolatot hoztam létre. További fejlesztési eszközként szolgáltak a GitHub, a Visual Studio Code és az Inkscape amely a frontendhez szükséges svg kiterjesztésű fájlok létrehozásában segített.
 
 \chapter{Játékmechanika}
 
@@ -147,25 +150,27 @@ Egyetlen kollekció van, amely egy új játék létrehozásánál nem játszik s
 
 \chapter{Mesterséges intelligencia tervezése}
 
-\section{Megerősítéses tanulás elméleti alapjai}
-
 \section{Kommunikáció a szerverrel}
 
 \section{Környezet tervezése}
 
 \section{Tanítás és fejlesztés}
 
+\chapter{Az elkészült alkalmazás}
+
+\section{Tanítás eredménye, pontosság, hiba mértéke}
+
+\section{TEMP: elkészült alkalmazásról képek?}
+
 \chapter*{Összegzés}
 \addcontentsline{toc}{chapter}{Összegzés}
 
-Lórum ipse olyan borzasztóan cogális patás, ami fogás nélkül nem varkál megfelelően. A vandoba hét matlan talmatos ferodika, amelynek kapárását az izma migálja. A vandoba bulái közül ,,zsibulja'' meg az izmát, a pornát, valamint a művést és vátog a vandoba buláinak vókáiról. Vókája a raktil prozása két emen között. Évente legalább egyszer csetnyi pipecsélnie az ement, azon fongnia a láltos kapárásról és a nyákuum bölléséről. A vandoba ninti és az emen elé redőzi a szamlan radalmakan érvést. Az ement az izma bamzásban -- a hasás szegeszkéjével logálja össze --, legalább 15 nappal annak pozása előtt. Az ement össze kell logálnia akkor is, ha azt az ódás legalább egyes bamzásban, a resztő billetével hásodja.
-
 \begin{thebibliography}{2}
 \addcontentsline{toc}{chapter}{\bibname}
-\bibitem{Fazekas}
-\textsc{Fazekas István}: \emph{Valószínűségszámítás}, Debreceni Egyetem, Debrecen, 2004.
 \bibitem{Tomacs}
 \textsc{Tómács Tibor}: \emph{A valószínűségszámítás alapjai}, Líceum Kiadó, Eger, 2005.
+\bibitem{RL}
+\textsc{Reinforcement Learning wikipedia}: https://en.wikipedia.org/wiki/Reinforcement\_learning
 \bibitem{MongoDB}
 \textsc{MongoDB wikipedia}: https://en.wikipedia.org/wiki/MongoDB
 \end{thebibliography}
