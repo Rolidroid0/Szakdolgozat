@@ -70,15 +70,27 @@ A mesterséges intelligencia fejlődése az elmúlt években jelentősen befoly�
 
 \chapter{MI és technológia}
 
-\section{Megerősítéses tanulás elméleti alapjai}
+\section{A gépi tanulás elméleti alapjai és a megerősítéses tanulás}
 
-%TODO: gépi tanulás, neurális hálózat, ügynök, környzet fogalmak
+A mesterséges intelligencia fejlődése során a gépi tanulás (machine learning, ML) kapott kiemelkedő szerepet az intelligens rendszerek fejlesztésében. A gépi tanulás olyan módszereket foglal magában, amelyek lehetővé teszik a számítógépes modellek számára, hogy tapasztalatok alapján javítsák a teljesítményüket, a programozásuk ember általi megváltoztatása nélkül. Az ML három fő típusa a felügyelt tanulás (supervised learning), a felügyelet nélküli tanulás (unsupervised learning) és a megerősítéses tanulás. \cite{ML}
 
-A megerősítéses tanulás (Reinforcement Learning, RL) olyan gépi tanulási módszer, amelyben az ügynök egy környezetben interakciók során tanul optimális stratégiákat kialakítani. Az RL egyik legfőbb célja a döntéshozatal optimalizálása egy adott probléma keretein belül. \cite{RL} A megerősítéses tanulás egyik alapvető fogalma az állapot (state, $S$), amely a környezet aktuális reprezentációja, amely leírja az ügynök és a környezet közötti pillanatnyi helyzetet. A cselekvés (action, $A$) az ügynök által végrehajtható lépések halmaza. A jutalom (reward, $R$) a környezet visszacsatolása egy adott cselekvés végrehajtása után. Az ügynök célja ezen jutalom hosszú távon való maximalizálása. Az ügynök által használt politika (policy, $\pi$) egy szabályrendszer, amely meghatározza, hogy egy adott állapotban milyen cselekvést hajtson végre az ügynök. A hosszú távú jutalom várható értékének számításához egy adott állapot és cselekvés kombinációját használja, ez az úgynevezett Q-érték (Q-value, $Q(s,a)$).
+A felügyelt tanulás esetében a rendszer egy előre meghatározott bemenet-kimenet párokból álló adathalmazon tanul, míg a felügyelet nélküli tanulás során a modell mintázatokat keres egy struktúra nélküli adathalmazon belül. Ezekkel szemben a megerősítéses tanulás egy olyan módszer, amelyben egy ügynök (agent) a környezetével (environment) interakcióba lépve tanul, és az akciókért visszacsatolást kap jutalmak (reward) vagy büntetések formájában.
+
+\subsection{Neurális hálózatok}
+
+A neurális hálózatok az ML egy legfontosabb eszközei, amelyek a biológiai neuronhálózatok mintájára épülnek fel. Egy mély neurális hálózat (deep neural network, DNN) több rétegű csomópontokból áll, ahol az egyes rétegek között súlyok segítségével történik az információátadás. Ezek az architektúrák jól alkalmazhatók képfelismerés, természetes nyelvfeldolgozás és komplex döntéshozatali folyamatok esetén. A megerősítéses tanulásban gyakran alkalmaznak mély neurális hálózatokat, például Deep Q-Network algoritmust, amely egy Q-tanulási (Q-learning) stratégiát kombinál mély tanulási modellekkel, lehetővé téve az ügynök számára a nagyobb állapottérrel rendelkező környezetben való hatékony tanulást. \cite{NN}
+
+\subsection{Az ügynök és a környezet fogalma}
+
+Egy megerősítéses tanulást alkalmazó szoftver fejlesztése során két központi elemet kell meghatároznunk: az ügynököt és a környezetet. Az ügynök az a döntéshozó entitás, amely egy adott állapotban kiválaszt egy akciót a környezet befolyásolására. A környezet pedig az a rendszer, amelyben az ügynök működik. Folyamatosan visszacsatolást ad az ügynök döntéseire jutalmak vagy büntetések formájában. A tanulási folyamat során az ügynök folyamatosan próbálja maximalizálni az összegyűjtött jutalmat, miközben az ismeretlen környezetben kísérletezik és tanul a visszajelzések alapján.
+
+\subsection{Megerősítéses tanulás}
+
+Mint említettem, a megerősítéses tanulás (Reinforcement Learning, RL) olyan gépi tanulási módszer, amelyben az ügynök egy környezetben interakciók során tanul optimális stratégiákat kialakítani. Az RL egyik legfőbb célja a döntéshozatal optimalizálása egy adott probléma keretein belül. \cite{RL} A megerősítéses tanulás egyik alapvető fogalma az állapot (state, $S$), amely a környezet aktuális reprezentációja, amely leírja az ügynök és a környezet közötti pillanatnyi helyzetet. A cselekvés (action, $A$) az ügynök által végrehajtható lépések halmaza. A jutalom (reward, $R$) a környezet visszacsatolása egy adott cselekvés végrehajtása után. Az ügynök célja ezen jutalom hosszú távon való maximalizálása. Az ügynök által használt politika (policy, $\pi$) egy szabályrendszer, amely meghatározza, hogy egy adott állapotban milyen cselekvést hajtson végre az ügynök. A hosszú távú jutalom várható értékének számításához egy adott állapot és cselekvés kombinációját használja, ez az úgynevezett Q-érték (Q-value, $Q(s,a)$).
 
 Az RL során az ügynök kísérlet és hiba (trial and error) folyamat révén tanulja meg a várhatóan legjobb kimenetelű döntéseket. Számtalan algoritmust használhatunk a tanításhoz, ezek közül a legismertebbek közé tartozik a Q-learning és a Deep Q Nerwork (DQN), amelyek az állapot-cselekvés értékek (Q-értékek) becslésén alapulnak.
 
-Egy stratégiai játékban az RL lehetőséget ad arra, hogy a mesterséges intelligencia adaptálódjon a játékos döntéseihez, és folyamatosan fejlessze saját taktikáját. Az ilyen típusú modellek egyik legfontosabb előnye, hogy nem előre megírt szabályok szerint működnek, hanem a tapasztalatokból tanulnak és fejlődnek.
+A megerősítéses tanulás alkalmazásai számos területet lefednek, beleértve a robotikát, az önvezető járműveket és a stratégiai játékokat. Egy stratégiai játékban az RL lehetőséget ad arra, hogy a mesterséges intelligencia adaptálódjon a játékos döntéseihez, és folyamatosan fejlessze saját taktikáját. Az ilyen típusú modellek egyik legfontosabb előnye, hogy nem előre megírt szabályok szerint működnek, hanem a tapasztalatokból tanulnak és fejlődnek.
 
 \section{Felhasznált technológiák}
 
@@ -86,9 +98,37 @@ A projekt megvalósítása során több különböző technológiát alkalmaztam
 
 \chapter{Játékmechanika}
 
+Ebben a fejezetben bemutatom a játék alapvető mechanikáit, szabályrendszerét, valamint a játékosok interakcióit és a játékmenet fázisait. A játék egy körökre osztott stratégiai társasjáték digitális implementációja, amelyben a játékosok különböző területek felett próbálnak uralmat szerezni, harcolnak egymással, és erőforrásokat kezelnek. A játék szabályrendszere, mechanikái és karakterei a játék készítőinek\footnote{Hasbro} szellemi termékei, és ezen elemek kidolgozása nem az én saját alkotásom, csak tanulási célból alkalmazom őket a dolgozatom során.
+
 \section{A játék szabályrendszere és célja}
 
+A játékot többféleképpen lehet játszani, kettő játékostól egészen hétig, egy vagy két térkép bevonásával. A különböző játékmódok különböző bónuszokat tartalmaznak, mint a karakterkártyák, a pénz és erődítmények. A végső implementációmban a legegyszerűbb kétszemélyes játékváltozat lett megvalósítva, ezért a továbbiakban ennek a szabályait fogom részletezni. 
+
+A játék célja, hogy a játékosok előre meghatározott győzelmi feltételt teljesítsenek, amely lehet bizonyos pontszám elérése, vagy az összes többi játékos legyőzése. A játékosok egy-egy házat képviselnek, és a térképen található területek felett próbálnak uralmat szerezni támadások és stratégiai döntések révén. 
+
+A játéktér egy rácsszerkezetként értelmezhető térkép, amely különböző régiókra oszlik. Minden régió több területet tartalmaz, amelyek birtoklása kulcsszerepet játszik a játékosok stratégiájának kialakításában. A területek rendelkezhetnek erődökkel és kikötőkkel, amelyek befolyásolhatják a harci döntéseket. A játék legelején véletlenszerűen kiosztásra kerül 12-12 terület a két játékos között, majd a maradék területeket az úgynevezett semleges seregek birtokolják. Minden területre a játékosok felhelyeznek két sereget, majd a területkártyák megkeverésre kerülnek úgy, hogy a játék vége kártya a pakli alsó felébe kerüljön véletlenszerű helyre.
+
+Egy játékos körében négy különböző akciót lehet végrehajtani: erősítés, invázió, manőver és húzás. A játék szabályai biztosítják, hogy minden játékos azonos eséllyel induljon, és a stratégiai döntéseik határozzák meg a végeredményt. A körökre osztott rendszer lehetővé teszi, hogy a játékosok átgondolják lépéseiket és reagáljanak az ellenfeleik akcióira.
+
+Amikor a pakliba rejtett játék vége kártya a felszínre kerül, minden játékos megszámolja a pontjait és a legtöbb ponttal rendelkező játékos nyer. Pont jár a területek, a várak és a kikötők birtoklásáért. Természetesen ha egy játékos minden területet megszerez, automatikusan megnyeri a játékot.
+
 \section{Játékosok interakciói és fázisai}
+
+A játékosok interakciói alapvetően három fő dolgon alapszanak: területfoglalás, csaták és diplomácia. Mint említettem a játék egy körökre osztott rendszerben zajlik, ahol a körök több fázisból állnak. Minden kör végén a következő játékos veszi át az irányítást. A négy fázis/végrehajtható akció a következő:
+
+\begin{itemize}
+	\item \textbf{Erősítés}: a játékos minden köre elején plusz seregeket kap, amelyekkel tetszőlegesen erősítheti a birtokában lévő területeket. A plusz seregek számát a következőképpen számolják:
+	\begin{itemize}
+		\item A birtokolt területek számát össze kell adni a rajtuk lévő várak számával, elosztani hárommal és lefelé kerekíteni. Fontos kiegészítés, hogy legalább három sereget mindenképpen kap a játékos, még ha a számolás eredményeképp kevesebb járna is.
+		\item Minden terület egy régióhoz tartozik és minden régiónak van egy plusz seregeket jelentő értéke. Ha egy játékos egy adott régió összes területével rendelkezik, akkor a meghatározott plusz seregeket hozzáadhatja az eddigi erősítésként járó seregeihez. Természetesen ha több régiót is teljesen birtokol egy játékos, akkor az összes régió bónuszt megkapja.
+		\item Minden területkártyán van egy különleges egységet ábrázoló kép, amelyekből ha három összegyűlik további seregekre tehet szert a játékos. Fontos megjegyzés, hogy nem lehet öt kártyánál többet birtokolni, ha ebben a fázisban öt kártyája van egy játékosnak, azokból mindenképpen be kell váltania hármat. További bónusz seregekre tehet szert a játékos, ha a beváltott kártyákon lévő területeket is birtokolja. Ilyenkor két extra sereget helyezhet fel kizárólag ezekre a területekre.
+		%TODO: ide bevágni a területkártyás táblázatot?
+	\end{itemize}
+	Végezetül az összes meghatározott plusz sereget el kell helyezni a táblán a játékos által birtokolt területekre. Ezeket lehet tetszőlegesen elosztani vagy akár mindet egy területre lehelyezni.
+	\item \textbf{Inváziók és csaták}: az za
+	\item \textbf{Manőver}: aa le
+	\item \textbf{Területkártyák húzása}: a jti
+\end{itemize}
 
 \chapter{Implementáció}
 
@@ -169,6 +209,10 @@ Egyetlen kollekció van, amely egy új játék létrehozásánál nem játszik s
 \addcontentsline{toc}{chapter}{\bibname}
 \bibitem{Tomacs}
 \textsc{Tómács Tibor}: \emph{A valószínűségszámítás alapjai}, Líceum Kiadó, Eger, 2005.
+\bibitem{ML}
+\textsc{Machine Learning wikipedia}: https://en.wikipedia.org/wiki/Machine\_learning
+\bibitem{NN}
+\textsc{Neural network wikipedia}: https://en.wikipedia.org/wiki/Neural\_network\_(machine\_learning)
 \bibitem{RL}
 \textsc{Reinforcement Learning wikipedia}: https://en.wikipedia.org/wiki/Reinforcement\_learning
 \bibitem{MongoDB}
