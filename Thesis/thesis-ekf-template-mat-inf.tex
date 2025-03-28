@@ -221,8 +221,27 @@ Mivel a szerverem JavaScript nyelven íródott, illetve az MI Python nyelven ker
 Végül a játék mesterséges intelligenciájának működéséhez egy FastAPI-alapú szerver is fut, amely fogadja a kliens kéréseit és visszaadja az AI által választott akciót. Ez a frontend kliensek miatt került bele a játékba, hogy tudják kérni az eddig betanított AI segítségét. A szerver a uvicorn segítségével futtatható, amely egy aszinkron webkiszolgáló Pythonhoz, és különösen jól működik az async és await alapú alkalmazásokkal. A FastAPI segítségével egy REST API készült, amely egy /predict/ végpontot biztosít. Ez a végpont fogad egy JSON formátumú kérést, amely tartalmazza a játék állapotát és a lehetséges akciókat. Az API először a bemeneti adatokat egy megfelelő formátumba alakítja (\_flatten\_state függvény), majd meghívja az  ügynököt, amely a tanult modell alapján kiválasztja a legjobb akciót. A választott akciót az API visszaküldi a kliensnek, így a játék képes az MI döntései alapján továbbhaladni.
 
 \section{Környezet tervezése}
+\label{környezet-tervezése}
 
 \section{Tanítás és fejlesztés}
+
+Az inváziók eldöntésére létrehozott mesterséges intelligenciát tehát egy mély Q-hálózat alapú tanulóalgoritmus irányítja, amely megerősítéses tanulást tartalmaz. A rendszer egy neurális hálózatot használ, amely tapasztalatokból tanul, egy replay buffer segítségével. A fejlesztés során a tanulási folyamat több komponensre oszlik: a környezet (és annak interfészei), a tanuló ügynök, valamint a mély Q-hálózat. Mindezt pedig egy train.py fájlban összesítem egy DQNTrainer osztályban.
+
+\textbf{Környezet (Environment)}: A tanulási folyamat egy játékbeli szimulált környezetben történik, amelyet az AttackEnvironment osztály definiál (Bővebben lásd:~\ref{környezet-tervezése}.~fejezet). Ez az osztály biztosítja a környezet interakcióit, az elérhető akciók listáját, valamint a környezet visszacsatolásait (jutalmakat).
+
+\textbf{DQN ügynök (DQNAgent)}: A tanulás kulcseleme a DQNAgent osztály, amely az alábbiakat kezeli:
+
+\begin{itemize}
+	\item \textbf{Akció kiválasztása}: Az epsilon-greedy stratégiát alkalmazza, hogy az ügynök kezdetben véletlenszerű akciókat válasszon, majd idővel egyre inkább a tapasztalatokra alapozott döntéseket hozzon.
+	\item \textbf{Tapasztalatok tárolása}: A tanuláshoz szükséges múltbeli tapasztalatokat egy replay bufferben tárolja.
+	\item \textbf{Tanulási folyamat}: A Q-értékeket folyamatosan frissíti a célhálózattal való kontraszt alapján.
+	\item \textbf{Célhálózat frissítése}: Fenntart egy állandóan frissített célhálózatot, amely a tanulás stabilitását biztosítja.
+	\item \textbf{Modell mentése és betöltése}: A betanított modellt egy pth formátumú fájlban tárolja, amelyet bármikor be lehet tölteni, hogy az eddigi tapasztalatokat tovább lehessen tanítani, vagy csak a döntését kérni.
+\end{itemize}
+
+\textbf{Mély Q-Hálózat (DeepQNetwork)}: A DQN alapja egy mély neuronhálózat, amelyet a DeepQNetwork osztály valósít meg. A hálózat egy bemeneti rétegből, két rejtett teljes összeköttetésű rétegből (és ReLU aktivációkból), valamint egy kimeneti rétegből áll, amely az egyes akciókhoz tartozó Q-értékeket szolgáltatja. A bemenetek dimenziója a játékbeli állapot adataira alapozott, a kimenetek száma pedig az elérhető akciók maximumát adja meg. 
+
+\textbf{Tanulási folyamat (DQNTrainer)}: A DQNTrainer osztály a teljes tanítási folyamatot kezeli. Meg kell előre adni az epizódok számát, azaz hogy hány játékot játsszon le a tanulás ideje alatt, majd futtatni a train.py fájlt. Először betölti az ügynököt az elmentett pth fájlból, vagy ha nem találja akkor újrainicializálja azt. Az ügynök az egyes epizódok során akciókat hajt végre, tapasztalatokat gyűjt, és tanul. Az epizódok végén pedig elmenti az ügynököt. A tanulás során az ügynök kölcsönhat a környezettel, jutalmakat kap a teljesítése alapján, majd folyamatosan frissíti a stratégiáját. Az epsilon csökkentésével az ügynök idővel egyre kevesebb véletlenszerű akciót végez, helyette a tanult optimális stratégiát alkalmazza. 
 
 \chapter{Az elkészült alkalmazás}
 
