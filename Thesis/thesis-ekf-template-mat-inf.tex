@@ -223,6 +223,18 @@ Végül a játék mesterséges intelligenciájának működéséhez egy FastAPI-
 \section{Környezet tervezése}
 \label{környezet-tervezése}
 
+A mesterséges intelligencia döntéshozatali folyamatainak tanításához elengedhetetlen egy jó környezet, amelyből tanulhat. Ennek a környezetnek pontosan kell szimulálnia a játék adott mechanizmusát, különben az MI rossz mintákat tanul meg, amelyek a valódi játékban irrelevánsnak számíthatnak. Ezért egy egyedi megvalósítást kellett megalkotni, amely pontosan követi a játék lépéseit, szabályait. A Gym nevezetű könyvtárat használtam fel kiindulási alapnak, amely lehetővé teszi az egyedi megerősítéses tanulás környezetek kialakítását. A Gym-en belül is az Env osztályt írtam felül, amely alapjáraton a következő függvényeket tartalmazza: init, step, reset és render. 
+
+Az \emph{init} függvényben a környezet legfontosabb mezői kapnak értéket. Az egyik ilyen a megfigyelési tér (Observation Space), amely a játék aktuális állapotát modellezi. Az MI a döntéshozatalhoz öt információt használ. Az ownership, amely a területek birtoklását jelenti, értéke lehet 1, ha az AI birtokolja és 0, ha egy ellenfele. Az army\_counts, amely az egyes területeken lévő seregeket reprezentálja. Értéke az adott területen lévő seregek száma osztva egy maximum értékkel. Az attackable mutatja, hogy mely területek azok, amelyekről az AI indíthat támadást jelen pillanatban. Az utolsó két értékek pedig az is\_my\_turn és a round\_state, amelyekkel ellenőrizhető, hogy valóban az AI támadási köre van jelenleg. Másik fontos mező amely értéket kap az akciótér (Action Space), amely a végrehajtható akciókat tartalmazza dinamikusan. Ezek az akciók minden lépés után a get\_valid\_attacks() függvénnyel (\ref{get-valid-attacks}) kerülnek meghatározásra. Ezeknek a maximuma a területek száma szorozva a területek száma mínusz eggyel, szorozva a maximális seregekkel, majd a végén plusz egy, a passzolási lehetőség miatt. 
+
+\lstinputlisting[caption={Akciótér beállítása.}, label=get-valid-attacks, captionpos=b]{GetValidAttacks.py}
+
+A \emph{reset} függvény felel a környezet újrakezdéséért, minden lejátszott játék után ez a függvény kerül meghívásra a tanítás során. A WebSocket-en keresztül küld a szervernek egy új játék kezdése kérést, majd a válasz alapján beállítja a kezdéshez szükséges adatokat. A legnagyobb különbség az egyes állapotok lekérése és a legelső állapot lekérése között az a statikus adatok beállítása. Ilyen adatok a kikötők és várak elhelyezkedése a területeken, vagy a szomszédsági mátrix (egy \emph{n}x\emph{n}-es mátrix, ahol az \emph{n} a területek száma, a mátrix értékei pedig azt jelzik, hogy a két terület szomszédos-e), ugyanis ezek nem változnak a játék folyamán.
+
+A \emph{step} az egyetlen függvény, amely egy paramétert is vár. A paraméter a választott akció sorszáma, amelyet kikeres a környezet az elérhető akciókból. Miután ellenőrizte, hogy valóban a kör helyes szakaszában van és a lépés is létezik, megnézi, hogy a választott lépés a passzolás-e. Ha igen, akkor az automata-kör kérést küldi a szervernek, ha pedig nem, akkor egy csata-kezdése kérést küld, csatolva a támadó és védekező területek azonosítóját, a játékos azonosítóját és a seregek számát. Mindkét esetben egy jutalom értéket vár vissza a szervertől, amely ha meghalad egy bizonyos értéket, akkor befejezettnek tekinti az adott játékot. Ha ez az érték nem elég nagy, azaz még folyamatban van a játék, akkor pedig a jutalom értéke mellett a következő állapotot is visszaadja az MI-nek. 
+
+A \emph{render} valójában a környezet vizuális megjelenítéséért lenne felelős, azonban a játékomhoz már létezik frontend a kliensek számára, ezért az a függvény nem került implementálásra a környezeten belül.
+
 \section{Tanítás és fejlesztés}
 
 Az inváziók eldöntésére létrehozott mesterséges intelligenciát tehát egy mély Q-hálózat alapú tanulóalgoritmus irányítja, amely megerősítéses tanulást tartalmaz. A rendszer egy neurális hálózatot használ, amely tapasztalatokból tanul, egy replay buffer segítségével. A fejlesztés során a tanulási folyamat több komponensre oszlik: a környezet (és annak interfészei), a tanuló ügynök, valamint a mély Q-hálózat. Mindezt pedig egy train.py fájlban összesítem egy DQNTrainer osztályban.
@@ -251,6 +263,8 @@ Az inváziók eldöntésére létrehozott mesterséges intelligenciát tehát eg
 
 \chapter*{Összegzés}
 \addcontentsline{toc}{chapter}{Összegzés}
+
+%TODO: 1. implementáció rész kibővíteni 2. elkészült alkalmazás fejezet 3. környezet tervezése vagy a backend fejezetben legyen az automata turn? 4. Összegzés
 
 \begin{thebibliography}{2}
 \addcontentsline{toc}{chapter}{\bibname}
