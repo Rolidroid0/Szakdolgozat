@@ -138,11 +138,23 @@ A projekt fejlesztéséhez Visual Studio Code-ot használok, mivel támogatja mi
 
 \subsection{Backend}
 
-A játék alapját egy Node.js alapú backend biztosítja, amely a MongoDB adatbázissal kommunikálva tárolja és frissíti a különböző játékállapotokat.
+A játék alapját egy Node.js alapú backend biztosítja, amely a MongoDB adatbázissal kommunikálva tárolja és frissíti a különböző játékállapotokat. A szerver Express.js keretrendszert használ a HTTP és WebSocket kapcsolatok kezelésére, lehetővé téve a valós idejű kommunikációt a játékosok között. A backend struktúrája a következő mappákra oszlik: models, routes, constrollers, services, utils, handlers, config és db-seed. 
+
+A \emph{models} mappában az adatbázisban tárolt dokumentumok sémái találhatók, mint például a kártyák vagy területek modellei. Ezen modellek felhasználásával történik meg az adatbázis feltöltése is a \emph{db-seed} mappában elhelyezkedő fájlok segítségével. 
+
+A \emph{routes} az API végpontok definiálására szolgál, amelyek a kliens kéréseit kezelik. Ezekhez a végpontokhoz tartoznak különböző műveletek, amelyek a \emph{controllers} mappában helyezkednek el. Az üzleti logika nagy része itt történik, a kérések itt kerülnek feldolgozásra. A controller-ek különböző szolgáltatásokat használnak, akár többet is, amelyek a \emph{services} mappában találhatók. Ezek az önállóan működő szolgáltatások a legfontosabbak, hiszen ezeken keresztül történik a kommunikáció az adatbázissal. A különböző játékbeli lépések itt vannak rendszerezve egy-egy fájlban, mint például a \emph{cardsService.ts}, amely a kártyákhoz tartozó függvényeket tartalmazza (kártyák keverése, kártya húzása, kártyák beváltása seregekre). Azok a függvények, amelyek különféle segédfüggvények, például adatellenőrzések és egyéb általános műveletek az \emph{utils} mappában helyezkednek el.
+
+A \emph{config} mappában két lényeges része kerül beállításra a szervernek: az adatbázissal való kapcsolat és a WebSocket szerver. Az adatbázishoz való csatlakozás egy Singleton osztály, amely ha nincs még csatlakozva egy mongoose.Connection példányon keresztül, akkor kialakít egy kapcsolatot az adatbázis URI-ját használva. A WebSocket szerver pedig létrehozza a szervert, majd várja a kliensek fel- és lecsatlakozását, illetve az üzeneteiket. Minden üzenetnek tartalmaznia kell egy kívánt akciót és opcionális adatokat. Az akciók a \emph{handlers} mappában kerülnek feldolgozásra a neveik alapján. Mindhez tartozik egy függvény, amelyek a különböző szolgáltatásokat hívják meg az akciók végrehajtására, majd visszajelzést küldenek az üzenetet küldő kliensnek, vagy bizonyos esetekben az összes kliensnek (például egy terület megerősítéséről minden kliensnek tudnia kell, lásd:~\ref{wss-clients}).
+
+\lstinputlisting[caption={WSS kliensek értesítése.}, label=wss-clients, captionpos=b]{wssClients.ts} 
 
 \subsection{Frontend}
 
-A React segítségével épített frontend biztosítja a játékosok számára az interaktív felületet egy webes alkalmazás formájában.
+A React segítségével épített frontend biztosítja a játékosok számára az interaktív felületet egy webes alkalmazás formájában. A React könyvtár komponens alapú felhasználói felületek létrehozására alkalmas. Az egész alapját az App.tsx fájl adja, amely a főoldalnak felel meg. Ezen helyezkednek el a különböző komponensek, mint például a fejléc. Az egyes komponensek két részből állnak, egy tsx fájlból, amely tartalmazza a hozzá tartozó mezőket és függvényeket, illetve a végén egy HTML szerű leírást és egy css fájlból, ami pedig a formázásban és megjelenítésben segít. A legtöbb komponens rendelkezik egy UseEffect() függvénnyel, amely folyamatosan figyeli, hogy érkezik-e üzenet a szerver felől WebSocket-en keresztül, ha igen, akkor pedig a tartalma alapján eldönti, hogy módosítania kell-e valamit a mezőin, vagy nem neki szólt ez az üzenet. A szerverhez hasonlóan a klienseken is fut egy szolgáltatás, amely egy Singleton osztálynak felel meg, és ezáltal csatlakozik a WebSocket szerverhez. Ebben a szolgáltatásban tudnak regisztrálni a komponensek úgynevezett handler-eket, amelyek figyelik a szervertől kapott üzenetek tartalmát. További szolgáltatások is megtalálhatók a kliensek kódjában, ezek azonban az API végpontok elérésében segédkeznek. Szintén a szerverhez hasonlóan itt is megjelennek az egyes adatbázis entitások modelljei. 
+
+A frontend egyik legkiemelkedőbb része a térkép. Ez az \emph{assets} mappában helyezkedik el egy svg fájlként, amelyet az Inkscape program használatával került megalkotásra. Minden terület egyedi azonosítóval rendelkezik, amely a játékbeli névvel egyezik meg, így a frontend felismerheti őket. A ReactSVG könyvtár biztosítja az interaktivitást, lehetővé téve az elemek manipulációját. Például egy területre való kattintásnál az a terület élesebb színűvé válik, illetve az azonosító alapján meg tud nyílni oldalt a hozzá tartozó fül a terület adataival. Továbbá minden területen számszerűen megjelenik a rajta elhelyezkedő seregek száma a birtokos házának színével. 
+
+%TODO: kép a térképről, úgy, hogy az egyik területre rá van kattintva 
 
 \section{Adatkezelés és játékállapot tárolása}
 
