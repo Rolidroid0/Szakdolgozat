@@ -198,6 +198,13 @@ Végezetül a területek kerülnek az adatbázisba a seedEssosTerritories() füg
 
 Egyetlen kollekció van, amely egy új játék létrehozásánál nem játszik semmilyen szerepet, a csatákat tartalmazó tábla. Ez a kollekció felel a már lejátszott és a még zajló csaták nyomon követésében. Amikor egy csata létrejön, akkor beállításra kerülnek az alapvető mezők mint például a támadó azonosítója, vagy a védekező terület azonosítója a szerver által. A csata közben a kör száma mező módosul, a dobások értékeinek mezője, illetve a csatanapló. Ha egy csatának vége van, akkor az állapota módosul az egyik fél győzelmére, majd a csatanaplóban lehet visszanézni, hogy pontosan hogyan is ment végbe az adott csata.
 
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[width=16cm]{DB.png}
+	\caption{Az adatbázis teljes tervezete.}
+	\label{database}
+\end{figure}
+
 %TODO: adatbázis képet beletenni
 
 \chapter{Mesterséges intelligencia tervezése}
@@ -243,7 +250,7 @@ Az \emph{init} függvényben a környezet legfontosabb mezői kapnak értéket. 
 
 A \emph{reset} függvény felel a környezet újrakezdéséért, minden lejátszott játék után ez a függvény kerül meghívásra a tanítás során. A WebSocket-en keresztül küld a szervernek egy új játék kezdése kérést, majd a válasz alapján beállítja a kezdéshez szükséges adatokat. A legnagyobb különbség az egyes állapotok lekérése és a legelső állapot lekérése között az a statikus adatok beállítása. Ilyen adatok a kikötők és várak elhelyezkedése a területeken, vagy a szomszédsági mátrix (egy \emph{n}x\emph{n}-es mátrix, ahol az \emph{n} a területek száma, a mátrix értékei pedig azt jelzik, hogy a két terület szomszédos-e), ugyanis ezek nem változnak a játék folyamán.
 
-A \emph{step} az egyetlen függvény, amely egy paramétert is vár. A paraméter a választott akció sorszáma, amelyet kikeres a környezet az elérhető akciókból. Miután ellenőrizte, hogy valóban a kör helyes szakaszában van és a lépés is létezik, megnézi, hogy a választott lépés a passzolás-e. Ha igen, akkor az automata-kör kérést küldi a szervernek, ha pedig nem, akkor egy csata-kezdése kérést küld, csatolva a támadó és védekező területek azonosítóját, a játékos azonosítóját és a seregek számát. Mindkét esetben egy jutalom értéket vár vissza a szervertől, amely ha meghalad egy bizonyos értéket, akkor befejezettnek tekinti az adott játékot. Ha ez az érték nem elég nagy, azaz még folyamatban van a játék, akkor pedig a jutalom értéke mellett a következő állapotot is visszaadja az MI-nek. 
+A \emph{step} az egyetlen függvény, amely egy paramétert is vár. A paraméter a választott akció sorszáma, amelyet kikeres a környezet az elérhető akciókból. Miután ellenőrizte, hogy valóban a kör helyes szakaszában van és a lépés is létezik, megnézi, hogy a választott lépés a passzolás-e. Ha igen, akkor az automata-kör kérést küldi a szervernek, ha pedig nem, akkor egy csata-kezdése kérést küld, csatolva a támadó és védekező területek azonosítóját, a játékos azonosítóját és a seregek számát. Mindkét esetben egy jutalom értéket vár vissza a szervertől, amely ha meghalad egy bizonyos értéket, akkor befejezettnek tekinti az adott játékot. Ha ez az érték nem elég nagy, azaz még folyamatban van a játék, akkor pedig a jutalom értéke mellett a következő állapotot is visszaadja az MI-nek. Amikor egy automata-kör kérés érkezik a szerver számára, akkor a seregek lehelyezése egy algoritmus alapján megy végig, csak egyesével lepakolja őket a területekre sorban. Az ellenfél köre pedig szintén egy egyszerű algoritmus alapján szimulálódik le: megnézi a birtokolt területeket, azok közül is azokat, amelyek rendelkeznek ellenséges szomszéddal, majd megnézi hogy ezen a területen van-e elég sereg a biztonságos támadáshoz. Csak akkor támad, ha legalább három serege van, és ha a saját seregek száma legalább kétszer annyi, mint a védekezőé. A támadó seregek számát úgy választja meg, hogy a támadók száma a maximum sereg felének felel meg, de legalább kettő kell, hogy legyen, de nem támadhat annyi sereggel, hogy csak egy maradjon a területen. Ha az így kiválasztott seregek száma nagyobb, mint a védekező seregek száma, akkor támadást indít. Ha egy támadás elindul, vagy nem talál egy megfelelőt sem, akkor az algoritmus leáll és visszatér, majd újra az MI következik. Magyarán csak akkor támad, ha biztos fölénye van, és igyekszik minimalizálni a kockázatot.
 
 A \emph{render} valójában a környezet vizuális megjelenítéséért lenne felelős, azonban a játékomhoz már létezik frontend a kliensek számára, ezért az a függvény nem került implementálásra a környezeten belül.
 
@@ -276,7 +283,7 @@ Az inváziók eldöntésére létrehozott mesterséges intelligenciát tehát eg
 \chapter*{Összegzés}
 \addcontentsline{toc}{chapter}{Összegzés}
 
-%TODO: 1. implementáció rész kibővíteni 2. elkészült alkalmazás fejezet 3. környezet tervezése vagy a backend fejezetben legyen az automata turn? 4. Összegzés
+%TODO: 1. implementáció rész kibővíteni (todo rész) 2. elkészült alkalmazás fejezet 3. Összegzés
 
 \begin{thebibliography}{2}
 \addcontentsline{toc}{chapter}{\bibname}
