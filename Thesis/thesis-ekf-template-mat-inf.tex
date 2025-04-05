@@ -68,6 +68,8 @@ További érdekessége a szakdolgozatnak a mesterséges intelligencia (MI) fejle
 
 A mesterséges intelligencia fejlődése az elmúlt években jelentősen befolyásolta a játékfejlesztés folyamatát, lehetővé téve, hogy az MI-alapú ellenfelek egyre intelligensebb döntéseket hozzanak és alkalmazkodjanak a játékosok stratégiájához. Stratégiai döntések meghozatalához különösen a projektemben is használt megerősítéses tanulás (reinforcement learning, RL) vált népszerűvé, amely az MI folyamatos fejlődését, tanulását teszi lehetővé.
 
+A szakdolgozatomban szeretnék elsősorban a mesterséges intelligenciáról írni, bemutatni a projektet általánosságban, hogy milyen technológiák kerültek felhasználásra. Ezek után magáról a játékról, annak szabályairól lesz szó, majd ennek a konkrét implementációjáról online környezetben. Részletesen kifejtem a mesterséges intelligencia megtervezésének és fejlesztésének folyamatát, majd végezetül bemutatom az elkészült alkalmazást, összefoglalom a fejlesztés során szerzett tapasztalatokat. A projekt a következő GitHub linken érhető el: \url{https://github.com/Rolidroid0/Szakdolgozat}.
+
 \chapter{MI és technológia}
 
 \section{A gépi tanulás elméleti alapjai és a megerősítéses tanulás}
@@ -176,13 +178,13 @@ Hat adatbázis-kollekció lett létrehozva, a következőképpen (lásd: \ref{co
 \begin{itemize}
 	\item \textbf{Players}: a játékosok adatait tartalmazza
 	\item \textbf{Games}: az aktuális és lezárt játszmák állapotát tartalmazza
-	\item \textbf{Territories}: a térkép területeit és kapcsolataikat írja le
-	\item \textbf{Cards}: a játékban szereplő kártyák helyzetét rögzíti
+	\item \textbf{EssosTerritories}: a térkép területeit és kapcsolataikat írja le
+	\item \textbf{EssosCards}: a játékban szereplő kártyák helyzetét rögzíti
 	\item \textbf{Regions}: a területeket összekötő régiókat tartalmazza
 	\item \textbf{Battles}: a folyamatban lévő és lezárt csaták részleteit kezeli
 \end{itemize}
 
-A játék adatbázisának célja, hogy hatékonyan kezelje a játékállapotot, a területek, a játékosokat, a kártyákat és a csatákat. Az alábbiakban részletesen bemutatom az egyes táblák szerepét, a közöttük lévő kapcsolatokat, valamint az adatok kezelésének menetét. A régiókat tartalmazó kollekció a Regions.csv-ből került betöltésre, azonban mivel ezek az adatok nem változnak játék közben és két játék között sem, ezért ezzel a táblával adatmódosítás szempontjából nem is kell foglalkozni. Fő célja a kör elején kapott bónusz seregek számításánál a régióbónusz meghatározása. Erre a calculatePlusArmies(playerId: ObjectId) metódusban kerül sor (\ref{region-bonus}).
+A játék adatbázisának célja, hogy hatékonyan kezelje a játékállapotot, a területek, a játékosokat, a kártyákat és a csatákat. Az alábbiakban részletesen bemutatom az egyes táblák szerepét, a közöttük lévő kapcsolatokat, valamint az adatok kezelésének menetét. A régiókat tartalmazó kollekció a Regions.csv-ből került betöltésre, azonban mivel ezek az adatok nem változnak játék közben és két játék között sem, ezért ezzel a táblával adatmódosítás szempontjából nem is kell foglalkozni. Fő célja a kör elején kapott bónusz seregek számításánál a régióbónusz meghatározása. Erre a calculatePlusArmies(playerId: ObjectId) metódusban kerül sor (ahogy az \aref{region-bonus} kódrészletben látható).
 
 \lstinputlisting[caption={Régióbónusz meghatározása.}, label=region-bonus, captionpos=b]{regionBonus.ts}
 
@@ -205,7 +207,7 @@ Egyetlen kollekció van, amely egy új játék létrehozásánál nem játszik s
 	\label{database}
 \end{figure}
 
-%TODO: adatbázis képet beletenni
+%TODO: adatbázis képet beletenni és hivatkozni rá + a 3.2-es kódrészletre is 
 
 \chapter{Mesterséges intelligencia tervezése}
 
