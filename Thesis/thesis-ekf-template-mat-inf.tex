@@ -50,7 +50,7 @@
 \begin{document}
 
 \institute{Matematikai és Informatikai Intézet}
-\title{Mesterséges intelligencia számítógépes játékokban}
+\title{Stratégiai társasjáték fejlesztése megerősítéses tanulást alkalmazó mesterséges intelligenciával}
 \author{Budai Roland\\Programtervező informatikus BSc.}
 \supervisor{Dr. Kovásznai Gergely\\Egyetemi docens}
 \city{Eger}
@@ -80,7 +80,7 @@ A felügyelt tanulás esetében a rendszer egy előre meghatározott bemenet-kim
 
 \subsection{Neurális hálózatok}
 
-A neurális hálózatok az ML egy legfontosabb eszközei, amelyek a biológiai neuronhálózatok mintájára épülnek fel. Egy mély neurális hálózat (deep neural network, DNN) több rétegű csomópontokból áll, ahol az egyes rétegek között súlyok segítségével történik az információátadás. Ezek az architektúrák jól alkalmazhatók képfelismerés, természetes nyelvfeldolgozás és komplex döntéshozatali folyamatok esetén. A megerősítéses tanulásban gyakran alkalmaznak mély neurális hálózatokat, például Deep Q-Network algoritmust, amely egy Q-tanulási (Q-learning) stratégiát kombinál mély tanulási modellekkel, lehetővé téve az ügynök számára a nagyobb állapottérrel rendelkező környezetben való hatékony tanulást. \cite{NN}
+A neurális hálózatok az ML egy legfontosabb eszközei, amelyek a biológiai neuronhálózatok mintájára épülnek fel. \cite{NN2} Egy mély neurális hálózat (deep neural network, DNN) több rétegű csomópontokból áll, ahol az egyes rétegek között súlyok segítségével történik az információátadás. Ezek az architektúrák jól alkalmazhatók képfelismerés, természetes nyelvfeldolgozás és komplex döntéshozatali folyamatok esetén. A megerősítéses tanulásban gyakran alkalmaznak mély neurális hálózatokat, például Deep Q-Network algoritmust, amely egy Q-tanulási (Q-learning) stratégiát kombinál mély tanulási modellekkel, lehetővé téve az ügynök számára a nagyobb állapottérrel rendelkező környezetben való hatékony tanulást. \cite{NN}
 
 \subsection{Az ügynök és a környezet fogalma}
 
@@ -124,7 +124,6 @@ A játékosok interakciói alapvetően három fő dolgon alapszanak: területfog
 		\item A birtokolt területek számát össze kell adni a rajtuk lévő várak számával, elosztani hárommal és lefelé kerekíteni. Fontos kiegészítés, hogy legalább három sereget mindenképpen kap a játékos, még ha a számolás eredményeképp kevesebb járna is.
 		\item Minden terület egy régióhoz tartozik és minden régiónak van egy plusz seregeket jelentő értéke. Ha egy játékos egy adott régió összes területével rendelkezik, akkor a meghatározott plusz seregeket hozzáadhatja az eddigi erősítésként járó seregeihez. Természetesen ha több régiót is teljesen birtokol egy játékos, akkor az összes régió bónuszt megkapja.
 		\item Minden területkártyán van egy különleges egységet ábrázoló kép, amelyekből ha három összegyűlik további seregekre tehet szert a játékos. Fontos megjegyzés, hogy nem lehet öt kártyánál többet birtokolni, ha ebben a fázisban öt kártyája van egy játékosnak, azokból mindenképpen be kell váltania hármat. További bónusz seregekre tehet szert a játékos, ha a beváltott kártyákon lévő területeket is birtokolja. Ilyenkor két extra sereget helyezhet fel kizárólag ezekre a területekre.
-		%TODO: ide bevágni a területkártyás táblázatot?
 	\end{itemize}
 	Végezetül az összes meghatározott plusz sereget el kell helyezni a táblán a játékos által birtokolt területekre. Ezeket lehet tetszőlegesen elosztani vagy akár mindet egy területre lehelyezni.
 	\item \textbf{Inváziók és csaták}: Az inváziók és csaták a játék és a játékos körének a legfontosabb eseményei. Itt kell eldönteni, hogy kit és hol támadnak meg a játékosok, ezáltal közelebb kerülve a győzelemhez. Egy körben bármennyi inváziót kezdeményezhet a játékos, azonban egy területről csak egy támadás indítható adott körben. Olyan területeket lehet támadni, amelyek szomszédosak a kezdeményező területtel és ellenség birtokolja őket. A kikötővel rendelkező területek szomszédosnak számítanak egymással, ezáltal ezekről a területekről akár messzebbre is el lehet kezdeni terjeszkedni. Természetesen a játékos bármennyiszer támadhat egy körben amennyiszer lehetséges, de akár dönthet úgy is, hogy egyszer sem támad, ekkor automatikusan folytatódik a kör a következő fázissal. Egy invázió megkezdésekor ki kell választani, hogy melyik területről és melyik területre szeretne támadni a játékos, továbbá meg kell határoznia a támadó seregek számát. Ez a szám nem haladhatja meg az adott területen lévő seregeinek a számát és legalább egy sereget hátul kell hagynia, hogy ne maradjon üresen a terület. Miután egy invázió sikeresen létrejön, megkezdődnek a csaták. A támadó fél maximum három sereggel csatázhat, még ha ennél többel is kezdte meg az inváziót, és a védekező pedig legfeljebb két sereggel védekezik. Mindkét játékos a csatázó seregeinek számával megegyező kockával dob, majd ezeket az értékeket párosítják a legmagasabbaktól a legalacsonyabbakig. Ha a támadó legnagyobb dobása a magasabb, akkor a védekező veszít egy sereget, ha a védekező dobása a nagyobb vagy egyenlő, akkor pedig a támadó vesz le egy sereget. Hasonló összehasonlítás történik a második legnagyobb dobásokkal is. Ha az egyik fél több kockával dobott, aminek nem jutott már párja, akkor azt figyelmen kívül kell hagyni, az nem okoz veszteséget egyik fél számára sem. Ez egészen addig ismétlődik, amíg az egyik fél seregei el nem fogynak az adott invázió során. Ekkor ha a védőnek nem marad serege a megtámadott területen, a támadó megszerzi az adott területet, és a megmaradó seregei felkerülnek erre a területre. A semleges seregek által birtokolt területekre hasonló szabályok érvényesek, viszont a dobásokat nem a másik játékos végzi, hanem azok automatikusan végrehajtódnak.
@@ -162,7 +161,7 @@ A frontend egyik legkiemelkedőbb része a térkép. Ez az \emph{assets} mappáb
 
 A játék egyik legfontosabb eleme a játékállapot pontos eltárolása, amely biztosítja a játékosok számára a legfrissebb helyzeteket. Ezáltal az adatbázis tervezése volt az egyik legfontosabb feladat az implementáció során. 
 
-A projektben MongoDB-t használok, mivel ez egy NoSQL-alapú, dokumentum-orientált adatbázis. JSON-szerű dokumentumokat használ, amik könnyedén lekérdezhetők, kezelhetők és bővíthetők, ezáltal jól illeszkednek a játékstruktúrához. \cite{MongoDB} A játékállapot folyamatos frissítése során fontos biztosítani, hogy ne történjenek ütközések, illetve adatvesztések. Ennek biztosítására kínál lehetőséget a MongoDB az Atomic Update műveletekkel, mint például az updateOne() és findOneAndUpdate() beépített függvények.
+A projektben MongoDB-t használok, mivel ez egy NoSQL-alapú, dokumentum-orientált adatbázis. JSON-szerű dokumentumokat használ, amik könnyedén lekérdezhetők, kezelhetők és bővíthetők, ezáltal jól illeszkednek a játékstruktúrához. \cite{MongoDB} A játékállapot folyamatos frissítése során fontos biztosítani, hogy ne történjenek ütközések, illetve adatvesztések. Ennek biztosítására kínál lehetőséget a MongoDB az Atomic Update műveletekkel, mint például az updateOne() és findOneAndUpdate() beépített függvények (lásd~\aref{kod-atomic-update}~kódrészletet).
 
 \lstinputlisting[caption={Példa az Atomic Update műveletekre a cardsService.ts-ből.}, label=kod-atomic-update, captionpos=b]{atomicUpdate.ts}
 
@@ -200,14 +199,14 @@ Végezetül a területek kerülnek az adatbázisba a seedEssosTerritories() füg
 
 Egyetlen kollekció van, amely egy új játék létrehozásánál nem játszik semmilyen szerepet, a csatákat tartalmazó tábla. Ez a kollekció felel a már lejátszott és a még zajló csaták nyomon követésében. Amikor egy csata létrejön, akkor beállításra kerülnek az alapvető mezők mint például a támadó azonosítója, vagy a védekező terület azonosítója a szerver által. A csata közben a kör száma mező módosul, a dobások értékeinek mezője, illetve a csatanapló. Ha egy csatának vége van, akkor az állapota módosul az egyik fél győzelmére, majd a csatanaplóban lehet visszanézni, hogy pontosan hogyan is ment végbe az adott csata.
 
+\Aref{database} ábrán látható a teljes adatbázis tervezete. A fejlesztés során eleinte nem minden tábla tartalmazta a game\_id mezőt, mivel nem volt rá szükség, a mesterséges intelligencia tervezése során merült fel, hogy ezt a mezőt is be kell vezetni néhány táblán. Ezen változtatások miatt vannak mezők, amelyek magyarázatot igényelhetnek. Ilyen például az EssosCards tábla owner\_id mezőjének típusa. Ez a mező hivatott összekötni a játékosok és a kártyák tábláit. Mivel egy játékos és egy kártya entitás is rendelkezik game\_id mezővel, így biztosítva van, hogy csak az adott játékban lévő kártyák és játékosok kerülhetnek össze, ezért elég a játékos házának nevét megadni az azonosítója helyett, mivel a house mező egy játékon belül minden játékosnak egyedi. Hasonlóan a Games táblában a current\_player és a players mezők a játékosok házainak neveit tartalmazzák mint azonosító. Az EssosTerritories táblánál pedig a region mező szintén egy régió nevét tartalmazza, mivel azok is egyediek, nem változnak a játékok között, ráadásul a csv-ből való betöltésnél is az egyes területeknél a régió neve van megadva.
+
 \begin{figure}[ht!]
 	\centering
 	\includegraphics[width=16cm]{DB.png}
 	\caption{Az adatbázis teljes tervezete.}
 	\label{database}
 \end{figure}
-
-%TODO: adatbázis képet beletenni és hivatkozni rá + a 3.2-es kódrészletre is 
 
 \chapter{Mesterséges intelligencia tervezése}
 
@@ -265,16 +264,20 @@ Az inváziók eldöntésére létrehozott mesterséges intelligenciát tehát eg
 \textbf{DQN ügynök (DQNAgent)}: A tanulás kulcseleme a DQNAgent osztály, amely az alábbiakat kezeli:
 
 \begin{itemize}
-	\item \textbf{Akció kiválasztása}: Az epsilon-greedy stratégiát alkalmazza, hogy az ügynök kezdetben véletlenszerű akciókat válasszon, majd idővel egyre inkább a tapasztalatokra alapozott döntéseket hozzon.
+	\item \textbf{Akció kiválasztása}: Az epsilon-greedy stratégiát alkalmazza, hogy az ügynök kezdetben véletlenszerű akciókat válasszon, majd idővel egyre inkább a tapasztalatokra alapozott döntéseket hozzon (lásd: \ref{choose-action}).
+	\lstinputlisting[caption={Az ügynök akció választása.}, label=choose-action, captionpos=b]{ChooseAction.py}
 	\item \textbf{Tapasztalatok tárolása}: A tanuláshoz szükséges múltbeli tapasztalatokat egy replay bufferben tárolja.
 	\item \textbf{Tanulási folyamat}: A Q-értékeket folyamatosan frissíti a célhálózattal való kontraszt alapján.
 	\item \textbf{Célhálózat frissítése}: Fenntart egy állandóan frissített célhálózatot, amely a tanulás stabilitását biztosítja.
-	\item \textbf{Modell mentése és betöltése}: A betanított modellt egy pth formátumú fájlban tárolja, amelyet bármikor be lehet tölteni, hogy az eddigi tapasztalatokat tovább lehessen tanítani, vagy csak a döntését kérni.
+	\item \textbf{Modell mentése és betöltése}: A betanított modellt egy pth formátumú fájlban tárolja, amelyet bármikor be lehet tölteni, hogy az eddigi tapasztalatokat tovább lehessen tanítani, vagy csak a döntését kérni. Mint \aref{save-model} kódrészletben is látható, nem kell az egész modellt elmenteni, elég a Q-Hálózat state\_dict mezőjét, rugalmasságot biztosítva ezzel. 
+	\lstinputlisting[caption={A tapasztalatok mentése.}, label=save-model, captionpos=b]{SaveModel.py}
 \end{itemize}
 
 \textbf{Mély Q-Hálózat (DeepQNetwork)}: A DQN alapja egy mély neuronhálózat, amelyet a DeepQNetwork osztály valósít meg. A hálózat egy bemeneti rétegből, két rejtett teljes összeköttetésű rétegből (és ReLU aktivációkból), valamint egy kimeneti rétegből áll, amely az egyes akciókhoz tartozó Q-értékeket szolgáltatja. A bemenetek dimenziója a játékbeli állapot adataira alapozott, a kimenetek száma pedig az elérhető akciók maximumát adja meg. 
 
-\textbf{Tanulási folyamat (DQNTrainer)}: A DQNTrainer osztály a teljes tanítási folyamatot kezeli. Meg kell előre adni az epizódok számát, azaz hogy hány játékot játsszon le a tanulás ideje alatt, majd futtatni a train.py fájlt. Először betölti az ügynököt az elmentett pth fájlból, vagy ha nem találja akkor újrainicializálja azt. Az ügynök az egyes epizódok során akciókat hajt végre, tapasztalatokat gyűjt, és tanul. Az epizódok végén pedig elmenti az ügynököt. A tanulás során az ügynök kölcsönhat a környezettel, jutalmakat kap a teljesítése alapján, majd folyamatosan frissíti a stratégiáját. Az epsilon csökkentésével az ügynök idővel egyre kevesebb véletlenszerű akciót végez, helyette a tanult optimális stratégiát alkalmazza. 
+\textbf{Tanulási folyamat (DQNTrainer)}: A DQNTrainer osztály a teljes tanítási folyamatot kezeli. Meg kell előre adni az epizódok számát, azaz hogy hány játékot játsszon le a tanulás ideje alatt, majd futtatni a train.py fájlt. Először betölti az ügynököt az elmentett pth fájlból, vagy ha nem találja akkor újrainicializálja azt. Az ügynök az egyes epizódok során akciókat hajt végre, tapasztalatokat gyűjt, és tanul. Az epizódok végén pedig elmenti az ügynököt. A tanulás során az ügynök kölcsönhat a környezettel, jutalmakat kap a teljesítése alapján, majd folyamatosan frissíti a stratégiáját. Az epsilon csökkentésével az ügynök idővel egyre kevesebb véletlenszerű akciót végez, helyette a tanult optimális stratégiát alkalmazza (bővebben lásd: \ref{train} kódrészlet).
+
+\lstinputlisting[caption={Train.py fájl.}, label=train, captionpos=b]{Train.py}
 
 \chapter{Az elkészült alkalmazás}
 
@@ -292,7 +295,9 @@ Az inváziók eldöntésére létrehozott mesterséges intelligenciát tehát eg
 \bibitem{Tomacs}
 \textsc{Tómács Tibor}: \emph{A valószínűségszámítás alapjai}, Líceum Kiadó, Eger, 2005.
 \bibitem{ML}
-\textsc{Machine Learning wikipedia}: https://en.wikipedia.org/wiki/Machine\_learning
+\textsc{Alpaydin, Ethem}: Introduction to Machine Learning, MIT Press, 2020.
+\bibitem{NN2}
+\textsc{Larry Hardesty}: Explained: Neural networks, MIT News Office, 2017. 
 \bibitem{NN}
 \textsc{Neural network wikipedia}: https://en.wikipedia.org/wiki/Neural\_network\_(machine\_learning)
 \bibitem{RL}
