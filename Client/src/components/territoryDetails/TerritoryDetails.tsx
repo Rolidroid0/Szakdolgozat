@@ -212,16 +212,34 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
     return (
         <div className="territory-details-panel">
             <div className="territory-header" style={headerStyle}>
-                <h2>{territory.name}</h2>
+                <div className='territory-title'>
+                    <h2>{territory.name}</h2>
+                </div>
                 <button className="close-button" onClick={onClose}>
                     &times;
                 </button>
             </div>
             <div className="details">
-                {territory.fortress === 1 && <p>Fortress</p>}
-                {territory.port === 1 && <p>Port</p>}
-                <p>Region: {territory.region}</p>
-                <p>Armies: {territory.number_of_armies}</p>
+            <div className="territory-tags">
+                <div className="tag-line">
+                    <span className="icon">🛡️</span>
+                    <span>Fortress:</span>
+                    <span className={territory.fortress === 1 ? "status success" : "status fail"}>
+                        {territory.fortress === 1 ? "✔️" : "❌"}
+                    </span>
+                </div>
+                <div className="tag-line">
+                    <span className="icon">⚓</span>
+                    <span>Port:</span>
+                    <span className={territory.port === 1 ? "status success" : "status fail"}>
+                        {territory.port === 1 ? "✔️" : "❌"}
+                    </span>
+                </div>
+            </div>
+                <div className='territory-info'>
+                    <p>🗺️ Region: {territory.region}</p>
+                    <p>⚔️ Armies: {territory.number_of_armies}</p>
+                </div>
                 {game.round_state === "reinforcement" 
                     && game.current_player === player.house
                     && territory.owner_id === player.house && (

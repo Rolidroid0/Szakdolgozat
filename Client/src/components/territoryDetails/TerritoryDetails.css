@@ -3,9 +3,9 @@
   position: fixed;
   right: 0;
   top: 0;
-  width: 300px;
+  width: 375px;
   height: 100%;
-  background-color: white;
+  background-color: rgb(213, 213, 213);
   box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
   z-index: 1000;
   display: flex;
@@ -77,4 +77,98 @@
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+.territory-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  background-color: #3b3b3b;
+  border-bottom: 1px solid #ddd;
+  color: white;
+  position: relative;
+}
+
+.territory-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  width: 100%;
+  pointer-events: none;
+}
+
+.territory-title h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  margin-left: auto;
+  font-size: 24px;
+  cursor: pointer;
+  color: white;
+  z-index: 1;
+}
+
+.territory-tags {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+.tag-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon {
+  font-size: 18px;
+}
+
+.status {
+  font-size: 18px;
+}
+
+.status.success {
+  color: green;
+}
+
+.status.fail {
+  color: red;
+}
+
+.tag {
+  padding: 5px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+  color: white;
+}
+
+.tag.fortress {
+  background-color: #8e44ad;
+}
+
+.tag.port {
+  background-color: #2980b9;
+}
+
+.tag.none {
+  background-color: #bdc3c7;
+  color: #2c3e50;
+}
+
+.territory-info {
+  margin-bottom: 15px;
+}
+
+.territory-info p {
+  margin: 5px 0;
 }

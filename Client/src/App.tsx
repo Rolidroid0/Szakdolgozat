@@ -108,7 +108,7 @@ const App: React.FC = () => {
                 ) : (
                   <>
                     {!showCards ? (
-                            <button onClick={handleToggleCards} className="header-button">
+                            <button onClick={handleToggleCards} className="cards-button">
                                 Show Cards
                             </button>
                         ) : (

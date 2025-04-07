@@ -228,32 +228,38 @@ const Header: React.FC<HeaderProps> = ({ wsService, handleLoggedIn, ongoingBattl
                             </option>
                         ))}
                     </select>
-                    <button onClick={handleLogin} className="header-button">
+                    <button onClick={handleLogin} className="login-button">
                         Log in
                     </button>
                     <StartGameButton wsService={wsService}></StartGameButton>
                 </>
             ) : (
                 <div className="header-loggedInContainer">
-                    <span>House {players.find(p => p._id === selectedPlayer)?.house}</span>
-                    <button onClick={handleLogout} className="header-button">
-                        Logout
-                    </button>
-                    <h1>Round {round} : {currentHouse}</h1>
-                    <h2>Current Phase: {roundState}</h2>
+                    <div className="header-left">
+                        <span>House {players.find(p => p._id === selectedPlayer)?.house}</span>
+                    </div>
+                    <div className="header-center">
+                        <h1>Round {round} : {currentHouse}</h1>
+                        <h2>Current Phase: {roundState}</h2>
+                    </div>
                     {players.find(p => p._id === selectedPlayer)?.house === currentHouse && !ongoingBattle &&
-                    <>
-                        {roundState === "invasion" &&
                         <>
-                            <button onClick={letAIDecide} className="header-button">Let AI decide</button>
+                            {roundState === "invasion" &&
+                            <>
+                                <button onClick={letAIDecide} className="header-button">Let AI decide</button>
+                            </>
+                            }
+                            <EndTurnButton wsService={wsService} selectedPlayer={selectedPlayer}></EndTurnButton>
+                            <button onClick={handleEndPhase} className="header-button">
+                                End {roundState} Phase
+                            </button>
                         </>
                         }
-                        <EndTurnButton wsService={wsService} selectedPlayer={selectedPlayer}></EndTurnButton>
-                        <button onClick={handleEndPhase} className="header-button">
-                            End {roundState} Phase
+                    <div className="header-left">
+                        <button onClick={handleLogout} className="logout-button">
+                            Logout
                         </button>
-                    </>
-                    }
+                    </div>
                 </div>
             )}
         </header>

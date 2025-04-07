@@ -153,9 +153,14 @@ A \emph{config} mappában két lényeges része kerül beállításra a szervern
 
 A React segítségével épített frontend biztosítja a játékosok számára az interaktív felületet egy webes alkalmazás formájában. A React könyvtár komponens alapú felhasználói felületek létrehozására alkalmas. Az egész alapját az App.tsx fájl adja, amely a főoldalnak felel meg. Ezen helyezkednek el a különböző komponensek, mint például a fejléc. Az egyes komponensek két részből állnak, egy tsx fájlból, amely tartalmazza a hozzá tartozó mezőket és függvényeket, illetve a végén egy HTML szerű leírást és egy css fájlból, ami pedig a formázásban és megjelenítésben segít. A legtöbb komponens rendelkezik egy UseEffect() függvénnyel, amely folyamatosan figyeli, hogy érkezik-e üzenet a szerver felől WebSocket-en keresztül, ha igen, akkor pedig a tartalma alapján eldönti, hogy módosítania kell-e valamit a mezőin, vagy nem neki szólt ez az üzenet. A szerverhez hasonlóan a klienseken is fut egy szolgáltatás, amely egy Singleton osztálynak felel meg, és ezáltal csatlakozik a WebSocket szerverhez. Ebben a szolgáltatásban tudnak regisztrálni a komponensek úgynevezett handler-eket, amelyek figyelik a szervertől kapott üzenetek tartalmát. További szolgáltatások is megtalálhatók a kliensek kódjában, ezek azonban az API végpontok elérésében segédkeznek. Szintén a szerverhez hasonlóan itt is megjelennek az egyes adatbázis entitások modelljei. 
 
-A frontend egyik legkiemelkedőbb része a térkép. Ez az \emph{assets} mappában helyezkedik el egy svg fájlként, amelyet az Inkscape program használatával került megalkotásra. Minden terület egyedi azonosítóval rendelkezik, amely a játékbeli névvel egyezik meg, így a frontend felismerheti őket. A ReactSVG könyvtár biztosítja az interaktivitást, lehetővé téve az elemek manipulációját. Például egy területre való kattintásnál az a terület élesebb színűvé válik, illetve az azonosító alapján meg tud nyílni oldalt a hozzá tartozó fül a terület adataival. Továbbá minden területen számszerűen megjelenik a rajta elhelyezkedő seregek száma a birtokos házának színével. 
+A frontend egyik legkiemelkedőbb része a térkép. Ez az \emph{assets} mappában helyezkedik el egy svg fájlként, amelyet az Inkscape program használatával került megalkotásra. Minden terület egyedi azonosítóval rendelkezik, amely a játékbeli névvel egyezik meg, így a frontend felismerheti őket. A ReactSVG könyvtár biztosítja az interaktivitást, lehetővé téve az elemek manipulációját. Például egy területre való kattintásnál az a terület élesebb színűvé válik, illetve az azonosító alapján meg tud nyílni oldalt a hozzá tartozó fül a terület adataival (lásd: \ref{territory-selected}). Továbbá minden területen számszerűen megjelenik a rajta elhelyezkedő seregek száma a birtokos házának színével. 
 
-%TODO: kép a térképről, úgy, hogy az egyik területre rá van kattintva 
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[width=15cm]{TerritorySelected.png}
+	\caption{Vaes Dothrak terület adatai.}
+	\label{territory-selected}
+\end{figure}
 
 \section{Adatkezelés és játékállapot tárolása}
 

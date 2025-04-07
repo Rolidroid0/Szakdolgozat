@@ -97,7 +97,12 @@ const Map: React.FC<MapProps> = ({ playerId }) => {
                 textElement.setAttribute('dominant-baseline', 'middle');
 
                 const ownerColor = houseColors[territoryData.owner_id] || 'black';
-                textElement.setAttribute('fill', ownerColor);
+                textElement.setAttribute('fill', 'white');
+
+                textElement.setAttribute('stroke', ownerColor);
+                textElement.setAttribute('stroke-width', '2'); // minél nagyobb, annál vastagabb a háttér
+                textElement.setAttribute('paint-order', 'stroke');
+                textElement.setAttribute('style', 'paint-order: stroke;'); // extra biztosíték
 
                 textElement.textContent = territoryData.number_of_armies.toString();
 
