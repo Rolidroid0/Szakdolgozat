@@ -61,7 +61,7 @@
   font-size: 16px;
   width: 600px;
   cursor: pointer;
-  background-color: #51b4c8;
+  background-color: #d3be1e;
   color: #fff;
   border: none;
   border-radius: 5px;
@@ -70,7 +70,7 @@
 }
 
 .cards-button:hover {
-  background-color: #5dcfe6;
+  background-color: #e9d120;
   transform: scale(1.05);
 }
 

@@ -106,20 +106,25 @@ const CardsDisplay: React.FC<CardsDisplayProps> = ({ playerId, onTradeSuccess })
 
     return (
         <div className='cards-container'>
-            <h3>Your Cards</h3>
+            <h3 className='cards-title'>Your Cards</h3>
             <div className='cards-list'>
                 {playerCards.map((card) => (
                     <div
                         key={card._id}
-                        className={`card ${selectedCards.includes(card._id) ? 'selected' : ''}`}
+                        className={`card ${selectedCards.includes(card._id) ? 'selected' : ''} ${card.symbol.toLowerCase()}`}
                         onClick={() => handleCardClick(card._id)}
                     >
-                        <div>{card.name},
-                        {card.symbol}</div>
+                        <div className='card-name'>{card.name}</div>
+                        <div className='card-symbol'>{card.symbol}</div>
+                        <div className="card-icon">
+                            {card.symbol === 'knight' && '♞'}
+                            {card.symbol === 'siegeEngine' && '🏹'}
+                            {card.symbol === 'fortress' && '♜'}
+                        </div>
                     </div>
                 ))}
             </div>
-            <button onClick={handleTrade} disabled={selectedCards.length !== 3}>
+            <button onClick={handleTrade} disabled={selectedCards.length !== 3} className='trade-button'>
                 Trade Selected Cards
             </button>
         </div>

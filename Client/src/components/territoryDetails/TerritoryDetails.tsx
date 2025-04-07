@@ -240,6 +240,7 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
                     <p>🗺️ Region: {territory.region}</p>
                     <p>⚔️ Armies: {territory.number_of_armies}</p>
                 </div>
+                <hr />
                 {game.round_state === "reinforcement" 
                     && game.current_player === player.house
                     && territory.owner_id === player.house && (
@@ -266,6 +267,7 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
                         <select 
                             value={targetTerritoryId || ""}
                             onChange={(e) => setTargetTerritoryId(e.target.value)}
+                            className='select'
                             >
                                 <option value="">Select a territory</option>
                                 {maneuverableTerritories.map(territory => (
@@ -281,9 +283,10 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
                                 max={territory.number_of_armies - 1}
                                 value={armiesToManeuver}
                                 onChange={handleManeuverSliderChange}
+                                className='slider'
                             />
-                            <p>Armies to maneuver: {armiesToManeuver}</p>
-                            <button onClick={handleManeuver} disabled={armiesToManeuver === 0 || !targetTerritoryId}>
+                            <p>🚩 Armies to maneuver: {armiesToManeuver}</p>
+                            <button onClick={handleManeuver} disabled={armiesToManeuver === 0 || !targetTerritoryId} className='terr-det-btn'>
                                 Maneuver
                             </button>
                     </div>
@@ -295,6 +298,7 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
                         <select 
                             value={targetTerritoryId || ""}
                             onChange={(e) => setTargetTerritoryId(e.target.value)}
+                            className='select'
                         >
                             <option value="">Select a territory</option>
                             {attackableTerritories.map(enemyTerritory => (
@@ -310,9 +314,10 @@ const TerritoryDetails: React.FC<TerritoryDetailsProps> = ({ territoryId, onClos
                             max={territory.number_of_armies - 1}
                             value={armiesToAttack}
                             onChange={handleAttackSliderChange}
+                            className='slider'
                         />
-                        <p>Armies to attack: {armiesToAttack}</p>
-                        <button onClick={handleStartBattle} disabled={armiesToAttack === 0 || !targetTerritoryId}>
+                        <p>⚔️ Armies to attack: {armiesToAttack}</p>
+                        <button onClick={handleStartBattle} disabled={armiesToAttack === 0 || !targetTerritoryId} className='terr-det-btn'>
                             Start Battle
                         </button>
                     </div>

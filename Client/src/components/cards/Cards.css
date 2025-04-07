@@ -2,27 +2,94 @@
     display: flex;
     flex-direction: column;
     background-color: #f8f9fa;
-    padding: 10px;
+    padding: 20px;
     border: 1px solid #ddd;
+    border-radius: 10px;
+    max-width: 600px;
+    margin: 0 auto;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.cards-title {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: #333;
 }
 
 .cards-list {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 15px;
+    justify-content: center;
 }
 
 .card {
+    width: 120px;
+    height: 100px;
+    border-radius: 10px;
     padding: 10px;
-    background-color: #ffffff;
-    border: 1px solid #ddd;
+    color: white;
+    font-weight: bold;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.card-name {
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.card-symbol {
+    font-size: 14px;
 }
 
 .card.selected {
-    border: 2px solid #007bff;
+    outline: 3px solid #007bff;
 }
 
-button {
-    margin-top: 10px;
+.card.knight {
+    background-color: #eb2626;
+}
+
+.card.siegeengine {
+    background-color: #FF9800;
+}
+
+.card.fortress {
+    background-color: #9C27B0;
+}
+
+.trade-button {
+    margin-top: 20px;
+    padding: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+    background-color: #28a745;
+    color: white;
+    cursor: pointer;
+}
+
+.trade-button:disabled {
+    background-color: #a93226;
+    color: #eee;
+    cursor: not-allowed;
+}
+
+.card-icon {
+    font-size: 24px;
+    margin-top: 5px;
 }
