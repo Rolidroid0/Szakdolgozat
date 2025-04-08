@@ -103,55 +103,53 @@ const BattleModal: React.FC<BattleModalProps> = ({ wsService, battle, playerId }
 
             <div className="battle-header">
               <div className="attacker">
-                <h3 style={{ backgroundColor: houseColors[battle.attacker_id] }}>{battle.attacker_id}</h3>
+                <h3 style={{ backgroundColor: houseColors[battle.attacker_id] }}>⚔️ {battle.attacker_id}</h3>
                 <p>Initial Armies: {battle.attacker_armies}</p>
                 <p>Current Armies: {battle.current_attacker_armies}</p>
               </div>
-              <div className="defender" style={{ backgroundColor: houseColors[battle.defender_id] }}>
-                <h3>{battle.defender_id}</h3>
+
+              <div className="battle-center">
+                <div className="dice-rolls">
+                  <div>
+                    <h4>⚔️ Attacker Rolls: {attackerRolls.join(" 🎲, ")}</h4>
+                  </div>
+                  <div>
+                    <h4>🛡️ Defender Rolls: {defenderRolls.join(" 🎲, ")}</h4>
+                  </div>
+                </div>
+
+                <div className="battle-log">
+                  <h3>Battle Log</h3>
+                  <div className="log-entries">
+                    {battleLog.map((entry, index) => {
+                      const parsedEntry = JSON.parse(entry);
+                      return (
+                        <div key={index}>
+                          <p>Attacker Rolls: {parsedEntry.attackerRolls.join(", ")}</p>
+                          <p>Defender Rolls: {parsedEntry.defenderRolls.join(", ")}</p>
+                          <p>Attacker Losses: {parsedEntry.attackerLosses}</p>
+                          <p>Defender Losses: {parsedEntry.defenderLosses}</p>
+                          <p>Remaining Attacker Armies: {parsedEntry.remainingAttackerArmies}</p>
+                          <p>Remaining Defender Armies: {parsedEntry.remainingDefenderArmies}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {canRoll && !loadingPlayer && (
+                  <button onClick={handleRollDice} className="roll-button">
+                    Roll Dice
+                  </button>
+                )}
+              </div>
+
+              <div className="defender">
+                <h3 style={{ backgroundColor: houseColors[battle.defender_id] }}>🛡️ {battle.defender_id}</h3>
                 <p>Initial Armies: {battle.defender_armies}</p>
                 <p>Current Armies: {battle.current_defender_armies}</p>
               </div>
             </div>
-
-            <div className="dice-rolls">
-              <div>
-                <h4>Attacker Rolls: {attackerRolls.join(", ")}</h4>
-              </div>
-              <div>
-                <h4>Defender Rolls: {defenderRolls.join(", ")}</h4>
-              </div>
-            </div>
-
-            <div className="battle-log">
-              <h3>Battle Log</h3>
-              <div className="log-entries">
-                {battleLog.map((entry : string, index) => {
-                  const parsedEntry = JSON.parse(entry);
-                  return (
-                  <div key={index}>
-                    <p>Attacker Rolls: {parsedEntry.attackerRolls.join(', ')}</p>
-                    <p>Defender Rolls: {parsedEntry.defenderRolls.join(', ')}</p>
-                    <p>Attacker Losses: {parsedEntry.attackerLosses}</p>
-                    <p>Defender Losses: {parsedEntry.defenderLosses}</p>
-                    <p>Remaining Attacker Armies: {parsedEntry.remainingAttackerArmies}</p>
-                    <p>Remaining Defender Armies: {parsedEntry.remainingDefenderArmies}</p>
-                    <hr />
-                </div>
-                );
-                })}
-              </div>
-            </div>
-
-            {loadingPlayer ? (
-              <Spinner />
-            ) : (
-              canRoll && (
-                <button onClick={handleRollDice} className="roll-button">
-                  Roll Dice
-                </button>
-              )
-            )}
           </div>
         </Popup>
     );
