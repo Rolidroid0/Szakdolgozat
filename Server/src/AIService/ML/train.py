@@ -1,12 +1,13 @@
 import torch
 import numpy as np
 import asyncio
+import os
 from models.deep_q_network import DeepQNetwork
 from agents.deep_q_agent import DQNAgent
 from environments.AttackEnv import AttackEnvironment
 from websocket_client import WebSocketClient
 
-EPISODES = 100
+EPISODES = 1000
 BATCH_SIZE = 64
 
 class DQNTrainer:
@@ -16,6 +17,8 @@ class DQNTrainer:
         self.websocket = websocket
         self.batch_size = BATCH_SIZE
         self.max_episodes = EPISODES
+        self.log_dir = "training_logs"
+        os.makedirs(self.log_dir, exist_ok=True)
 
     async def train(self):
         try:
@@ -46,6 +49,7 @@ class DQNTrainer:
 
                 if (episode + 1) % 10 == 0:
                     self.agent.save_model()
+                    self._save_rewards_to_file(episode_rewards, episode + 1)
 
             print("\nAll episodes rewards:")
             for idx, reward in enumerate(episode_rewards):
@@ -64,6 +68,13 @@ class DQNTrainer:
             [state["is_my_turn"]],
             [state["round_state"]]
         ])
+    
+    def _save_rewards_to_file(self, rewards, episode_number):
+        filename = os.path.join(self.log_dir, f"rewards_until_episode_{episode_number}.txt")
+        with open(filename, "w") as f:
+            for i, reward in enumerate(rewards):
+                f.write(f"Episode {i + 1}: {reward} points\n")
+        print(f"Saved rewards to {filename}")
 
 if __name__ == "__main__":
     env = AttackEnvironment()
