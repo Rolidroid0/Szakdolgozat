@@ -276,7 +276,7 @@
 	\textbf{DQN ügynök (DQNAgent)}: A tanulás kulcseleme a DQNAgent osztály, amely az alábbiakat kezeli:
 	
 	\begin{itemize}
-		\item \textbf{Akció kiválasztása}: Az epsilon-greedy stratégiát alkalmazza, hogy az ügynök kezdetben véletlenszerű akciókat válasszon, majd idővel egyre inkább a tapasztalatokra alapozott döntéseket hozzon (lásd: \ref{choose-action}).
+		\item \textbf{Akció kiválasztása}: Ez a függvény felelős azért, hogy az AI kiválasszon egy akciót a jelenlegi állapot alapján. A \emph{num\_valid\_actions} azt adja meg, hogy az adott pillanatban hány érvényes akció közül lehet választani. Az epsilon-greedy stratégiát alkalmazza, hogy az ügynök kezdetben véletlenszerű akciókat válasszon, majd idővel egyre inkább a tapasztalatokra alapozott döntéseket hozzon. Ha egy véletlen szám (0 és 1 között) kisebb, mint az epszilon, akkor véletlenszerű akciót választ. Máskülönben a neurális hálózat által becsült Q-értékek alapján választja ki a legjobb opciót. A state tömböt átalakítja az \emph{unsqueeze} metódussal a neurális hálózat számára értelmezhető adattá, majd meghívja a Q-hálózatot (self.q\_network) az állapot bemenettel, és visszaadja a hálózat által becsült Q-értékeket. Mivel a hálózat több Q-értéket is kiszámol, ezért a  \emph{valid\_q\_values}-ba levágjuk azokat az értékeket, amelyek nem tartoznak érvényes akciókhoz. Végezetül kiválasztja a legnagyobb Q-értékkel rendelkező akció indexét (ez a legjobbnak becsült akció), és a \emph{.item()}-mel kinyerjük a Python-integer értéket (lásd: \ref{choose-action}).
 		\lstinputlisting[caption={Az ügynök akció választása.}, label=choose-action, captionpos=b]{ChooseAction.py}
 		\item \textbf{Tapasztalatok tárolása}: A tanuláshoz szükséges múltbeli tapasztalatokat egy replay bufferben tárolja.
 		\item \textbf{Tanulási folyamat}: A Q-értékeket folyamatosan frissíti a célhálózattal való kontraszt alapján.
@@ -287,7 +287,7 @@
 	
 	\textbf{Mély Q-Hálózat (DeepQNetwork)}: A DQN alapja egy mély neuronhálózat, amelyet a DeepQNetwork osztály valósít meg. A hálózat egy bemeneti rétegből, két rejtett teljes összeköttetésű rétegből (és ReLU aktivációkból), valamint egy kimeneti rétegből áll, amely az egyes akciókhoz tartozó Q-értékeket szolgáltatja. A bemenetek dimenziója a játékbeli állapot adataira alapozott, a kimenetek száma pedig az elérhető akciók maximumát adja meg. 
 	
-	\textbf{Tanulási folyamat (DQNTrainer)}: A DQNTrainer osztály a teljes tanítási folyamatot kezeli. Meg kell előre adni az epizódok számát, azaz hogy hány játékot játsszon le a tanulás ideje alatt, majd futtatni a train.py fájlt. Először betölti az ügynököt az elmentett pth fájlból, vagy ha nem találja akkor újrainicializálja azt. Az ügynök az egyes epizódok során akciókat hajt végre, tapasztalatokat gyűjt, és tanul. Az epizódok végén pedig elmenti az ügynököt. A tanulás során az ügynök kölcsönhat a környezettel, jutalmakat kap a teljesítése alapján, majd folyamatosan frissíti a stratégiáját. Az epsilon csökkentésével az ügynök idővel egyre kevesebb véletlenszerű akciót végez, helyette a tanult optimális stratégiát alkalmazza (bővebben lásd: \ref{train} kódrészlet).
+	\textbf{Tanulási folyamat (DQNTrainer)}: A tanulási folyamatot a \emph{DQNTrainer} osztály valósítja meg, amely a \emph{train.py} fájl fő komponense (bővebben lásd: \ref{train} kódrészlet). Az osztály inicializálásakor megkapja a környezetet, a bemeneti dimenziót (állapothalmazt), a maximális akciók számát, valamint a WebSocket kapcsolatot, amelyet átad a környezetnek a szerverhez való csatlakozáshoz. A \emph{train()} függvény aszinkron módon fut, először megpróbál kapcsolódni a szerverhez a WebSocketen keresztül, majd betölti a korábban mentett neurális hálózati modellt (ha van ilyen), vagy új hálózatot inicializál, ha nem talál mentést. Ezután a tanulás epizódokban történik: az EPISODES konstans határozza meg, hány játékmenetet (episode) kell lefuttatni. Minden epizód elején a környezet visszaáll az alapállapotába az \emph{env.reset()} segítségével, majd a ciklusban az ügynök addig hajt végre akciókat, amíg a játék véget nem ér. Az egyes lépések során lekérdezi az aktuálisan elérhető akciókat a környezettől, majd a \emph{choose\_action()} függvénnyel kiválaszt egyet közülük, epsilon-greedy módon. A kiválasztott akció hatását a környezet \emph{step()} függvénye értékeli ki, és visszaadja a következő állapotot, a kapott jutalmat, valamint egy \emph{done} jelzőt, ami mutatja, hogy vége van-e az epizódnak/játéknak. A tapasztalatot elmenti a replay bufferbe (\emph{store\_transition()}), majd az \emph{agent.learn()} meghívásával frissíti a hálózat súlyait a minták alapján. Az epizód végén a teljes jutalom (\emph{total\_reward}) kiírásra kerül, és minden 10. epizód után a modell elmentésre kerül (\emph{save\_model()}). A főprogram rész (\emph{\_\_main\_\_}) inicializálja a környezetet és a WebSocket kapcsolatot, majd létrehozza a DQNTrainer példányt, és meghívja a \emph{train()} metódust egy aszinkron eseménykezelő segítségével (\emph{asyncio.run}). Ez biztosítja, hogy a tanulás folyamata automatikusan lefusson és a kapcsolat bezárásra kerüljön a végén.
 	
 	\lstinputlisting[caption={Train.py fájl.}, label=train, captionpos=b]{Train.py}
 	
@@ -296,6 +296,28 @@
 	Végezetül a játékhoz készült intelligens ügynök is betanítva bekerült az elkészült alkalmazásba egy Let AI decide gomb formájában, hogy segítsen a játékosoknak az optimális akcióválasztásban. Az alábbiakban bemutatom a tanítás során elért eredményeket, illetve az elkészült alkalmazás felületét.
 	
 	\section{Tanítás eredménye, pontosság, hiba mértéke}
+	
+	A tanítás során különböző hosszúságú epizódokat futtattam le, amelyek eredményei txt fájlokban kerültek rögzítésre. A cél az volt, hogy megfigyeljem, hogyan alakul a tanulóügynök teljesítménye az epizódok előrehaladtával. A tanítás elején az ügynök pontszámai jelentős ingadozást mutattak. A korai epizódokban gyakran fordul elő -400 és -600 közötti pontszám, amely azt jelzi, hogy az ügynök még nem tudta hatékonyan optimalizálni a döntéseit. Néhány pozitív érték már a kezdeti szakaszban is előfordult, amely a szerencsének is köszönhető. Egy pozitív pontszám minden esetben azt jelenti, hogy az ügynök megnyerte az adott játékot és ezért jóval több jutalmat kapott. 
+	
+	Két főbb tanítási eredményt vehetünk figyelembe a végső elemzéshez: az \texttt{eredmények.txt} és a \texttt{rewards\_until\_episode\_240.txt} (továbbiakban \emph{rue240}) fájlok tartalmát. Az \textbf{eredmények} több kisebb epizóddal rendelkezdő tanítást foglal magában, van benne 30, 50, illetve 100 epizódos tanítás eredménye is. A \textbf{rue240} fájl ezzel szemben egy 240 epizódból álló tanítás eredményeit tartalmazza. 
+	
+	A \textbf{rue240 fájl} adatai alapján megfigyelhető, hogy a tanítási szakasz végére az ügynök teljesítménye kissé stabilizálódott, és egyre gyakrabban fordult elő nyertes (pozitív jutalommal záruló) epizód. Ezzel szemben az \textbf{eredmenyek.txt} több különálló tanítási kísérlet eredményét tartalmazza, amelyek között nem látható határozott javuló tendencia.
+	
+	\Aref{winrate} oszlopdiagram az epizódok során mért \textbf{nyertes játékok arányát mutatja 10 epizódonként}, külön a két tanítási eredményfájl alapján. Baloldalt a rue240, jobboldalt pedig az eredmenyek fájl adatai láthatók.
+	
+	\begin{figure}[ht!] 
+		\centering \includegraphics[width=16cm]{winrate.png} \caption{Pozitív pontszámú epizódok száma 10 epizódonként, összehasonlítva a két tanítással} 
+		\label{winrate}	
+	\end{figure}
+	
+	\Aref{mozgoatlag} ábra egy \textbf{mozgóátlagos ábrázolást} mutat, amelyből jól látható, hogy a rue240 (bal) esetében a teljesítmény bár továbbra is szór, összességében valamelyest javul.
+	
+	\begin{figure}[ht!] 
+		\centering \includegraphics[width=16cm]{mozgoatlag.png} \caption{Epizódonkénti mozgóátlagos teljesítmény: rue240 és eredmenyek.txt}
+		\label{mozgoatlag}
+	\end{figure}
+	
+	A tanulási folyamat során tehát nem beszélhetünk egyértelmű monoton növekedésről, de időszakosan megfigyelhető a teljesítmény javulása. Az epizódok során keletkező nagy szórást a környezet komplexitása, az ügynök döntési szabadsága és a szerencse eredményezheti. Jövőbeni pozitívabb teljesítmények eléréséhez érdemes lehet finomítani az MI tanulási rátáját vagy hosszabb tanítási időszakokat futtatni. 
 	
 	\section{Az alkalmazás felhasználói felülete}
 	
@@ -359,7 +381,15 @@
 	\chapter*{Összegzés}
 	\addcontentsline{toc}{chapter}{Összegzés}
 	
-	%TODO: 1. elkészült alkalmazás fejezet 3. Összegzés
+	Az elkészült dolgozatomban egy olyan webes alapú, valós idejű stratégiai játékot valósítottam meg, amely rendelkezik saját mesterséges intelligenciával. A fejlesztés során kifejezett célom volt egy gördülékeny, vizuálisan és játékélmény szempontjából is élvezhető játék megalkotása, amelyben az emberi játékosok mellett egy AI is szerepet kaphat. 
+	
+	A fejlesztés során számos kihívással szembesültem, többek között a több kliens és szerver közötti valós idejű kommunikáció megoldásának problémájával, a komplex játékszabályok formalizálásával, az AI, a környezet és a szerver közötti kommunikáció biztosításával, valamint a megfelelő technológiák hatékony kiválasztásával és felhasználásával. Ezek megoldása során mélyebb ismereteket szereztem mind a gépi tanulás gyakorlati alkalmazásáról, mind pedig a webes játékfejlesztésről.
+	
+	A tanítási szakasz során különböző epizódszámú tréningeket hajtottam végre, amelyek eredményeiből vizuális ábrázolás segítségével következtetéseket vontam le a modell teljesítményéről. Bár a tanulási görbe nem volt tökéletesen monoton, az ügynök idővel képes volt egyre hatékonyabban reagálni a környezeti ingerekre és bizonyos esetekben sikeres támadási döntéseket hozni, ezáltal játékokat is nyerni. 
+	
+	Úgy vélem, hogy a jövőben a rendszer továbbfejleszthető többféle úton is. A társasjáték része kibővíthető újabb játékmechanizmusok fejlesztésével mint például a pénz és mesterkártyák implementálása, de jelentős változást adhat a térkép kibővítése és a játékosok számának emelése, akár 3-7 játékosra is. A kód nagy része úgy van implementálva, hogy az könnyen módosítható legyen több játékos befogadására is. Egy másik fejlesztési lehetőség újabb mesterséges intelligenciák hozzáadása, például az erősítés vagy a manőverezés fázisához. Ezek által akár az egyik játékos szerepét teljesen át is vehetnék a különböző MI-k, ezzel lehetővé téve, hogy a játékot egyedül is lehessen játszani a gép ellen.
+	
+	A projekt megvalósítása számomra inspiráló és élvezetes volt. Nemcsak elméleti, hanem gyakorlati tapasztalatokat is szereztem az MI-alapú játékfejlesztés világában, amelyek a jövőbeli tanulmányaim és pályám során is hasznosnak bizonyulhatnak. 
 	
 	\begin{thebibliography}{2}
 		\addcontentsline{toc}{chapter}{\bibname}
