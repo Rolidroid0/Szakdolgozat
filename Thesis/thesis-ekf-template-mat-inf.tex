@@ -246,7 +246,7 @@
 	
 	\section{Kommunikáció a szerverrel}
 	
-	Mivel a szerverem JavaScript nyelven íródott, illetve az MI Python nyelven kerül megvalósításra, valahogyan meg kell oldanom, hogy a kettő tudjon kommunikálni egymással. Az egyik megoldás a Python alkalmazáson belül egy REST API létrehozása (például Flask keretrendszerrel), ahol a Node.js szerver HTTP-kéréseket küldene, és a Python API pedig visszaadná az eredményeket. Ezzel a megoldással az a probléma, hogy nem valós idejű kommunikációra optimalizált. Ezzel szemben hatékonyabb megoldást nyújt a WesSocket kapcsolat. A Python és a Node.js között egy kétirányú, valós idejű kommunikációt biztosíthatunk a segítségével. Ez egy aszinkron adatcserét eredményez, ami hosszabb adatok küldésére és fogadására a legoptimálisabb. A Python oldalon hasonlóan a kliensekhez a WebSocket kapcsolat úgy van megoldva, hogy csatlakozik a szerverhez a Python kliens. A frontend kliensekkel ellentétben azonban a Python kliens minden kérésnél hozzáad egy random generált request\_id-t, amelyet a szerver figyelembe vesz. Ez azért fontos, mivel a Python részen nem szükséges megkapni minden üzenetet, amit a szerver folyamatosan küldözget például egy új játék létrehozásánál. Ezzel a megoldással a Python kliens egy olyan üzenetre vár, ami tartalmazza a kérése azonosítóját, és csak akkor megy tovább, amikor a megfelelő választ megkapta. \ref{python-client-awaiting}
+	Mivel a szerverem JavaScript nyelven íródott, illetve az MI Python nyelven kerül megvalósításra, valahogyan meg kell oldanom, hogy a kettő tudjon kommunikálni egymással. Az egyik megoldás a Python alkalmazáson belül egy REST API létrehozása (például Flask keretrendszerrel), ahol a Node.js szerver HTTP-kéréseket küldene, és a Python API pedig visszaadná az eredményeket. Ezzel a megoldással az a probléma, hogy nem valós idejű kommunikációra optimalizált. Ezzel szemben hatékonyabb megoldást nyújt a WesSocket kapcsolat. A Python és a Node.js között egy kétirányú, valós idejű kommunikációt biztosíthatunk a segítségével. Ez egy aszinkron adatcserét eredményez, ami hosszabb adatok küldésére és fogadására a legoptimálisabb. A Python oldalon hasonlóan a kliensekhez a WebSocket kapcsolat úgy van megoldva, hogy csatlakozik a szerverhez a Python kliens. A frontend kliensekkel ellentétben azonban a Python kliens minden kérésnél hozzáad egy random generált request\_id-t, amelyet a szerver figyelembe vesz. Ez azért fontos, mivel a Python részen nem szükséges megkapni minden üzenetet, amit a szerver folyamatosan küldözget például egy új játék létrehozásánál. Ezzel a megoldással a Python kliens egy olyan üzenetre vár, ami tartalmazza a kérése azonosítóját, és csak akkor megy tovább, amikor a megfelelő választ megkapta (lásd: \ref{python-client-awaiting}).
 	
 	\lstinputlisting[caption={Python kliens várakozása a megfelelő válaszra.}, label=python-client-awaiting, captionpos=b]{PythonClientAwaiting.py}
 	
@@ -257,7 +257,7 @@
 	
 	A mesterséges intelligencia döntéshozatali folyamatainak tanításához elengedhetetlen egy jó környezet, amelyből tanulhat. Ennek a környezetnek pontosan kell szimulálnia a játék adott mechanizmusát, különben az MI rossz mintákat tanul meg, amelyek a valódi játékban irrelevánsnak számíthatnak. Ezért egy egyedi megvalósítást kellett megalkotni, amely pontosan követi a játék lépéseit, szabályait. A Gym nevezetű könyvtárat használtam fel kiindulási alapnak, amely lehetővé teszi az egyedi megerősítéses tanulás környezetek kialakítását. A Gym-en belül is az Env osztályt írtam felül, amely alapjáraton a következő függvényeket tartalmazza: init, step, reset és render. 
 	
-	Az \emph{init} függvényben a környezet legfontosabb mezői kapnak értéket. Az egyik ilyen a megfigyelési tér (Observation Space), amely a játék aktuális állapotát modellezi. Az MI a döntéshozatalhoz öt információt használ. Az ownership, amely a területek birtoklását jelenti, értéke lehet 1, ha az AI birtokolja és 0, ha egy ellenfele. Az army\_counts, amely az egyes területeken lévő seregeket reprezentálja. Értéke az adott területen lévő seregek száma osztva egy maximum értékkel. Az attackable mutatja, hogy mely területek azok, amelyekről az AI indíthat támadást jelen pillanatban. Az utolsó két értékek pedig az is\_my\_turn és a round\_state, amelyekkel ellenőrizhető, hogy valóban az AI támadási köre van jelenleg. Másik fontos mező amely értéket kap az akciótér (Action Space), amely a végrehajtható akciókat tartalmazza dinamikusan. Ezek az akciók minden lépés után a get\_valid\_attacks() függvénnyel (\ref{get-valid-attacks}) kerülnek meghatározásra. Ezeknek a maximuma a területek száma szorozva a területek száma mínusz eggyel, szorozva a maximális seregekkel, majd a végén plusz egy, a passzolási lehetőség miatt. 
+	Az \emph{init} függvényben a környezet legfontosabb mezői kapnak értéket. Az egyik ilyen a megfigyelési tér (Observation Space), amely a játék aktuális állapotát modellezi. Az MI a döntéshozatalhoz öt információt használ. Az ownership, amely a területek birtoklását jelenti, értéke lehet 1, ha az AI birtokolja és 0, ha egy ellenfele. Az army\_counts, amely az egyes területeken lévő seregeket reprezentálja. Értéke az adott területen lévő seregek száma osztva egy maximum értékkel. Az attackable mutatja, hogy mely területek azok, amelyekről az AI indíthat támadást jelen pillanatban. Az utolsó két értékek pedig az is\_my\_turn és a round\_state, amelyekkel ellenőrizhető, hogy valóban az AI támadási köre van jelenleg. Másik fontos mező amely értéket kap az akciótér (Action Space), amely a végrehajtható akciókat tartalmazza dinamikusan. Ezek az akciók minden lépés után a get\_valid\_attacks() függvénnyel (lásd: \ref{get-valid-attacks}) kerülnek meghatározásra. Ezeknek a maximuma a területek száma szorozva a területek száma mínusz eggyel, szorozva a maximális seregekkel, majd a végén plusz egy, a passzolási lehetőség miatt. 
 	
 	\lstinputlisting[caption={Akciótér beállítása.}, label=get-valid-attacks, captionpos=b]{GetValidAttacks.py}
 	
@@ -398,19 +398,19 @@
 		\bibitem{NN2}
 		\textsc{Larry Hardesty}: Explained: Neural networks, MIT News Office, 2017. 
 		\bibitem{NN}
-		\textsc{Neural network wikipedia}: https://en.wikipedia.org/wiki/Neural\_network\_(machine\_learning)
+		\textsc{Neural network wikipedia}: \url{https://en.wikipedia.org/wiki/Neural\_network\_(machine\_learning)}
 		\bibitem{RL}
-		\textsc{Reinforcement Learning wikipedia}: https://en.wikipedia.org/wiki/Reinforcement\_learning
+		\textsc{Reinforcement Learning wikipedia}: \url{https://en.wikipedia.org/wiki/Reinforcement\_learning}
 		\bibitem{MongoDB}
-		\textsc{MongoDB wikipedia}: https://en.wikipedia.org/wiki/MongoDB
+		\textsc{MongoDB wikipedia}: \url{https://en.wikipedia.org/wiki/MongoDB}
 		\bibitem{TFJS}
-		\textsc{TensorFlow.js}: https://www.tensorflow.org/js
+		\textsc{TensorFlow.js}: \url{https://www.tensorflow.org/js}
 		\bibitem{PYTCH}
-		\textsc{PyTorch}: https://pytorch.org/
+		\textsc{PyTorch}: \url{https://pytorch.org/}
 		\bibitem{ActSpac}
-		\textsc{Action Space}: https://medium.com/@corinacataraug/hybrid-action-spaces-in-rl-a-short-overview-5314ac0d62d6
+		\textsc{Action Space}: \url{https://medium.com/@corinacataraug/hybrid-action-spaces-in-rl-a-short-overview-5314ac0d62d6}
 		\bibitem{PPO}
-		\textsc{Proximal Policy Optimization}: https://www.mathworks.com/help/reinforcement-learning/ug/proximal-policy-optimization-agents.html
+		\textsc{Proximal Policy Optimization}: \url{https://www.mathworks.com/help/reinforcement-learning/ug/proximal-policy-optimization-agents.html}
 	\end{thebibliography}
 	
 	% Aláírt, szkennelt nyilatkozat beillesztése a szakdolgozat végére
